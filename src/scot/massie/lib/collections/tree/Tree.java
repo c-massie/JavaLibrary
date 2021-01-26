@@ -6,8 +6,6 @@ import java.lang.reflect.Type;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// TO DO: Reörder, put methods into specified regions.
-
 public interface Tree<TNode, TLeaf>
 {
     class NoItemAtPathException extends RuntimeException
@@ -121,6 +119,9 @@ public interface Tree<TNode, TLeaf>
         { return nodes; }
 
         public int getLength()
+        { return nodes.size(); }
+
+        public int size()
         { return nodes.size(); }
 
         public TNode getFirst()
@@ -1932,10 +1933,7 @@ class TreeDefaultHelperMethods
     }
 
     public static Type getComparableType(Object o)
-    {
-        Class t = o.getClass();
-        return t.isInterface() ? getComparableTypeFromInterface(t) : getComparableTypeFromClass(t);
-    }
+    { return getComparableTypeFromClass(o.getClass()); }
 
     public static Type getComparableTypeFromClass(Class t)
     {
