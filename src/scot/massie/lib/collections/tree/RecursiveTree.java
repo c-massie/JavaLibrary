@@ -100,6 +100,9 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public boolean hasItemsAtOrUnder(TNode... path)
     { return hasItemsAtOrUnder_internal(path, 0); }
 
+    public boolean hasItemsAtOrUnder(List<TNode> path)
+    { return hasItemsAtOrUnder_internal(path, 0); }
+
     private boolean hasItemsAtOrUnder_internal(TNode[] path, int index)
     {
         if(path.length == index)
@@ -109,8 +112,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch != null && branch.hasItemsAtOrUnder_internal(path, index + 1);
     }
 
+    private boolean hasItemsAtOrUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return hasRootItem || !branches.isEmpty();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch != null && branch.hasItemsAtOrUnder_internal(path, index + 1);
+    }
+
     @Override
     public boolean hasItemsUnder(TNode... path)
+    { return hasItemsUnder_internal(path, 0); }
+
+    @Override
+    public boolean hasItemsUnder(List<TNode> path)
     { return hasItemsUnder_internal(path, 0); }
 
     private boolean hasItemsUnder_internal(TNode[] path, int index)
@@ -122,8 +138,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch != null && branch.hasItemsUnder_internal(path, index + 1);
     }
 
+    private boolean hasItemsUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return !branches.isEmpty();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch != null && branch.hasItemsUnder_internal(path, index + 1);
+    }
+
     @Override
     public boolean hasItemsAlong(TNode... path)
+    { return hasItemsAlong_internal(path, 0); }
+
+    @Override
+    public boolean hasItemsAlong(List<TNode> path)
     { return hasItemsAlong_internal(path, 0); }
 
     private boolean hasItemsAlong_internal(TNode[] path, int index)
@@ -138,8 +167,24 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch != null && branch.hasItemsAlong_internal(path, index + 1);
     }
 
+    private boolean hasItemsAlong_internal(List<TNode> path, int index)
+    {
+        if(hasRootItem)
+            return true;
+
+        if(path.size() == index)
+            return false;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch != null && branch.hasItemsAlong_internal(path, index + 1);
+    }
+
     @Override
     public boolean hasNonRootItemsAlong(TNode... path)
+    { return hasNonRootItemsAlong_internal(path, 0); }
+
+    @Override
+    public boolean hasNonRootItemsAlong(List<TNode> path)
     { return hasNonRootItemsAlong_internal(path, 0); }
 
     private boolean hasNonRootItemsAlong_internal(TNode[] path, int index)
@@ -151,8 +196,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch != null && branch.hasItemsAlong_internal(path, index + 1);
     }
 
+    private boolean hasNonRootItemsAlong_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return false;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch != null && branch.hasItemsAlong_internal(path, index + 1);
+    }
+
     @Override
     public boolean hasItemAt(TNode... path)
+    { return hasItemAt_internal(path, 0); }
+
+    @Override
+    public boolean hasItemAt(List<TNode> path)
     { return hasItemAt_internal(path, 0); }
 
     private boolean hasItemAt_internal(TNode[] path, int index)
@@ -161,6 +219,15 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             return hasRootItem;
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch != null && branch.hasItemAt_internal(path, index + 1);
+    }
+
+    private boolean hasItemAt_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return hasRootItem;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch != null && branch.hasItemAt_internal(path, index + 1);
     }
 
@@ -180,6 +247,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public boolean isEmptyAtAndUnder(TNode... path)
     { return isEmptyAtAndUnder_internal(path, 0); }
 
+    @Override
+    public boolean isEmptyAtAndUnder(List<TNode> path)
+    { return isEmptyAtAndUnder_internal(path, 0); }
+
     private boolean isEmptyAtAndUnder_internal(TNode[] path, int index)
     {
         if(path.length == index)
@@ -189,8 +260,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null || branch.isEmptyAtAndUnder_internal(path, index + 1);
     }
 
+    private boolean isEmptyAtAndUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return (!hasRootItem) && branches.isEmpty();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null || branch.isEmptyAtAndUnder_internal(path, index + 1);
+    }
+
     @Override
     public boolean isEmptyUnder(TNode... path)
+    { return isEmptyUnder_internal(path, 0); }
+
+    @Override
+    public boolean isEmptyUnder(List<TNode> path)
     { return isEmptyUnder_internal(path, 0); }
 
     private boolean isEmptyUnder_internal(TNode[] path, int index)
@@ -202,8 +286,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null || branch.isEmptyUnder_internal(path, index + 1);
     }
 
+    private boolean isEmptyUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return branches.isEmpty();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null || branch.isEmptyUnder_internal(path, index + 1);
+    }
+
     @Override
     public boolean isEmptyAlong(TNode... path)
+    { return isEmptyAlong_internal(path, 0); }
+
+    @Override
+    public boolean isEmptyAlong(List<TNode> path)
     { return isEmptyAlong_internal(path, 0); }
 
     private boolean isEmptyAlong_internal(TNode[] path, int index)
@@ -218,8 +315,24 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null || branch.isEmptyAlong_internal(path, index + 1);
     }
 
+    private boolean isEmptyAlong_internal(List<TNode> path, int index)
+    {
+        if(hasRootItem)
+            return false;
+
+        if(path.size() == index)
+            return true;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null || branch.isEmptyAlong_internal(path, index + 1);
+    }
+
     @Override
     public boolean isEmptyAlongAfterRoot(TNode... path)
+    { return isEmptyAlongAfterRoot_internal(path, 0); }
+
+    @Override
+    public boolean isEmptyAlongAfterRoot(List<TNode> path)
     { return isEmptyAlongAfterRoot_internal(path, 0); }
 
     private boolean isEmptyAlongAfterRoot_internal(TNode[] path, int index)
@@ -231,8 +344,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null || branch.isEmptyAlong_internal(path, index + 1);
     }
 
+    private boolean isEmptyAlongAfterRoot_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return true;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null || branch.isEmptyAlong_internal(path, index + 1);
+    }
+
     @Override
     public boolean isEmptyAt(TNode... path)
+    { return isEmptyAt_internal(path, 0); }
+
+    @Override
+    public boolean isEmptyAt(List<TNode> path)
     { return isEmptyAt_internal(path, 0); }
 
     private boolean isEmptyAt_internal(TNode[] path, int index)
@@ -241,6 +367,15 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             return !hasRootItem;
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null || branch.isEmptyAt_internal(path, index + 1);
+    }
+
+    private boolean isEmptyAt_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return !hasRootItem;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null || branch.isEmptyAt_internal(path, index + 1);
     }
 
@@ -277,6 +412,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public TLeaf getAt(TNode... path) throws NoItemAtPathException
     { return getAt_internal(path, 0); }
 
+    @Override
+    public TLeaf getAt(List<TNode> path) throws NoItemAtPathException
+    { return getAt_internal(path, 0); }
+
     private TLeaf getAt_internal(TNode[] path, int index) throws NoItemAtPathException
     {
         if(path.length == index)
@@ -295,8 +434,30 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch.getAt_internal(path, index + 1);
     }
 
+    private TLeaf getAt_internal(List<TNode> path, int index) throws NoItemAtPathException
+    {
+        if(path.size() == index)
+        {
+            if(!hasRootItem)
+                throw new NoItemAtPathException();
+
+            return rootItem;
+        }
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+
+        if(branch == null)
+            throw new NoItemAtPathException();
+
+        return branch.getAt_internal(path, index + 1);
+    }
+
     @Override
     public ValueWithPresence<TLeaf> getAtSafely(TNode... path)
+    { return getAtSafely_internal(path, 0); }
+
+    @Override
+    public ValueWithPresence<TLeaf> getAtSafely(List<TNode> path)
     { return getAtSafely_internal(path, 0); }
 
     private ValueWithPresence<TLeaf> getAtSafely_internal(TNode[] path, int index)
@@ -308,8 +469,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? new ValueWithPresence<>(false, null) : branch.getAtSafely_internal(path, index + 1);
     }
 
+    private ValueWithPresence<TLeaf> getAtSafely_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return new ValueWithPresence<>(hasRootItem, rootItem);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? new ValueWithPresence<>(false, null) : branch.getAtSafely_internal(path, index + 1);
+    }
+
     @Override
     public TLeaf getAtOrDefault(TLeaf defaultItem, TNode... path)
+    { return getAtOrDefault_internal(defaultItem, path, 0); }
+
+    @Override
+    public TLeaf getAtOrDefault(TLeaf defaultItem, List<TNode> path)
     { return getAtOrDefault_internal(defaultItem, path, 0); }
 
     private TLeaf getAtOrDefault_internal(TLeaf defaultItem, TNode[] path, int index)
@@ -321,8 +495,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? defaultItem : branch.getAtOrDefault_internal(defaultItem, path, index + 1);
     }
 
+    private TLeaf getAtOrDefault_internal(TLeaf defaultItem, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return hasRootItem ? rootItem : defaultItem;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? defaultItem : branch.getAtOrDefault_internal(defaultItem, path, index + 1);
+    }
+
     @Override
     public Object getAtOrDefaultAnyType(Object defaultItem, TNode... path)
+    { return getAtOrDefaultAnyType_internal(defaultItem, path, 0); }
+
+    @Override
+    public Object getAtOrDefaultAnyType(Object defaultItem, List<TNode> path)
     { return getAtOrDefaultAnyType_internal(defaultItem, path, 0); }
 
     private Object getAtOrDefaultAnyType_internal(Object defaultItem, TNode[] path, int index)
@@ -334,8 +521,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? defaultItem : branch.getAtOrDefaultAnyType_internal(defaultItem, path, index + 1);
     }
 
+    private Object getAtOrDefaultAnyType_internal(Object defaultItem, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return hasRootItem ? rootItem : defaultItem;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? defaultItem : branch.getAtOrDefaultAnyType_internal(defaultItem, path, index + 1);
+    }
+
     @Override
     public TLeaf getAtOrNull(TNode... path)
+    { return getAtOrNull_internal(path, 0); }
+
+    @Override
+    public TLeaf getAtOrNull(List<TNode> path)
     { return getAtOrNull_internal(path, 0); }
 
     private TLeaf getAtOrNull_internal(TNode[] path, int index)
@@ -347,10 +547,17 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? null : branch.getAtOrNull_internal(path, index + 1);
     }
 
+    private TLeaf getAtOrNull_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return hasRootItem ? rootItem : null;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? null : branch.getAtOrNull_internal(path, index + 1);
+    }
+
     @Override
-    //public Collection<TNode[]> getPaths()
     public Collection<Tree.TreePath<TNode>> getPaths()
-    //{ return getPaths_internal().map(x -> (TNode[])(x.toArray())).collect(Collectors.toList()); }
     { return getPaths_internal().map(TreePath::fromStream).collect(Collectors.toList()); }
 
     private Stream<Stream<TNode>> getPaths_internal()
@@ -446,6 +653,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<TLeaf> getItemsAtAndUnder(TNode... path)
     { return getItemsAtAndUnder_internal(path, 0); }
 
+    @Override
+    public Collection<TLeaf> getItemsAtAndUnder(List<TNode> path)
+    { return getItemsAtAndUnder_internal(path, 0); }
+
     private Collection<TLeaf> getItemsAtAndUnder_internal(TNode[] path, int index)
     {
         if(path.length == index)
@@ -455,8 +666,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? Collections.emptyList() : branch.getItemsAtAndUnder_internal(path, index + 1);
     }
 
+    private Collection<TLeaf> getItemsAtAndUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getItems();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? Collections.emptyList() : branch.getItemsAtAndUnder_internal(path, index + 1);
+    }
+
     @Override
     public List<TLeaf> getItemsAtAndUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return getItemsAtAndUnderInOrder_internal(comparator, path, 0); }
+
+    @Override
+    public List<TLeaf> getItemsAtAndUnderInOrder(Comparator<TNode> comparator, List<TNode> path)
     { return getItemsAtAndUnderInOrder_internal(comparator, path, 0); }
 
     private List<TLeaf> getItemsAtAndUnderInOrder_internal(Comparator<TNode> comp, TNode[] path, int index)
@@ -465,6 +689,15 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             return getItemsInOrder(comp);
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? Collections.emptyList() : branch.getItemsAtAndUnderInOrder_internal(comp, path, index + 1);
+    }
+
+    private List<TLeaf> getItemsAtAndUnderInOrder_internal(Comparator<TNode> comp, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getItemsInOrder(comp);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? Collections.emptyList() : branch.getItemsAtAndUnderInOrder_internal(comp, path, index + 1);
     }
 
@@ -504,6 +737,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<TLeaf> getItemsUnder(TNode... path)
     { return getItemsUnder_internal(path, 0); }
 
+    @Override
+    public Collection<TLeaf> getItemsUnder(List<TNode> path)
+    { return getItemsUnder_internal(path, 0); }
+
     private Collection<TLeaf> getItemsUnder_internal(TNode[] path, int index)
     {
         if(path.length == index)
@@ -513,8 +750,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? Collections.emptyList() : branch.getItemsUnder_internal(path, index + 1);
     }
 
+    private Collection<TLeaf> getItemsUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getNonRootItems();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? Collections.emptyList() : branch.getItemsUnder_internal(path, index + 1);
+    }
+
     @Override
     public List<TLeaf> getItemsUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return getItemsUnderInOrder_internal(comparator, path, 0); }
+
+    @Override
+    public List<TLeaf> getItemsUnderInOrder(Comparator<TNode> comparator, List<TNode> path)
     { return getItemsUnderInOrder_internal(comparator, path, 0); }
 
     private List<TLeaf> getItemsUnderInOrder_internal(Comparator<TNode> comparator, TNode[] path, int index)
@@ -526,8 +776,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? Collections.emptyList() : branch.getItemsUnderInOrder_internal(comparator, path, index + 1);
     }
 
+    private List<TLeaf> getItemsUnderInOrder_internal(Comparator<TNode> comparator, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getNonRootItemsInOrder(comparator);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? Collections.emptyList() : branch.getItemsUnderInOrder_internal(comparator, path, index + 1);
+    }
+
     @Override
     public List<TLeaf> getItemsAlong(TNode... path)
+    { return getItemsAlong_internal(path, 0).collect(Collectors.toList()); }
+
+    @Override
+    public List<TLeaf> getItemsAlong(List<TNode> path)
     { return getItemsAlong_internal(path, 0).collect(Collectors.toList()); }
 
     private Stream<TLeaf> getItemsAlong_internal(TNode[] path, int index)
@@ -548,8 +811,30 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         }
     }
 
+    private Stream<TLeaf> getItemsAlong_internal(List<TNode> path, int index)
+    {
+        Stream<TLeaf> result = hasRootItem ? Stream.of(rootItem) : null;
+
+        if(path.size() == index)
+            return result == null ? Stream.empty() : result;
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+
+        if(branch == null)
+            return result == null ? Stream.empty() : result;
+        else
+        {
+            Stream<TLeaf> branchResult = branch.getItemsAlong_internal(path, index + 1);
+            return result == null ? branchResult : Stream.concat(result, branchResult);
+        }
+    }
+
     @Override
     public List<TLeaf> getNonRootItemsAlong(TNode... path)
+    { return getNonRootItemsAlong_internal(path, 0).collect(Collectors.toList()); }
+
+    @Override
+    public List<TLeaf> getNonRootItemsAlong(List<TNode> path)
     { return getNonRootItemsAlong_internal(path, 0).collect(Collectors.toList()); }
 
     private Stream<TLeaf> getNonRootItemsAlong_internal(TNode[] path, int index)
@@ -558,6 +843,15 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             return Stream.empty();
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? Stream.empty() : branch.getItemsAlong_internal(path, index + 1);
+    }
+
+    private Stream<TLeaf> getNonRootItemsAlong_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return Stream.empty();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? Stream.empty() : branch.getItemsAlong_internal(path, index + 1);
     }
 
@@ -599,6 +893,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<TLeaf> getItemsImmediatelyUnder(TNode... path)
     { return getItemsImmediatelyUnder_internal(path, 0); }
 
+    @Override
+    public Collection<TLeaf> getItemsImmediatelyUnder(List<TNode> path)
+    { return getItemsImmediatelyUnder_internal(path, 0); }
+
     private Collection<TLeaf> getItemsImmediatelyUnder_internal(TNode[] path, int index)
     {
         if(path.length == index)
@@ -608,8 +906,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? Collections.emptyList() : branch.getItemsImmediatelyUnder_internal(path, index + 1);
     }
 
+    private Collection<TLeaf> getItemsImmediatelyUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getImmediateItems();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? Collections.emptyList() : branch.getItemsImmediatelyUnder_internal(path, index + 1);
+    }
+
     @Override
     public List<TLeaf> getItemsImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return getItemsImmediatelyUnderInOrder_internal(comparator, path, 0); }
+
+    @Override
+    public List<TLeaf> getItemsImmediatelyUnderInOrder(Comparator<TNode> comparator, List<TNode> path)
     { return getItemsImmediatelyUnderInOrder_internal(comparator, path, 0); }
 
     private List<TLeaf> getItemsImmediatelyUnderInOrder_internal(Comparator<TNode> comparator, TNode[] path, int index)
@@ -618,6 +929,15 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             return getImmediateItemsInOrder(comparator);
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? Collections.emptyList() : branch.getItemsImmediatelyUnderInOrder_internal(comparator, path, index + 1);
+    }
+
+    private List<TLeaf> getItemsImmediatelyUnderInOrder_internal(Comparator<TNode> comparator, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getImmediateItemsInOrder(comparator);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? Collections.emptyList() : branch.getItemsImmediatelyUnderInOrder_internal(comparator, path, index + 1);
     }
 
@@ -667,6 +987,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<TLeaf> getItemsAtAndImmediatelyUnder(TNode... path)
     { return getItemsAtAndImmediatelyUnder_internal(path, 0); }
 
+    @Override
+    public Collection<TLeaf> getItemsAtAndImmediatelyUnder(List<TNode> path)
+    { return getItemsAtAndImmediatelyUnder_internal(path, 0); }
+
     private Collection<TLeaf> getItemsAtAndImmediatelyUnder_internal(TNode[] path, int index)
     {
         if(path.length == index)
@@ -676,8 +1000,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? Collections.emptyList() : branch.getItemsAtAndImmediatelyUnder_internal(path, index + 1);
     }
 
+    private Collection<TLeaf> getItemsAtAndImmediatelyUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getRootAndImmediateItems();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? Collections.emptyList() : branch.getItemsAtAndImmediatelyUnder_internal(path, index + 1);
+    }
+
     @Override
     public List<TLeaf> getItemsAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return getItemsAtAndImmediatelyUnderInOrder_internal(comparator, path, 0); }
+
+    @Override
+    public List<TLeaf> getItemsAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, List<TNode> path)
     { return getItemsAtAndImmediatelyUnderInOrder_internal(comparator, path, 0); }
 
     private List<TLeaf> getItemsAtAndImmediatelyUnderInOrder_internal(Comparator<TNode> comparator, TNode[] path, int index)
@@ -686,6 +1023,15 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             return getRootAndImmediateItemsInOrder(comparator);
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? Collections.emptyList() : branch.getItemsAtAndImmediatelyUnderInOrder_internal(comparator, path, index + 1);
+    }
+
+    private List<TLeaf> getItemsAtAndImmediatelyUnderInOrder_internal(Comparator<TNode> comparator, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getRootAndImmediateItemsInOrder(comparator);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? Collections.emptyList() : branch.getItemsAtAndImmediatelyUnderInOrder_internal(comparator, path, index + 1);
     }
 
@@ -740,10 +1086,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     private Stream<Tree.Entry<TNode, TLeaf>> getEntriesAsStreamInOrder(Comparator<TNode> comparator)
     { return getPathsAndItemsAsStreamInOrder(comparator).map(x -> x.toEntry(this)); }
 
-    private Stream<Tree.Entry<TNode, TLeaf>> getEntriesWithPathPrefixedAsStream_2(RecursiveTree<TNode, TLeaf> sourceTree, List<TNode> prefix)
+    private Stream<Tree.Entry<TNode, TLeaf>> getEntriesWithPathPrefixedAsStream(RecursiveTree<TNode, TLeaf> sourceTree, List<TNode> prefix)
     { return getPathsAndItemsAsStream().peek(x -> x.prefixWith(prefix)).map(x -> x.toEntry(sourceTree)); }
 
-    private Stream<Tree.Entry<TNode, TLeaf>> getEntriesWithPathPrefixedAsStreamInOrder_2(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, List<TNode> prefix)
+    private Stream<Tree.Entry<TNode, TLeaf>> getEntriesWithPathPrefixedAsStreamInOrder(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, List<TNode> prefix)
     { return getPathsAndItemsAsStreamInOrder(comparator).peek(x -> x.prefixWith(prefix)).map(x -> x.toEntry(sourceTree)); }
 
     @Override
@@ -758,12 +1104,25 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnder(TNode... path)
     { return getEntriesAtAndUnder_internal(this, path, 0).collect(Collectors.toList()); }
 
+    @Override
+    public Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnder(List<TNode> path)
+    { return getEntriesAtAndUnder_internal(this, path, 0).collect(Collectors.toList()); }
+
     private Stream<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnder_internal(RecursiveTree<TNode, TLeaf> sourceTree, TNode[] path, int index)
     {
         if(path.length == index)
-            return getEntriesWithPathPrefixedAsStream_2(sourceTree, Arrays.asList(path));
+            return getEntriesWithPathPrefixedAsStream(sourceTree, Arrays.asList(path));
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? Stream.empty() : branch.getEntriesAtAndUnder_internal(sourceTree, path, index + 1);
+    }
+
+    private Stream<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnder_internal(RecursiveTree<TNode, TLeaf> sourceTree, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getEntriesWithPathPrefixedAsStream(sourceTree, path);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? Stream.empty() : branch.getEntriesAtAndUnder_internal(sourceTree, path, index + 1);
     }
 
@@ -771,12 +1130,25 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnderInOrder(Comparator<TNode> comparator, TNode... path)
     { return getEntriesAtAndUnderInOrder_internal(this, comparator, path, 0).collect(Collectors.toList()); }
 
+    @Override
+    public List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnderInOrder(Comparator<TNode> comparator, List<TNode> path)
+    { return getEntriesAtAndUnderInOrder_internal(this, comparator, path, 0).collect(Collectors.toList()); }
+
     private Stream<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnderInOrder_internal(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, TNode[] path, int index)
     {
         if(path.length == index)
-            return getEntriesWithPathPrefixedAsStreamInOrder_2(sourceTree, comparator, Arrays.asList(path));
+            return getEntriesWithPathPrefixedAsStreamInOrder(sourceTree, comparator, Arrays.asList(path));
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? Stream.empty() : branch.getEntriesAtAndUnderInOrder_internal(sourceTree, comparator, path, index + 1);
+    }
+
+    private Stream<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnderInOrder_internal(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getEntriesWithPathPrefixedAsStreamInOrder(sourceTree, comparator, path);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? Stream.empty() : branch.getEntriesAtAndUnderInOrder_internal(sourceTree, comparator, path, index + 1);
     }
 
@@ -845,6 +1217,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<Tree.Entry<TNode, TLeaf>> getEntriesUnder(TNode... path)
     { return getEntriesUnder_internal(this, path, 0).collect(Collectors.toList()); }
 
+    @Override
+    public Collection<Tree.Entry<TNode, TLeaf>> getEntriesUnder(List<TNode> path)
+    { return getEntriesUnder_internal(this, path, 0).collect(Collectors.toList()); }
+
     private Stream<Tree.Entry<TNode, TLeaf>> getEntriesUnder_internal(RecursiveTree<TNode, TLeaf> sourceTree, TNode[] path, int index)
     {
         if(path.length == index)
@@ -854,8 +1230,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? Stream.empty() : branch.getEntriesUnder_internal(sourceTree, path, index + 1);
     }
 
+    private Stream<Tree.Entry<TNode, TLeaf>> getEntriesUnder_internal(RecursiveTree<TNode, TLeaf> sourceTree, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getNonRootPathsAndItems().peek(x -> x.prefixWith(path)).map(x -> x.toEntry(sourceTree));
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? Stream.empty() : branch.getEntriesUnder_internal(sourceTree, path, index + 1);
+    }
+
     @Override
     public List<Tree.Entry<TNode, TLeaf>> getEntriesUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return getEntriesUnderInOrder_internal(this, comparator, path, 0).collect(Collectors.toList()); }
+
+    @Override
+    public List<Tree.Entry<TNode, TLeaf>> getEntriesUnderInOrder(Comparator<TNode> comparator, List<TNode> path)
     { return getEntriesUnderInOrder_internal(this, comparator, path, 0).collect(Collectors.toList()); }
 
     private Stream<Tree.Entry<TNode, TLeaf>> getEntriesUnderInOrder_internal(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, TNode[] path, int index)
@@ -867,11 +1256,27 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? Stream.empty() : branch.getEntriesUnderInOrder_internal(sourceTree, comparator, path, index + 1);
     }
 
+    private Stream<Tree.Entry<TNode, TLeaf>> getEntriesUnderInOrder_internal(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getNonRootPathsAndItemsInOrder(comparator).peek(x -> x.prefixWith(path)).map(x -> x.toEntry(sourceTree));
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? Stream.empty() : branch.getEntriesUnderInOrder_internal(sourceTree, comparator, path, index + 1);
+    }
+
     @Override
     public List<Tree.Entry<TNode, TLeaf>> getEntriesAlong(TNode... path)
     { return getPathsAndItemsAlong(path).map(x -> x.toEntry(this)).collect(Collectors.toList()); }
 
+    @Override
+    public List<Tree.Entry<TNode, TLeaf>> getEntriesAlong(List<TNode> path)
+    { return getPathsAndItemsAlong(path).map(x -> x.toEntry(this)).collect(Collectors.toList()); }
+
     private Stream<PathItemPair<TNode, TLeaf>> getPathsAndItemsAlong(TNode[] path)
+    { return getPathsAndItemsAlong(path, 0); }
+
+    private Stream<PathItemPair<TNode, TLeaf>> getPathsAndItemsAlong(List<TNode> path)
     { return getPathsAndItemsAlong(path, 0); }
 
     private Stream<PathItemPair<TNode, TLeaf>> getPathsAndItemsAlong(TNode[] path, int index)
@@ -884,6 +1289,27 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             return result != null ? result : Stream.empty();
 
         TNode node = path[index];
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(node, null);
+
+        if(branch == null)
+            return result != null ? result : Stream.empty();
+
+        Stream<PathItemPair<TNode, TLeaf>> branchResult = branch.getPathsAndItemsAlong(path, index + 1)
+                                                                .peek(x -> x.prefixWith(node));
+
+        return result != null ? Stream.concat(result, branchResult) : branchResult;
+    }
+
+    private Stream<PathItemPair<TNode, TLeaf>> getPathsAndItemsAlong(List<TNode> path, int index)
+    {
+        Stream<PathItemPair<TNode, TLeaf>> result = hasRootItem
+                                                            ? Stream.of(new PathItemPair<>(Stream.empty(), this, rootItem))
+                                                            : null;
+
+        if(index == path.size())
+            return result != null ? result : Stream.empty();
+
+        TNode node = path.get(index);
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(node, null);
 
         if(branch == null)
@@ -908,6 +1334,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
                     .map(x -> x.toEntry(this))
                     .collect(Collectors.toList())
             : new ArrayList<>();
+    }
+
+    @Override
+    public List<Tree.Entry<TNode, TLeaf>> getNonRootEntriesAlong(List<TNode> path)
+    {
+        if(path.size() == 0)
+            return new ArrayList<>();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(0), null);
+        return branch != null
+                       ? branch.getPathsAndItemsAlong(path, 1)
+                               .peek(x -> x.prefixWith(path.get(0)))
+                               .map(x -> x.toEntry(this))
+                               .collect(Collectors.toList())
+                       : new ArrayList<>();
     }
 
     @Override
@@ -964,6 +1405,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnder(TNode... path)
     { return getEntriesImmediatelyUnder_internal(this, path, 0); }
 
+    @Override
+    public Collection<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnder(List<TNode> path)
+    { return getEntriesImmediatelyUnder_internal(this, path, 0); }
+
     private Collection<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnder_internal(RecursiveTree<TNode, TLeaf> sourceTree, TNode[] path, int index)
     {
         if(path.length == index)
@@ -975,19 +1420,44 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? Collections.emptyList() : branch.getEntriesImmediatelyUnder_internal(sourceTree, path, index + 1);
     }
 
+    private Collection<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnder_internal(RecursiveTree<TNode, TLeaf> sourceTree, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getImmediatePathsAndItems().peek(x -> x.prefixWith(path))
+                                              .map(x -> x.toEntry(sourceTree))
+                                              .collect(Collectors.toList());
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? Collections.emptyList() : branch.getEntriesImmediatelyUnder_internal(sourceTree, path, index + 1);
+    }
+
     @Override
     public List<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return getEntriesImmediatelyUnderInOrder_internal(this, comparator, path, 0); }
+
+    @Override
+    public List<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnderInOrder(Comparator<TNode> comparator, List<TNode> path)
     { return getEntriesImmediatelyUnderInOrder_internal(this, comparator, path, 0); }
 
     private List<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnderInOrder_internal(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, TNode[] path, int index)
     {
         if(path.length == index)
-            //return getImmediateEntriesInOrder_internal(sourceTree, comparator, Stream.<TNode>of(path));
             return getImmediatePathsAndItemsInOrder(comparator).peek(x -> x.prefixWith(path))
                                                                .map(x -> x.toEntry(sourceTree))
                                                                .collect(Collectors.toList());
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? Collections.emptyList() : branch.getEntriesImmediatelyUnderInOrder_internal(sourceTree, comparator, path, index + 1);
+    }
+
+    private List<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnderInOrder_internal(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getImmediatePathsAndItemsInOrder(comparator).peek(x -> x.prefixWith(path))
+                                                               .map(x -> x.toEntry(sourceTree))
+                                                               .collect(Collectors.toList());
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? Collections.emptyList() : branch.getEntriesImmediatelyUnderInOrder_internal(sourceTree, comparator, path, index + 1);
     }
 
@@ -1050,6 +1520,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnder(TNode... path)
     { return getEntriesAtAndImmediatelyUnder_internal(this, path, 0); }
 
+    @Override
+    public Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnder(List<TNode> path)
+    { return getEntriesAtAndImmediatelyUnder_internal(this, path, 0); }
+
     private Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnder_internal(RecursiveTree<TNode, TLeaf> sourceTree, TNode[] path, int index)
     {
         if(path.length == index)
@@ -1061,8 +1535,23 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? Collections.emptyList() : branch.getEntriesAtAndImmediatelyUnder_internal(sourceTree, path, index + 1);
     }
 
+    private Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnder_internal(RecursiveTree<TNode, TLeaf> sourceTree, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getRootAndImmediatePathsAndItems().peek(x -> x.prefixWith(path))
+                                                     .map(x -> x.toEntry(sourceTree))
+                                                     .collect(Collectors.toList());
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? Collections.emptyList() : branch.getEntriesAtAndImmediatelyUnder_internal(sourceTree, path, index + 1);
+    }
+
     @Override
     public List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return getEntriesAtAndImmediatelyUnderInOrder_internal(this, comparator, path, 0); }
+
+    @Override
+    public List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, List<TNode> path)
     { return getEntriesAtAndImmediatelyUnderInOrder_internal(this, comparator, path, 0); }
 
     private List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnderInOrder_internal(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, TNode[] path, int index)
@@ -1073,6 +1562,17 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
                                                                       .collect(Collectors.toList());
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? Collections.emptyList() : branch.getEntriesAtAndImmediatelyUnderInOrder_internal(sourceTree, comparator, path, index + 1);
+    }
+
+    private List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnderInOrder_internal(RecursiveTree<TNode, TLeaf> sourceTree, Comparator<TNode> comparator, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getRootAndImmediatePathsAndItemsInOrder(comparator).peek(x -> x.prefixWith(path))
+                                                                      .map(x -> x.toEntry(sourceTree))
+                                                                      .collect(Collectors.toList());
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? Collections.emptyList() : branch.getEntriesAtAndImmediatelyUnderInOrder_internal(sourceTree, comparator, path, index + 1);
     }
 
@@ -1087,12 +1587,25 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public RecursiveTree<TNode, TLeaf> getBranch(TNode... path)
     { return getBranch_internal(path, 0); }
 
+    @Override
+    public RecursiveTree<TNode, TLeaf> getBranch(List<TNode> path)
+    { return getBranch_internal(path, 0); }
+
     private RecursiveTree<TNode, TLeaf> getBranch_internal(TNode[] path, int index)
     {
         if(path.length == index)
             return copy();
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? new RecursiveTree<>() : branch.getBranch_internal(path, index + 1);
+    }
+
+    private RecursiveTree<TNode, TLeaf> getBranch_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return copy();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? new RecursiveTree<>() : branch.getBranch_internal(path, index + 1);
     }
 
@@ -1104,12 +1617,25 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<Tree<TNode, TLeaf>> getBranches(TNode... path)
     { return getBranches_internal(path, 0); }
 
+    @Override
+    public Collection<Tree<TNode, TLeaf>> getBranches(List<TNode> path)
+    { return getBranches_internal(path, 0); }
+
     private Collection<Tree<TNode, TLeaf>> getBranches_internal(TNode[] path, int index)
     {
         if(path.length == index)
             return getBranches();
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? null : branch.getBranches_internal(path, index + 1);
+    }
+
+    private Collection<Tree<TNode, TLeaf>> getBranches_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return getBranches();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? null : branch.getBranches_internal(path, index + 1);
     }
 
@@ -1151,6 +1677,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public ValueWithPresence<TLeaf> setAt(TLeaf newItem, TNode... path)
     { return setAt_internal(newItem, path, 0); }
 
+    @Override
+    public ValueWithPresence<TLeaf> setAt(TLeaf newItem, List<TNode> path)
+    { return setAt_internal(newItem, path, 0); }
+
     private ValueWithPresence<TLeaf> setAt_internal(TLeaf newItem, TNode[] path, int index)
     {
         if(path.length == index)
@@ -1162,6 +1692,22 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         {
             branch = new RecursiveTree<>();
             branches.put(path[index], branch);
+        }
+
+        return branch.setAt_internal(newItem, path, index + 1);
+    }
+
+    private ValueWithPresence<TLeaf> setAt_internal(TLeaf newItem, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return setRootItem(newItem);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+
+        if(branch == null)
+        {
+            branch = new RecursiveTree<>();
+            branches.put(path.get(index), branch);
         }
 
         return branch.setAt_internal(newItem, path, index + 1);
@@ -1185,6 +1731,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public ValueWithPresence<TLeaf> setAtIfAbsent(TLeaf newItem, TNode... path)
     { return setAtIfAbsent_internal(newItem, path, 0); }
 
+    @Override
+    public ValueWithPresence<TLeaf> setAtIfAbsent(TLeaf newItem, List<TNode> path)
+    { return setAtIfAbsent_internal(newItem, path, 0); }
+
     private ValueWithPresence<TLeaf> setAtIfAbsent_internal(TLeaf newItem, TNode[] path, int index)
     {
         if(path.length == index)
@@ -1196,6 +1746,22 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         {
             branch = new RecursiveTree<>();
             branches.put(path[index], branch);
+        }
+
+        return branch.setAtIfAbsent_internal(newItem, path, index + 1);
+    }
+
+    private ValueWithPresence<TLeaf> setAtIfAbsent_internal(TLeaf newItem, List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return setRootItemIfAbsent(newItem);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+
+        if(branch == null)
+        {
+            branch = new RecursiveTree<>();
+            branches.put(path.get(index), branch);
         }
 
         return branch.setAtIfAbsent_internal(newItem, path, index + 1);
@@ -1240,6 +1806,10 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public ValueWithPresence<TLeaf> clearAt(TNode... path)
     { return clearAt_internal(path, 0); }
 
+    @Override
+    public ValueWithPresence<TLeaf> clearAt(List<TNode> path)
+    { return clearAt_internal(path, 0); }
+
     private ValueWithPresence<TLeaf> clearAt_internal(TNode[] path, int index)
     {
         if(path.length == index)
@@ -1249,8 +1819,21 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? new ValueWithPresence<>(false, null) : branch.clearAt_internal(path, index + 1);
     }
 
+    private ValueWithPresence<TLeaf> clearAt_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+            return clearRootItem();
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? new ValueWithPresence<>(false, null) : branch.clearAt_internal(path, index + 1);
+    }
+
     @Override
     public void clearAtAndUnder(TNode... path)
+    { clearAtAndUnder_internal(path, 0); }
+
+    @Override
+    public void clearAtAndUnder(List<TNode> path)
     { clearAtAndUnder_internal(path, 0); }
 
     private void clearAtAndUnder_internal(TNode[] path, int index)
@@ -1273,12 +1856,36 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             branch.clearAtAndUnder_internal(path, index + 1);
     }
 
+    private void clearAtAndUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+        {
+            clear();
+            return;
+        }
+
+        if(path.size() == (index + 1))
+        {
+            branches.remove(path.get(index));
+            return;
+        }
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+
+        if(branch != null)
+            branch.clearAtAndUnder_internal(path, index + 1);
+    }
+
     @Override
     public void clearAtAndUnder(TNode id)
     { branches.remove(id); }
 
     @Override
     public void clearUnder(TNode... path)
+    { clearUnder_internal(path, 0); }
+
+    @Override
+    public void clearUnder(List<TNode> path)
     { clearUnder_internal(path, 0); }
 
     public void clearUnder_internal(TNode[] path, int index)
@@ -1297,6 +1904,28 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         if((path.length == (index + 1)) && (!branch.hasRootItem))
         {
             branches.remove(path[index]);
+            return;
+        }
+
+        branch.clearUnder_internal(path, index + 1);
+    }
+
+    public void clearUnder_internal(List<TNode> path, int index)
+    {
+        if(path.size() == index)
+        {
+            clearNonRootItems();
+            return;
+        }
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+
+        if(branch == null)
+            return;
+
+        if((path.size() == (index + 1)) && (!branch.hasRootItem))
+        {
+            branches.remove(path.get(index));
             return;
         }
 
@@ -1356,96 +1985,4 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     @Override
     public int hashCode()
     { return Objects.hash(rootItem, hasRootItem, branches); }
-}
-
-class RecursiveTreeDefaultHelperMethods
-{
-    /*
-
-    These functions are to allow items in a generic collection to be provided/printed/whatever in a natural order, if
-    a natural order exists, and not in any particular order if it doesn't.
-
-    Type erasure is the major stumbling block here - I can't check if T is comparable because that information isn't
-    retained - I have to check if T implements comparable and the type that's passed into Comparable as a type argument,
-    working on the assumption that all types passing in the same type argument to Comparable are intercomparable.
-
-    In C#, this can be replicated quicker, more easily, and more efficiently, making use of reified generics, with:
-
-        if(typeof(K).IsAssignableFrom(typeof(IComparable<K>)))
-            return dict.Keys.OrderBy(x => (IComparable<K>)x).ToList();
-        else
-            return new List<K>(dict.Keys);
-     */
-
-    public static <K> List<K> getKeysOrdered(Map<K, ?> map)
-    {
-        Map<Type, List<K>> klists = new TreeMap<>(Comparator.comparing(Type::getTypeName, Comparator.nullsLast(Comparator.naturalOrder())));
-
-        for(K k : map.keySet())
-        {
-            Type comparableType = getComparableType(k);
-            List<K> klist = klists.getOrDefault(comparableType, null);
-
-            if(klist == null)
-            {
-                klist = new ArrayList<>();
-                klists.put(comparableType, klist);
-            }
-
-            klist.add(k);
-        }
-
-        List<K> merged = new ArrayList<>();
-
-        for(Map.Entry<Type, List<K>> klistsEntry : klists.entrySet())
-        {
-            List<K> klist = klistsEntry.getValue();
-            Type compType = klistsEntry.getKey();
-
-            if(compType != null) // If true, Members of klist are comparable, and comparable to eachother
-                Collections.sort(klist, Comparator.comparing(x -> (Comparable)x));
-
-            merged.addAll(klist);
-        }
-
-        return merged;
-    }
-
-    public static Type getComparableType(Object o)
-    {
-        Class t = o.getClass();
-        return t.isInterface() ? getComparableTypeFromInterface(t) : getComparableTypeFromClass(t);
-    }
-
-    public static Type getComparableTypeFromClass(Class t)
-    {
-        Type result = getComparableTypeFromInterface(t);
-
-        if(result != null)
-            return result;
-
-        Class parentClass = t.getSuperclass();
-
-        if(parentClass != null)
-            result = getComparableTypeFromClass(parentClass);
-
-        return result;
-    }
-
-    public static Type getComparableTypeFromInterface(Class t)
-    {
-        for(Type ti : t.getGenericInterfaces())
-            if(ti.getTypeName().startsWith("java.lang.Comparable<"))
-                return ((ParameterizedType)ti).getActualTypeArguments()[0];
-
-        for(Class tiface : t.getInterfaces())
-        {
-            Type result = getComparableTypeFromInterface(tiface);
-
-            if(result != null)
-                return result;
-        }
-
-        return null;
-    }
 }

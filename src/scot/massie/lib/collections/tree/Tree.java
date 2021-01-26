@@ -62,6 +62,13 @@ public interface Tree<TNode, TLeaf>
             this.item = item;
         }
 
+        public Entry(Tree<TNode, TLeaf> sourceTree, List<TNode> path, TLeaf item)
+        {
+            this.sourceTree = sourceTree;
+            this.path = new TreePath<>(path);
+            this.item = item;
+        }
+
         public Entry(Tree<TNode, TLeaf> sourceTree, TreePath<TNode> path, TLeaf item)
         {
             this.sourceTree = sourceTree;
@@ -243,6 +250,16 @@ public interface Tree<TNode, TLeaf>
      * @return True if this tree contains any items at or under the given path.
      */
     default boolean hasItemsAtOrUnder(TNode... path)
+    { return this.hasItemsUnder(Arrays.asList(path)); }
+
+    /**
+     * Checks whether or not this tree has any items at or under the given path. That is, with paths starting with the
+     * given path.
+     *
+     * @param path A list of items used to traverse the tree.
+     * @return True if this tree contains any items at or under the given path.
+     */
+    default boolean hasItemsAtOrUnder(List<TNode> path)
     { return this.hasItemAt(path) || this.hasItemsUnder(path); }
 
     /**
@@ -251,28 +268,61 @@ public interface Tree<TNode, TLeaf>
      * @param path An ordered array of items used to traverse the tree.
      * @return True if this tree contains any items under, but not at, the given path. Otherwise, false.
      */
-    boolean hasItemsUnder(TNode... path);
+    default boolean hasItemsUnder(TNode... path)
+    { return this.hasItemsUnder(Arrays.asList(path)); }
+
+    /**
+     * Checks whether or not this tree has any items under, but not necessarily at, the given path. That is, with paths starting
+     * with the given path, but not equal to the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return True if this tree contains any items under, but not at, the given path. Otherwise, false.
+     */
+    boolean hasItemsUnder(List<TNode> path);
 
     /**
      * Checks whether or not this tree has any items at any nodes along the provided path, including the root.
      * @param path An ordered array of items used to traverse the tree.
      * @return True if this tree contains any items along the given path. Otherwise, false.
      */
-    boolean hasItemsAlong(TNode... path);
+    default boolean hasItemsAlong(TNode... path)
+    { return this.hasItemsAlong(Arrays.asList(path)); }
+
+    /**
+     * Checks whether or not this tree has any items at any nodes along the provided path, including the root.
+     * @param path A list of items used to traverse the tree.
+     * @return True if this tree contains any items along the given path. Otherwise, false.
+     */
+    boolean hasItemsAlong(List<TNode> path);
 
     /**
      * Checks whether or not this tree has any items at any nodes along the provided path, not including the root.
      * @param path An ordered array of items used to traverse the tree.
      * @return True if this tree contains any items along the given path, ignoring the root. Otherwise, false.
      */
-    boolean hasNonRootItemsAlong(TNode... path);
+    default boolean hasNonRootItemsAlong(TNode... path)
+    { return this.hasNonRootItemsAlong(Arrays.asList(path)); }
+
+    /**
+     * Checks whether or not this tree has any items at any nodes along the provided path, not including the root.
+     * @param path A list of items used to traverse the tree.
+     * @return True if this tree contains any items along the given path, ignoring the root. Otherwise, false.
+     */
+    boolean hasNonRootItemsAlong(List<TNode> path);
 
     /**
      * Checks whether or not an item exists at the given path.
      * @param path An ordered array of items used to traverse the tree.
      * @return True if an item exists at the given path, otherwise false.
      */
-    boolean hasItemAt(TNode... path);
+    default boolean hasItemAt(TNode... path)
+    { return this.hasItemAt(Arrays.asList(path)); }
+
+    /**
+     * Checks whether or not an item exists at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return True if an item exists at the given path, otherwise false.
+     */
+    boolean hasItemAt(List<TNode> path);
 
     /**
      * Checks whether or not this tree has an item at the base level.
@@ -302,6 +352,15 @@ public interface Tree<TNode, TLeaf>
      * @return True if there are no items in this tree at or under the given path. Otherwise, false.
      */
     default boolean isEmptyAtAndUnder(TNode... path)
+    { return isEmptyAtAndUnder(Arrays.asList(path)); }
+
+    /**
+     * Checks whether or not this tree is empty at and under the given path. That is, at paths matching and starting
+     * with the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return True if there are no items in this tree at or under the given path. Otherwise, false.
+     */
+    default boolean isEmptyAtAndUnder(List<TNode> path)
     { return !this.hasItemsAtOrUnder(path); }
 
     /**
@@ -312,12 +371,28 @@ public interface Tree<TNode, TLeaf>
      * path itself.. Otherwise, false.
      */
     default boolean isEmptyUnder(TNode... path)
+    { return this.isEmptyUnder(Arrays.asList(path)); }
+
+    /**
+     * Checks whether or not this tree is empty under the given path, ignoring the item if present at the given path.
+     * That is, at paths starting with the given paths, but not matching the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return True if there are no items in this tree under the given path, ignoring any possible items at the given
+     * path itself.. Otherwise, false.
+     */
+    default boolean isEmptyUnder(List<TNode> path)
     { return !this.hasItemsUnder(path); }
 
     default boolean isEmptyAlong(TNode... path)
+    { return this.isEmptyAlong(Arrays.asList(path)); }
+
+    default boolean isEmptyAlong(List<TNode> path)
     { return !hasItemsAlong(path); }
 
     default boolean isEmptyAlongAfterRoot(TNode... path)
+    { return this.isEmptyAlongAfterRoot(Arrays.asList(path)); }
+
+    default boolean isEmptyAlongAfterRoot(List<TNode> path)
     { return !hasNonRootItemsAlong(path); }
 
     /**
@@ -326,6 +401,14 @@ public interface Tree<TNode, TLeaf>
      * @return True if there is no item at the given path. Otherwise, false.
      */
     default boolean isEmptyAt(TNode... path)
+    { return this.isEmptyAt(Arrays.asList(path)); }
+
+    /**
+     * Checks whether or not there is no item at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return True if there is no item at the given path. Otherwise, false.
+     */
+    default boolean isEmptyAt(List<TNode> path)
     { return !hasItemAt(path); }
 
     /**
@@ -409,6 +492,16 @@ public interface Tree<TNode, TLeaf>
      * @throws NoItemAtPathException If no item exists at the given path.
      */
     default TLeaf getAt(TNode... path) throws NoItemAtPathException
+    { return this.getAt(Arrays.asList(path)); }
+
+    /**
+     * Gets the item at the given path.
+     *
+     * @param path A list of items used to traverse the tree.
+     * @return The item at the given path.
+     * @throws NoItemAtPathException If no item exists at the given path.
+     */
+    default TLeaf getAt(List<TNode> path) throws NoItemAtPathException
     {
         ValueWithPresence<TLeaf> getterResult = this.getAtSafely(path);
 
@@ -423,16 +516,34 @@ public interface Tree<TNode, TLeaf>
      * @param path An ordered array of items used to traverse the tree.
      * @return The item at the given path, paired with whether or not an item existed at the given path.
      */
-    ValueWithPresence<TLeaf> getAtSafely(TNode... path);
+    default ValueWithPresence<TLeaf> getAtSafely(TNode... path)
+    { return getAtSafely(Arrays.asList(path)); }
+
+    /**
+     * Gets the item at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return The item at the given path, paired with whether or not an item existed at the given path.
+     */
+    ValueWithPresence<TLeaf> getAtSafely(List<TNode> path);
 
     /**
      * Gets the item at the given path, or the provided default value if no item exists at the given path.
      *
      * @param defaultItem The item to return if no item exists at the given path.
-     * @param path        An ordered array of items used to traverse the tree.
+     * @param path An ordered array of items used to traverse the tree.
      * @return The item at the given path, or defaultValue if no such item exists.
      */
     default TLeaf getAtOrDefault(TLeaf defaultItem, TNode... path)
+    { return this.getAtOrDefault(defaultItem, Arrays.asList(path)); }
+
+    /**
+     * Gets the item at the given path, or the provided default value if no item exists at the given path.
+     *
+     * @param defaultItem The item to return if no item exists at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return The item at the given path, or defaultValue if no such item exists.
+     */
+    default TLeaf getAtOrDefault(TLeaf defaultItem, List<TNode> path)
     {
         ValueWithPresence<TLeaf> getterResult = this.getAtSafely(path);
         return getterResult.valueWasPresent() ? getterResult.getValue() : defaultItem;
@@ -442,10 +553,20 @@ public interface Tree<TNode, TLeaf>
      * Gets the item at the given path, or the provided default value if no item exists at the given path.
      *
      * @param defaultItem The item to return if no item exists at the given path.
-     * @param path        An ordered array of items used to traverse the tree.
+     * @param path An ordered array of items used to traverse the tree.
      * @return The item at the given path, or defaultValue if no such item exists.
      */
     default Object getAtOrDefaultAnyType(Object defaultItem, TNode... path)
+    { return this.getAtOrDefaultAnyType(defaultItem, Arrays.asList(path)); }
+
+    /**
+     * Gets the item at the given path, or the provided default value if no item exists at the given path.
+     *
+     * @param defaultItem The item to return if no item exists at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return The item at the given path, or defaultValue if no such item exists.
+     */
+    default Object getAtOrDefaultAnyType(Object defaultItem, List<TNode> path)
     {
         ValueWithPresence<TLeaf> getterResult = this.getAtSafely(path);
         return getterResult.valueWasPresent() ? getterResult.getValue() : defaultItem;
@@ -459,6 +580,16 @@ public interface Tree<TNode, TLeaf>
      * at the given path *is* null.
      */
     default TLeaf getAtOrNull(TNode... path)
+    { return this.getAtOrNull(Arrays.asList(path)); }
+
+    /**
+     * Gets the item at the given path, or null if no item exists at the given path.
+     *
+     * @param path A list of items used to traverse the tree.
+     * @return The item at the given path, or null if no such item exists. Note that this may return null if the value
+     * at the given path *is* null.
+     */
+    default TLeaf getAtOrNull(List<TNode> path)
     {
         ValueWithPresence<TLeaf> getterResult = this.getAtSafely(path);
         return getterResult.valueWasPresent() ? getterResult.getValue() : null;
@@ -504,7 +635,16 @@ public interface Tree<TNode, TLeaf>
      * @return A collection of items in this tree at or under the given path. That is, items at paths starting with the
      * given path. Where there are no items at or under the given path, returns an empty collection.
      */
-    Collection<TLeaf> getItemsAtAndUnder(TNode... path);
+    default Collection<TLeaf> getItemsAtAndUnder(TNode... path)
+    { return this.getItemsAtAndUnder(Arrays.asList(path)); }
+
+    /**
+     * Gets all items in this tree at and under a given path. That is, items at paths starting with the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A collection of items in this tree at or under the given path. That is, items at paths starting with the
+     * given path. Where there are no items at or under the given path, returns an empty collection.
+     */
+    Collection<TLeaf> getItemsAtAndUnder(List<TNode> path);
 
     /**
      * Gets all items in this tree under a given path ordered hierarchically by each branch's key.
@@ -513,7 +653,17 @@ public interface Tree<TNode, TLeaf>
      * @return A list of items in this tree at or under the given path, in order of keysas determined by the provided
      * comparator
      */
-    List<TLeaf> getItemsAtAndUnderInOrder(Comparator<TNode> comparator, TNode... path);
+    default List<TLeaf> getItemsAtAndUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return this.getItemsAtAndUnderInOrder(comparator, Arrays.asList(path)); }
+
+    /**
+     * Gets all items in this tree under a given path ordered hierarchically by each branch's key.
+     * @param comparator The comparator to use in ordering keys.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of items in this tree at or under the given path, in order of keysas determined by the provided
+     * comparator
+     */
+    List<TLeaf> getItemsAtAndUnderInOrder(Comparator<TNode> comparator, List<TNode> path);
 
     /**
      * Gets all items in this tree other than the root item.
@@ -538,7 +688,17 @@ public interface Tree<TNode, TLeaf>
      * @return A collection of items in this tree under the given path, but not at the given path. That is, items at
      * paths starting with the given path, but not matching the given path.
      */
-    Collection<TLeaf> getItemsUnder(TNode... path);
+    default Collection<TLeaf> getItemsUnder(TNode... path)
+    { return this.getItemsUnder(Arrays.asList(path)); }
+
+    /**
+     * Gets all items in this tree under a given path, with the exception of any possible items at the given path. That
+     * is, items at paths starting with the given path, but not matching the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A collection of items in this tree under the given path, but not at the given path. That is, items at
+     * paths starting with the given path, but not matching the given path.
+     */
+    Collection<TLeaf> getItemsUnder(List<TNode> path);
 
     /**
      * Gets all items in this tree under a given path in order as determined by a comparator, with the exception of any
@@ -550,7 +710,20 @@ public interface Tree<TNode, TLeaf>
      * determined by the provided comparator. That is, items at the paths starting with the given path, but not matching
      * the given path.
      */
-    List<TLeaf> getItemsUnderInOrder(Comparator<TNode> comparator, TNode... path);
+    default List<TLeaf> getItemsUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return this.getItemsUnderInOrder(comparator, Arrays.asList(path)); }
+
+    /**
+     * Gets all items in this tree under a given path in order as determined by a comparator, with the exception of any
+     * possible items at the given path. That it, items at paths starting with the given path, but not matching the
+     * given path.
+     * @param comparator The comparator to use in ordering keys.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of items in this tree under the given path, but not at the given path, in order of keys as
+     * determined by the provided comparator. That is, items at the paths starting with the given path, but not matching
+     * the given path.
+     */
+    List<TLeaf> getItemsUnderInOrder(Comparator<TNode> comparator, List<TNode> path);
 
     /**
      * Gets items in this tree along the provided path. That is, where the provided path starts with the item's path.
@@ -559,7 +732,17 @@ public interface Tree<TNode, TLeaf>
      * provided path starts with the item's path. The list is ordered, from items shallowest in the tree's hierarchy to
      * deepest.
      */
-    List<TLeaf> getItemsAlong(TNode... path);
+    default List<TLeaf> getItemsAlong(TNode... path)
+    { return this.getItemsAlong(Arrays.asList(path)); }
+
+    /**
+     * Gets items in this tree along the provided path. That is, where the provided path starts with the item's path.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of items in this tree along the given path, including any possible root item. That is, where the
+     * provided path starts with the item's path. The list is ordered, from items shallowest in the tree's hierarchy to
+     * deepest.
+     */
+    List<TLeaf> getItemsAlong(List<TNode> path);
 
     /**
      * Gets items in this tree along the provided path, not including root. That is, where the provided path starts with
@@ -569,7 +752,18 @@ public interface Tree<TNode, TLeaf>
      * provided path starts with the item's path. The list is ordered, from items shallowest in the tree's hierarchy to
      * deepest.
      */
-    List<TLeaf> getNonRootItemsAlong(TNode... path);
+    default List<TLeaf> getNonRootItemsAlong(TNode... path)
+    { return getNonRootItemsAlong(Arrays.asList(path)); }
+
+    /**
+     * Gets items in this tree along the provided path, not including root. That is, where the provided path starts with
+     * the item's path.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of items in this tree along the given path, excluding any possible root item. That is, where the
+     * provided path starts with the item's path. The list is ordered, from items shallowest in the tree's hierarchy to
+     * deepest.
+     */
+    List<TLeaf> getNonRootItemsAlong(List<TNode> path);
 
     /**
      * Gets the items at levels immediately under the root level.
@@ -589,10 +783,20 @@ public interface Tree<TNode, TLeaf>
 
     /**
      * Gets the items immediately under the given path, but not at the given path.
+     * @param path An ordered array of items used to traverse the tree.
      * @return A collection of all the items at the given path plus one element. That is, all the items immediately
      * under the given path, but not at.
      */
-    Collection<TLeaf> getItemsImmediatelyUnder(TNode... path);
+    default Collection<TLeaf> getItemsImmediatelyUnder(TNode... path)
+    { return getItemsImmediatelyUnder(Arrays.asList(path)); }
+
+    /**
+     * Gets the items immediately under the given path, but not at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A collection of all the items at the given path plus one element. That is, all the items immediately
+     * under the given path, but not at.
+     */
+    Collection<TLeaf> getItemsImmediatelyUnder(List<TNode> path);
 
     /**
      * Gets the items immediately under the given path, but not at the given path, ordered by their keys.
@@ -601,7 +805,17 @@ public interface Tree<TNode, TLeaf>
      * @return A list of all the items at the given path plus one element, in order of keys as determined by the
      * provided comparator. That is, all the items under the given path, but not at.
      */
-    List<TLeaf> getItemsImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path);
+    default List<TLeaf> getItemsImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return this.getItemsImmediatelyUnderInOrder(comparator, Arrays.asList(path)); }
+
+    /**
+     * Gets the items immediately under the given path, but not at the given path, ordered by their keys.
+     * @param comparator The comparator to use in ordering keys.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of all the items at the given path plus one element, in order of keys as determined by the
+     * provided comparator. That is, all the items under the given path, but not at.
+     */
+    List<TLeaf> getItemsImmediatelyUnderInOrder(Comparator<TNode> comparator, List<TNode> path);
 
     /**
      * Gets the items at the root level or immediately under it.
@@ -624,7 +838,15 @@ public interface Tree<TNode, TLeaf>
      * @param path An ordered array of items used to traverse the tree.
      * @return A collection of items in this tree with the given path or the given path with one additional element.
      */
-    Collection<TLeaf> getItemsAtAndImmediatelyUnder(TNode... path);
+    default Collection<TLeaf> getItemsAtAndImmediatelyUnder(TNode... path)
+    { return this.getItemsAtAndImmediatelyUnder(Arrays.asList(path)); }
+
+    /**
+     * Gets the items at and immediately under the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A collection of items in this tree with the given path or the given path with one additional element.
+     */
+    Collection<TLeaf> getItemsAtAndImmediatelyUnder(List<TNode> path);
 
     /**
      * Gets the items at and immediately under the given path in order of keys.
@@ -633,7 +855,17 @@ public interface Tree<TNode, TLeaf>
      * @return A list of items in this tree with the given path or the given path with one additional element, in order
      * of keys as determined by the provided comparator.
      */
-    List<TLeaf> getItemsAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path);
+    default List<TLeaf> getItemsAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return this.getItemsAtAndImmediatelyUnderInOrder(comparator, Arrays.asList(path)); }
+
+    /**
+     * Gets the items at and immediately under the given path in order of keys.
+     * @param comparator The comparator to use in ordering keys.
+     * @param path An ordered array of items used to traverse the tree.
+     * @return A list of items in this tree with the given path or the given path with one additional element, in order
+     * of keys as determined by the provided comparator.
+     */
+    List<TLeaf> getItemsAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, List<TNode> path);
     //endregion
 
     //region get multiple entries
@@ -658,7 +890,16 @@ public interface Tree<TNode, TLeaf>
      * @return A collection of entries in this tree at or under the given path. That is, entries of items at paths
      * starting with the given path. Where there are no items at or under the given path, returns an empty collection.
      */
-    Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnder(TNode... path);
+    default Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnder(TNode... path)
+    { return this.getEntriesAtAndUnder(Arrays.asList(path)); }
+
+    /**
+     * Gets all entries in this tree at and under a given path. That is, items at paths starting with the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A collection of entries in this tree at or under the given path. That is, entries of items at paths
+     * starting with the given path. Where there are no items at or under the given path, returns an empty collection.
+     */
+    Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnder(List<TNode> path);
 
     /**
      * Gets all entries in this tree under a given path ordered hierarchically by each branch's key.
@@ -667,7 +908,17 @@ public interface Tree<TNode, TLeaf>
      * @return A list of entries in this tree at or under the given path, in order of keys as determined by the provided
      * comparator
      */
-    List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnderInOrder(Comparator<TNode> comparator, TNode... path);
+    default List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return this.getEntriesAtAndUnderInOrder(comparator, Arrays.asList(path)); }
+
+    /**
+     * Gets all entries in this tree under a given path ordered hierarchically by each branch's key.
+     * @param comparator The comparator to use in ordering keys.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of entries in this tree at or under the given path, in order of keys as determined by the provided
+     * comparator
+     */
+    List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndUnderInOrder(Comparator<TNode> comparator, List<TNode> path);
 
     /**
      * Gets all entries in this tree other than the root entry.
@@ -692,7 +943,17 @@ public interface Tree<TNode, TLeaf>
      * @return A collection of entries in this tree under the given path, but not at the given path. That is, entries of
      * items at paths starting with the given path, but not matching the given path.
      */
-    Collection<Tree.Entry<TNode, TLeaf>> getEntriesUnder(TNode... path);
+    default Collection<Tree.Entry<TNode, TLeaf>> getEntriesUnder(TNode... path)
+    { return this.getEntriesUnder(Arrays.asList(path)); }
+
+    /**
+     * Gets all entries in this tree under a given path, with the exception of the entries of any possible items at the
+     * given path. That is, entries of items at paths starting with the given path, but not matching the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A collection of entries in this tree under the given path, but not at the given path. That is, entries of
+     * items at paths starting with the given path, but not matching the given path.
+     */
+    Collection<Tree.Entry<TNode, TLeaf>> getEntriesUnder(List<TNode> path);
 
     /**
      * Gets all entries in this tree under a given path in order as determined by a comparator, with the exception of
@@ -704,7 +965,20 @@ public interface Tree<TNode, TLeaf>
      * determined by the provided comparator. That is, entries of items at the paths starting with the given path, but
      * not matching the given path.
      */
-    List<Tree.Entry<TNode, TLeaf>> getEntriesUnderInOrder(Comparator<TNode> comparator, TNode... path);
+    default List<Tree.Entry<TNode, TLeaf>> getEntriesUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return this.getEntriesUnderInOrder(comparator, Arrays.asList(path)); }
+
+    /**
+     * Gets all entries in this tree under a given path in order as determined by a comparator, with the exception of
+     * the entries of any possible items at the given path. That it, entries at paths starting with the given path, but
+     * not matching the given path.
+     * @param comparator The comparator to use in ordering keys.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of entries in this tree under the given path, but not at the given path, in order of keys as
+     * determined by the provided comparator. That is, entries of items at the paths starting with the given path, but
+     * not matching the given path.
+     */
+    List<Tree.Entry<TNode, TLeaf>> getEntriesUnderInOrder(Comparator<TNode> comparator, List<TNode> path);
 
     /**
      * Gets entries of items in this tree along the provided path. That is, where the provided path starts with the
@@ -714,7 +988,18 @@ public interface Tree<TNode, TLeaf>
      * the provided path starts with the item's path. The list is ordered, from items shallowest in the tree's hierarchy
      * to deepest.
      */
-    List<Tree.Entry<TNode, TLeaf>> getEntriesAlong(TNode... path);
+    default List<Tree.Entry<TNode, TLeaf>> getEntriesAlong(TNode... path)
+    { return this.getEntriesAlong(Arrays.asList(path)); }
+
+    /**
+     * Gets entries of items in this tree along the provided path. That is, where the provided path starts with the
+     * item's path.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of entries in this tree along the given path, including any possible root entry. That is, where
+     * the provided path starts with the item's path. The list is ordered, from items shallowest in the tree's hierarchy
+     * to deepest.
+     */
+    List<Tree.Entry<TNode, TLeaf>> getEntriesAlong(List<TNode> path);
 
     /**
      * Gets entries of items in this tree along the provided path, not including root. That is, where the provided path
@@ -724,7 +1009,18 @@ public interface Tree<TNode, TLeaf>
      * the provided path starts with the item's path. The list is ordered, from items shallowest in the tree's hierarchy
      * to deepest.
      */
-    List<Tree.Entry<TNode, TLeaf>> getNonRootEntriesAlong(TNode... path);
+    default List<Tree.Entry<TNode, TLeaf>> getNonRootEntriesAlong(TNode... path)
+    { return this.getNonRootEntriesAlong(Arrays.asList(path)); }
+
+    /**
+     * Gets entries of items in this tree along the provided path, not including root. That is, where the provided path
+     * starts with the item's path.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of entries in this tree along the given path, excluding any possible root entry. That is, where
+     * the provided path starts with the item's path. The list is ordered, from items shallowest in the tree's hierarchy
+     * to deepest.
+     */
+    List<Tree.Entry<TNode, TLeaf>> getNonRootEntriesAlong(List<TNode> path);
 
     /**
      * Gets the entries at levels immediately under the root level.
@@ -744,10 +1040,20 @@ public interface Tree<TNode, TLeaf>
 
     /**
      * Gets the entries immediately under the given path, but not at the given path.
+     * @param path An ordered array of items used to traverse the tree.
      * @return A collection of all the entries at the given path plus one element. That is, entries of all the items
      * immediately under the given path, but not at.
      */
-    Collection<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnder(TNode... path);
+    default Collection<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnder(TNode... path)
+    { return this.getEntriesImmediatelyUnder(Arrays.asList(path)); }
+
+    /**
+     * Gets the entries immediately under the given path, but not at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A collection of all the entries at the given path plus one element. That is, entries of all the items
+     * immediately under the given path, but not at.
+     */
+    Collection<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnder(List<TNode> path);
 
     /**
      * Gets the entries immediately under the given path, but not at the given path, ordered by their keys.
@@ -756,7 +1062,17 @@ public interface Tree<TNode, TLeaf>
      * @return A list of all the entries at the given path plus one element, in order of keys as determined by the
      * provided comparator. That is, entries of all the items under the given path, but not at.
      */
-    List<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path);
+    default List<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return this.getEntriesImmediatelyUnderInOrder(comparator, Arrays.asList(path)); }
+
+    /**
+     * Gets the entries immediately under the given path, but not at the given path, ordered by their keys.
+     * @param comparator The comparator to use in ordering keys.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of all the entries at the given path plus one element, in order of keys as determined by the
+     * provided comparator. That is, entries of all the items under the given path, but not at.
+     */
+    List<Tree.Entry<TNode, TLeaf>> getEntriesImmediatelyUnderInOrder(Comparator<TNode> comparator, List<TNode> path);
 
     /**
      * Gets the entries at the root level or immediately under it.
@@ -779,7 +1095,15 @@ public interface Tree<TNode, TLeaf>
      * @param path An ordered array of items used to traverse the tree.
      * @return A collection of entries in this tree with the given path or the given path with one additional element.
      */
-    Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnder(TNode... path);
+    default Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnder(TNode... path)
+    { return this.getEntriesAtAndImmediatelyUnder(Arrays.asList(path)); }
+
+    /**
+     * Gets the entries at and immediately under the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A collection of entries in this tree with the given path or the given path with one additional element.
+     */
+    Collection<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnder(List<TNode> path);
 
     /**
      * Gets the entries at and immediately under the given path in order of keys.
@@ -788,7 +1112,17 @@ public interface Tree<TNode, TLeaf>
      * @return A list of entries in this tree with the given path or the given path with one additional element, in
      * order of keys as determined by the provided comparator.
      */
-    List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path);
+    default List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, TNode... path)
+    { return getEntriesAtAndImmediatelyUnderInOrder(comparator, Arrays.asList(path)); }
+
+    /**
+     * Gets the entries at and immediately under the given path in order of keys.
+     * @param comparator The comparator to use in ordering keys.
+     * @param path A list of items used to traverse the tree.
+     * @return A list of entries in this tree with the given path or the given path with one additional element, in
+     * order of keys as determined by the provided comparator.
+     */
+    List<Tree.Entry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnderInOrder(Comparator<TNode> comparator, List<TNode> path);
     //endregion
 
     //region get branches
@@ -806,7 +1140,16 @@ public interface Tree<TNode, TLeaf>
      * @return A copy of the branch at the given path as a tree. An empty tree if this tree has no such branch.
      * @apiNote Changes made to the returned branch will not be reflected in this tree.
      */
-    Tree<TNode, TLeaf> getBranch(TNode... path);
+    default Tree<TNode, TLeaf> getBranch(TNode... path)
+    { return this.getBranch(Arrays.asList(path)); }
+
+    /**
+     * Gets a branch of this tree at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A copy of the branch at the given path as a tree. An empty tree if this tree has no such branch.
+     * @apiNote Changes made to the returned branch will not be reflected in this tree.
+     */
+    Tree<TNode, TLeaf> getBranch(List<TNode> path);
 
     /**
      * Gets the immediate branches of this tree.
@@ -821,7 +1164,16 @@ public interface Tree<TNode, TLeaf>
      * @return A collection of copies of the immediate branches of the given path of this tree.
      * @apiNote Changes made to the returned branches will not be reflected in this tree.
      */
-    Collection<Tree<TNode, TLeaf>> getBranches(TNode... path);
+    default Collection<Tree<TNode, TLeaf>> getBranches(TNode... path)
+    { return this.getBranches(Arrays.asList(path)); }
+
+    /**
+     * Gets the branches of this tree immediately under the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return A collection of copies of the immediate branches of the given path of this tree.
+     * @apiNote Changes made to the returned branches will not be reflected in this tree.
+     */
+    Collection<Tree<TNode, TLeaf>> getBranches(List<TNode> path);
 
     /**
      * Gets the branches of this tree immediately under the given path, in a map with each branch's initial path element
@@ -865,7 +1217,17 @@ public interface Tree<TNode, TLeaf>
      * @return The previous item at the given path in the tree, paired with whether or not there was an overwritten item
      * at the specified path in the tree.
      */
-    ValueWithPresence<TLeaf> setAt(TLeaf newItem, TNode... path);
+    default ValueWithPresence<TLeaf> setAt(TLeaf newItem, TNode... path)
+    { return this.setAt(newItem, Arrays.asList(path)); }
+
+    /**
+     * Sets the item in this tree at the given path, overwriting it if present.
+     * @param newItem The item to be set to be at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return The previous item at the given path in the tree, paired with whether or not there was an overwritten item
+     * at the specified path in the tree.
+     */
+    ValueWithPresence<TLeaf> setAt(TLeaf newItem, List<TNode> path);
 
     /**
      * Sets the item in this tree at the given path, overwriting it if present.
@@ -883,7 +1245,17 @@ public interface Tree<TNode, TLeaf>
      * @return The item at the given path in the tree, paired with whether or not an item was already present at the
      * given path.
      */
-    ValueWithPresence<TLeaf> setAtIfAbsent(TLeaf newItem, TNode... path);
+    default ValueWithPresence<TLeaf> setAtIfAbsent(TLeaf newItem, TNode... path)
+    { return this.setAtIfAbsent(newItem, Arrays.asList(path)); }
+
+    /**
+     * Sets the item in this tree at the given path, unless an item already exists.
+     * @param newItem The item to be set to be at the given path.
+     * @param path A list of items used to traverse the tree.
+     * @return The item at the given path in the tree, paired with whether or not an item was already present at the
+     * given path.
+     */
+    ValueWithPresence<TLeaf> setAtIfAbsent(TLeaf newItem, List<TNode> path);
 
     /**
      * Sets the item in this tree at the given path, unless an item already exists.
@@ -919,13 +1291,28 @@ public interface Tree<TNode, TLeaf>
      * @param path An ordered array of items used to traverse the tree.
      * @return The item at the given path in the tree, paired with whether or not an item was present at the given path.
      */
-    ValueWithPresence<TLeaf> clearAt(TNode... path);
+    default ValueWithPresence<TLeaf> clearAt(TNode... path)
+    { return this.clearAt(Arrays.asList(path)); }
+
+    /**
+     * Removes the item at the given path in the tree.
+     * @param path A list of items used to traverse the tree.
+     * @return The item at the given path in the tree, paired with whether or not an item was present at the given path.
+     */
+    ValueWithPresence<TLeaf> clearAt(List<TNode> path);
 
     /**
      * Removes all items at or under the given path.
      * @param path An ordered array of items used to traverse the tree.
      */
-    void clearAtAndUnder(TNode... path);
+    default void clearAtAndUnder(TNode... path)
+    { this.clearAtAndUnder(Arrays.asList(path)); }
+
+    /**
+     * Removes all items at or under the given path.
+     * @param path A list of items used to traverse the tree.
+     */
+    void clearAtAndUnder(List<TNode> path);
 
     /**
      * Removes all items at or under the given path.
@@ -937,7 +1324,14 @@ public interface Tree<TNode, TLeaf>
      * Removes all items under, but not at, the given path.
      * @param path An ordered array of items used to traverse the tree.
      */
-    void clearUnder(TNode... path);
+    default void clearUnder(TNode... path)
+    { this.clearUnder(Arrays.asList(path)); }
+
+    /**
+     * Removes all items under, but not at, the given path.
+     * @param path A list of items used to traverse the tree.
+     */
+    void clearUnder(List<TNode> path);
 
     /**
      * Removes all items under, but not at, the given path.
