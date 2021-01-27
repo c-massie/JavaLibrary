@@ -3,6 +3,7 @@ package scot.massie.lib.collections.tree;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.lang.reflect.Type;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,6 +33,12 @@ public interface Tree<TNode, TLeaf>
 
         public T getValue()
         { return value; }
+
+        public ValueWithPresence<T> andThen(BiConsumer<Boolean, T> thingToDo)
+        {
+            thingToDo.accept(valueWasPresent, value);
+            return this;
+        }
 
         @Override
         public int hashCode()
