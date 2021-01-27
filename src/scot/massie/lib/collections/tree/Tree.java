@@ -4,6 +4,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.lang.reflect.Type;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,11 +35,14 @@ public interface Tree<TNode, TLeaf>
         public T getValue()
         { return value; }
 
-        public ValueWithPresence<T> andThen(BiConsumer<Boolean, T> thingToDo)
+        public ValueWithPresence<T> then(BiConsumer<Boolean, T> thingToDo)
         {
             thingToDo.accept(valueWasPresent, value);
             return this;
         }
+
+        public boolean matches(BiFunction<Boolean, T, Boolean> test)
+        { return test.apply(valueWasPresent, value); }
 
         @Override
         public int hashCode()
