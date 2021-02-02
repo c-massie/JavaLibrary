@@ -1,10 +1,12 @@
 package scot.massie.lib.collections.tree;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.lang.reflect.Type;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1688,11 +1690,17 @@ public interface Tree<TNode, TLeaf>
 
     /**
      * Removes the root item from the tree.
-     *
      * @return The root item, paired with whether or not there was a root item.
      */
     default ValueWithPresence<TLeaf> clearRootItem()
     { return this.clearAt(); }
+
+    /**
+     * Removes the root item from the tree if it meets the given condition.
+     * @return The root item, paired with whether or not there was a root item.
+     */
+    default ValueWithPresence<TLeaf> clearRootItemIf(Predicate<TLeaf> test)
+    { return this.clearAtIf(new ArrayList<>(), test); }
 
     /**
      * Removes the item at the given path in the tree.
@@ -1716,6 +1724,43 @@ public interface Tree<TNode, TLeaf>
      */
     default ValueWithPresence<TLeaf> clearAt(TreePath<TNode> path)
     { return this.clearAt(path.getNodes()); }
+
+    /**
+     * Removes the item at the given path in the tree, if the required condition is met.
+     * @param path An ordered array of items used to traverse the tree.
+     * @param valueTest Condition that determines whether or not to remove the item at the given path in the tree.
+     * @return The item at the given path in the tree, paired with whether or not an item was present at the given path.
+     */
+    default ValueWithPresence<TLeaf> clearAtIf(TNode[] path, Predicate<TLeaf> valueTest)
+    { return clearAtIf(Arrays.asList(path), valueTest); }
+
+    /**
+     * Removes the item at the given path in the tree, if the required condition is met.
+     * @param path A list of items used to traverse the tree.
+     * @param valueTest Condition that determines whether or not to remove the item at the given path in the tree.
+     * @return The item at the given path in the tree, paired with whether or not an item was present at the given path.
+     */
+    default ValueWithPresence<TLeaf> clearAtIf(List<TNode> path, Predicate<TLeaf> valueTest)
+    {
+        ValueWithPresence<TLeaf> item = getAtSafely(path);
+
+        if(!item.valueWasPresent)
+            return new ValueWithPresence<>(false, null);
+
+        if(!valueTest.test(item.value))
+            return item;
+
+        return clearAt(path);
+    }
+
+    /**
+     * Removes the item at the given path in the tree, if the required condition is met.
+     * @param path A tree path for traversing the tree.
+     * @param valueTest Condition that determines whether or not to remove the item at the given path in the tree.
+     * @return The item at the given path in the tree, paired with whether or not an item was present at the given path.
+     */
+    default ValueWithPresence<TLeaf> clearAtIf(TreePath<TNode> path, Predicate<TLeaf> valueTest)
+    { return clearAtIf(path.getNodes(), valueTest); }
 
     /**
      * Removes all items at or under the given path.

@@ -3,6 +3,7 @@ package scot.massie.lib.collections.tree;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1803,6 +1804,20 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     }
 
     @Override
+    public ValueWithPresence<TLeaf> clearRootItemIf(Predicate<TLeaf> test)
+    {
+        ValueWithPresence<TLeaf> r = new ValueWithPresence<>(hasRootItem, rootItem);
+
+        if(hasRootItem && test.test(rootItem))
+        {
+            hasRootItem = false;
+            rootItem = null;
+        }
+
+        return r;
+    }
+
+    @Override
     public ValueWithPresence<TLeaf> clearAt(TNode... path)
     { return clearAt_internal(path, 0); }
 
@@ -1826,6 +1841,32 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 
         RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
         return branch == null ? new ValueWithPresence<>(false, null) : branch.clearAt_internal(path, index + 1);
+    }
+
+    @Override
+    public ValueWithPresence<TLeaf> clearAtIf(TNode[] path, Predicate<TLeaf> test)
+    { return clearAtIf_internal(path, test, 0); }
+
+    @Override
+    public ValueWithPresence<TLeaf> clearAtIf(List<TNode> path, Predicate<TLeaf> test)
+    { return clearAtIf_internal(path, test, 0); }
+
+    private ValueWithPresence<TLeaf> clearAtIf_internal(TNode[] path, Predicate<TLeaf> test, int index)
+    {
+        if(path.length == index)
+            return clearRootItemIf(test);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+        return branch == null ? new ValueWithPresence<>(false, null) : branch.clearAtIf_internal(path, test, index + 1);
+    }
+
+    private ValueWithPresence<TLeaf> clearAtIf_internal(List<TNode> path, Predicate<TLeaf> test, int index)
+    {
+        if(path.size() == index)
+            return clearRootItemIf(test);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+        return branch == null ? new ValueWithPresence<>(false, null) : branch.clearAtIf_internal(path, test, index + 1);
     }
 
     @Override
