@@ -3,6 +3,7 @@ package scot.massie.lib.collections.tree;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1661,6 +1662,20 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     }
 
     @Override
+    public ValueWithPresence<TLeaf> setRootItemIf(TLeaf newItem, BiPredicate<TLeaf, Boolean> test)
+    {
+        ValueWithPresence<TLeaf> r = new ValueWithPresence<>(hasRootItem, rootItem);
+
+        if(test.test(rootItem, hasRootItem))
+        {
+            rootItem = newItem;
+            hasRootItem = true;
+        }
+
+        return r;
+    }
+
+    @Override
     public ValueWithPresence<TLeaf> setRootItemIfAbsent(TLeaf newItem)
     {
         ValueWithPresence<TLeaf> r = new ValueWithPresence<>(hasRootItem, rootItem);
@@ -1726,6 +1741,78 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         }
 
         return branch.setRootItem(newItem);
+    }
+
+    @Override
+    public ValueWithPresence<TLeaf> setAtIf(TLeaf newItem, TNode[] path, BiPredicate<TLeaf, Boolean> test)
+    { return setAtIf_internal(newItem, path, test, 0); }
+
+    @Override
+    public ValueWithPresence<TLeaf> setAtIf(TLeaf newItem, List<TNode> path, BiPredicate<TLeaf, Boolean> test)
+    { return setAtIf_internal(newItem, path, test, 0); }
+
+    public ValueWithPresence<TLeaf> setAtIf_internal(TLeaf newItem, TNode[] path, BiPredicate<TLeaf, Boolean> test, int index)
+    {
+        if(path.length == index)
+            return setRootItemIf(newItem, test);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path[index], null);
+
+        if(branch == null)
+        {
+            if(test.test(null, false))
+            {
+                branch = new RecursiveTree<>();
+                branches.put(path[index], branch);
+                branch.setAt_internal(newItem, path, index + 1);
+            }
+
+            return new ValueWithPresence<>(false, null);
+        }
+
+        return branch.setAtIf_internal(newItem, path, test, index + 1);
+    }
+
+    public ValueWithPresence<TLeaf> setAtIf_internal(TLeaf newItem, List<TNode> path, BiPredicate<TLeaf, Boolean> test, int index)
+    {
+        if(path.size() == index)
+            return setRootItemIf(newItem, test);
+
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(path.get(index), null);
+
+        if(branch == null)
+        {
+            if(test.test(null, false))
+            {
+                branch = new RecursiveTree<>();
+                branches.put(path.get(index), branch);
+                branch.setAt_internal(newItem, path, index + 1);
+            }
+
+            return new ValueWithPresence<>(false, null);
+        }
+
+        return branch.setAtIf_internal(newItem, path, test, index + 1);
+    }
+
+    @Override
+    public ValueWithPresence<TLeaf> setAtIf(TLeaf newItem, TNode id, BiPredicate<TLeaf, Boolean> test)
+    {
+        RecursiveTree<TNode, TLeaf> branch = branches.getOrDefault(id, null);
+
+        if(branch == null)
+        {
+            if(test.test(null, false))
+            {
+                branch = new RecursiveTree<>();
+                branches.put(id, branch);
+                branch.setRootItem(newItem);
+            }
+
+            return new ValueWithPresence<>(false, null);
+        }
+
+        return branch.setRootItemIf(newItem, test);
     }
 
     @Override
@@ -1804,11 +1891,11 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     }
 
     @Override
-    public ValueWithPresence<TLeaf> clearRootItemIf(Predicate<TLeaf> test)
+    public ValueWithPresence<TLeaf> clearRootItemIf(BiPredicate<TLeaf, Boolean> test)
     {
         ValueWithPresence<TLeaf> r = new ValueWithPresence<>(hasRootItem, rootItem);
 
-        if(hasRootItem && test.test(rootItem))
+        if(hasRootItem && test.test(rootItem, hasRootItem))
         {
             hasRootItem = false;
             rootItem = null;
@@ -1844,14 +1931,14 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     }
 
     @Override
-    public ValueWithPresence<TLeaf> clearAtIf(TNode[] path, Predicate<TLeaf> test)
+    public ValueWithPresence<TLeaf> clearAtIf(TNode[] path, BiPredicate<TLeaf, Boolean> test)
     { return clearAtIf_internal(path, test, 0); }
 
     @Override
-    public ValueWithPresence<TLeaf> clearAtIf(List<TNode> path, Predicate<TLeaf> test)
+    public ValueWithPresence<TLeaf> clearAtIf(List<TNode> path, BiPredicate<TLeaf, Boolean> test)
     { return clearAtIf_internal(path, test, 0); }
 
-    private ValueWithPresence<TLeaf> clearAtIf_internal(TNode[] path, Predicate<TLeaf> test, int index)
+    private ValueWithPresence<TLeaf> clearAtIf_internal(TNode[] path, BiPredicate<TLeaf, Boolean> test, int index)
     {
         if(path.length == index)
             return clearRootItemIf(test);
@@ -1860,7 +1947,7 @@ public final class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         return branch == null ? new ValueWithPresence<>(false, null) : branch.clearAtIf_internal(path, test, index + 1);
     }
 
-    private ValueWithPresence<TLeaf> clearAtIf_internal(List<TNode> path, Predicate<TLeaf> test, int index)
+    private ValueWithPresence<TLeaf> clearAtIf_internal(List<TNode> path, BiPredicate<TLeaf, Boolean> test, int index)
     {
         if(path.size() == index)
             return clearRootItemIf(test);

@@ -1,11 +1,14 @@
 package scot.massie.lib.collections.tree;
 
+import org.assertj.core.util.Lists;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.lang.reflect.Type;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1591,6 +1594,9 @@ public interface Tree<TNode, TLeaf>
     default ValueWithPresence<TLeaf> setRootItem(TLeaf newItem)
     { return this.setAt(newItem); }
 
+    default ValueWithPresence<TLeaf> setRootItemIf(TLeaf newItem, BiPredicate<TLeaf, Boolean> test)
+    { return setAtIf(newItem, Lists.emptyList(), test); }
+
     /**
      * Sets the item in this tree at the root level, unless an item already exists.
      *
@@ -1637,6 +1643,56 @@ public interface Tree<TNode, TLeaf>
      * at the specified path in the tree.
      */
     ValueWithPresence<TLeaf> setAt(TLeaf newItem, TNode id);
+
+    /**
+     *
+     * @param newItem Sets the item in this tree at the given path, overwriting it if present, if the given test returns
+     *                true.
+     * @param path An ordered array of items used to traverse the tree.
+     * @param test Condition that determines whether or not to set the item at the given path in the tree. Passes in the
+     *             item already there, and a boolean representing whether there was an item already there.
+     * @return The previous item at the given path in the tree, paired with whether or not there was an overwritten item
+     *         at the specified path in the tree.
+     */
+    default ValueWithPresence<TLeaf> setAtIf(TLeaf newItem, TNode[] path, BiPredicate<TLeaf, Boolean> test)
+    { return this.setAtIf(newItem, Arrays.asList(path), test); }
+
+    /**
+     *
+     * @param newItem Sets the item in this tree at the given path, overwriting it if present, if the given test returns
+     *                true.
+     * @param path A list of items used to traverse the tree.
+     * @param test Condition that determines whether or not to set the item at the given path in the tree. Passes in the
+     *             item already there, and a boolean representing whether there was an item already there.
+     * @return The previous item at the given path in the tree, paired with whether or not there was an overwritten item
+     *         at the specified path in the tree.
+     */
+    ValueWithPresence<TLeaf> setAtIf(TLeaf newItem, List<TNode> path, BiPredicate<TLeaf, Boolean> test);
+
+    /**
+     *
+     * @param newItem Sets the item in this tree at the given path, overwriting it if present, if the given test returns
+     *                true.
+     * @param path A tree path for traversing the tree.
+     * @param test Condition that determines whether or not to set the item at the given path in the tree. Passes in the
+     *             item already there, and a boolean representing whether there was an item already there.
+     * @return The previous item at the given path in the tree, paired with whether or not there was an overwritten item
+     *         at the specified path in the tree.
+     */
+    default ValueWithPresence<TLeaf> setAtIf(TLeaf newItem, TreePath<TNode> path, BiPredicate<TLeaf, Boolean> test)
+    { return this.setAtIf(newItem, path.getNodes(), test); }
+
+    /**
+     *
+     * @param newItem Sets the item in this tree at the given path, overwriting it if present, if the given test returns
+     *                true.
+     * @param id The single-element path to set a value at.
+     * @param test Condition that determines whether or not to set the item at the given path in the tree. Passes in the
+     *             item already there, and a boolean representing whether there was an item already there.
+     * @return The previous item at the given path in the tree, paired with whether or not there was an overwritten item
+     *         at the specified path in the tree.
+     */
+    ValueWithPresence<TLeaf> setAtIf(TLeaf newItem, TNode id, BiPredicate<TLeaf, Boolean> test);
 
     /**
      * Sets the item in this tree at the given path, unless an item already exists.
@@ -1697,9 +1753,10 @@ public interface Tree<TNode, TLeaf>
 
     /**
      * Removes the root item from the tree if it meets the given condition.
+     * @param test Condition that determines whether or not to remove the item at the given path in the tree.
      * @return The root item, paired with whether or not there was a root item.
      */
-    default ValueWithPresence<TLeaf> clearRootItemIf(Predicate<TLeaf> test)
+    default ValueWithPresence<TLeaf> clearRootItemIf(BiPredicate<TLeaf, Boolean> test)
     { return this.clearAtIf(new ArrayList<>(), test); }
 
     /**
@@ -1731,7 +1788,7 @@ public interface Tree<TNode, TLeaf>
      * @param valueTest Condition that determines whether or not to remove the item at the given path in the tree.
      * @return The item at the given path in the tree, paired with whether or not an item was present at the given path.
      */
-    default ValueWithPresence<TLeaf> clearAtIf(TNode[] path, Predicate<TLeaf> valueTest)
+    default ValueWithPresence<TLeaf> clearAtIf(TNode[] path, BiPredicate<TLeaf, Boolean> valueTest)
     { return clearAtIf(Arrays.asList(path), valueTest); }
 
     /**
@@ -1740,14 +1797,14 @@ public interface Tree<TNode, TLeaf>
      * @param valueTest Condition that determines whether or not to remove the item at the given path in the tree.
      * @return The item at the given path in the tree, paired with whether or not an item was present at the given path.
      */
-    default ValueWithPresence<TLeaf> clearAtIf(List<TNode> path, Predicate<TLeaf> valueTest)
+    default ValueWithPresence<TLeaf> clearAtIf(List<TNode> path, BiPredicate<TLeaf, Boolean> valueTest)
     {
         ValueWithPresence<TLeaf> item = getAtSafely(path);
 
         if(!item.valueWasPresent)
             return new ValueWithPresence<>(false, null);
 
-        if(!valueTest.test(item.value))
+        if(!valueTest.test(item.value, item.valueWasPresent))
             return item;
 
         return clearAt(path);
@@ -1759,7 +1816,7 @@ public interface Tree<TNode, TLeaf>
      * @param valueTest Condition that determines whether or not to remove the item at the given path in the tree.
      * @return The item at the given path in the tree, paired with whether or not an item was present at the given path.
      */
-    default ValueWithPresence<TLeaf> clearAtIf(TreePath<TNode> path, Predicate<TLeaf> valueTest)
+    default ValueWithPresence<TLeaf> clearAtIf(TreePath<TNode> path, BiPredicate<TLeaf, Boolean> valueTest)
     { return clearAtIf(path.getNodes(), valueTest); }
 
     /**
