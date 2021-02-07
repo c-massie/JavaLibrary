@@ -2,6 +2,7 @@ package scot.massie.lib.events;
 
 import scot.massie.lib.events.args.EventArgs;
 
+import java.util.Collection;
 import java.util.function.Function;
 
 /**
@@ -59,4 +60,10 @@ public interface Event<TArgs extends EventArgs>
      * Removes all listeners to this event.
      */
     void clearListeners();
+
+    /**
+     * Gets the listeners registered to this event.
+     * @return A collections of the listeners registered to this event.
+     */
+    Collection<EventListener<TArgs>> getListeners();
 }
