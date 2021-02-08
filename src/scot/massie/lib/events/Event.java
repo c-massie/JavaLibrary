@@ -1,8 +1,10 @@
 package scot.massie.lib.events;
 
 import scot.massie.lib.events.args.EventArgs;
+import scot.massie.lib.events.convenience.EventListenerCallInfo;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -66,4 +68,14 @@ public interface Event<TArgs extends EventArgs>
      * @return A collections of the listeners registered to this event.
      */
     Collection<EventListener<TArgs>> getListeners();
+
+    /**
+     * Generates the information required to call all listeners of this event and all dependent events appropriately as
+     * the result of the event being raised, as represented by the provided EventArgs object.
+     * @param args The EventArgs representing this specific event invocation.
+     * @return A list of objects pairing each event listener with the information required to call it
+     * appropriately for this event invocation. The returned list should be mutable and not used elsewhere.githu
+     *
+     */
+    List<EventListenerCallInfo<?>> generateCallInfo(TArgs args);
 }
