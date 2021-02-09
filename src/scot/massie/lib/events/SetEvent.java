@@ -27,85 +27,114 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
     protected final Set<EventListener<TArgs>> listeners = new HashSet<>();
     protected final Map<Event<?>, EventWithArgsConverter<TArgs, ?>> dependentEvents = new HashMap<>();
 
+    // Synchronised on the listeners set, even where working with dependentEvents
+
     @Override
     public void invoke(TArgs eventArgs)
     {
-        if(listenerOrderMatters())
-        {
-            generateCallInfoAsStream(eventArgs).sorted(Events.listenerCallInfoComparator)
-                                               .forEachOrdered(EventListenerCallInfo::callListener);
-        }
-        else
-        {
-            for(EventListener<TArgs> listener : listeners)
-                listener.onEvent(eventArgs);
+        boolean listenerOrderMatters = false;
 
-            for(EventWithArgsConverter<TArgs, ?> ewac : dependentEvents.values())
-                ewac.invokeEvent(eventArgs);
+        synchronized(listeners)
+        {
+            for(Event<?> e : dependentEvents.keySet())
+                if(e.listenerOrderMatters())
+                    listenerOrderMatters = true;
+
+            if(listenerOrderMatters)
+            {
+                generateCallInfoAsStream_unthreadsafe(eventArgs).sorted(Events.listenerCallInfoComparator)
+                                                                .forEachOrdered(EventListenerCallInfo::callListener);
+            }
+            else
+            {
+                for(EventListener<TArgs> listener : listeners)
+                    listener.onEvent(eventArgs);
+
+                for(EventWithArgsConverter<TArgs, ?> ewac : dependentEvents.values())
+                    ewac.invokeEvent(eventArgs);
+            }
         }
     }
 
     @Override
     public void register(EventListener<TArgs> listener)
-    { listeners.add(listener); }
+    { synchronized(listeners) { listeners.add(listener); } }
 
     @Override
     public void register(Event<TArgs> dependentEvent)
-    { dependentEvents.put(dependentEvent, new EventWithArgsConverter<>(dependentEvent, Function.identity())); }
+    {
+        synchronized(listeners)
+        { dependentEvents.put(dependentEvent, new EventWithArgsConverter<>(dependentEvent, Function.identity())); }
+    }
 
     @Override
     public <TDependentArgs extends EventArgs> void register(Event<TDependentArgs> dependentEvent, Function<TArgs, TDependentArgs> argWrapper)
-    { dependentEvents.put(dependentEvent, new EventWithArgsConverter<>(dependentEvent, argWrapper)); }
+    {
+        synchronized(listeners)
+        { dependentEvents.put(dependentEvent, new EventWithArgsConverter<>(dependentEvent, argWrapper)); }
+    }
 
     @Override
     public void deregister(EventListener<TArgs> listener)
-    { listeners.remove(listener); }
+    { synchronized(listeners) { listeners.remove(listener); } }
 
     @Override
     public void deregister(Event<?> event)
-    { dependentEvents.remove(event); }
+    { synchronized(listeners) { dependentEvents.remove(event); } }
 
     @Override
     public void clearListeners()
-    { listeners.clear(); }
+    { synchronized(listeners) { listeners.clear(); } }
 
     @Override
     public void clearDependentEvents()
-    { dependentEvents.clear(); }
+    { synchronized(listeners) { dependentEvents.clear(); } }
 
     @Override
     public void clear()
     {
-        listeners.clear();
-        dependentEvents.clear();
+        synchronized(listeners)
+        {
+            listeners.clear();
+            dependentEvents.clear();
+        }
     }
 
     @Override
     public boolean listenerOrderMatters()
     {
-        for(Event<?> e : dependentEvents.keySet())
-            if(e.listenerOrderMatters())
-                return true;
+        synchronized(listeners)
+        {
+            for(Event<?> e : dependentEvents.keySet())
+                if(e.listenerOrderMatters())
+                    return true;
 
-        return false;
+            return false;
+        }
     }
 
     @Override
     public Collection<EventListener<TArgs>> getListeners()
-    { return new HashSet<>(listeners); }
+    { synchronized(listeners) { return new HashSet<>(listeners); } }
 
     @Override
     public Collection<Event<?>> getDependentEvents()
-    { return dependentEvents.values().stream().map(EventWithArgsConverter::getEvent).collect(Collectors.toList()); }
+    {
+        synchronized(listeners)
+        { return dependentEvents.values().stream().map(EventWithArgsConverter::getEvent).collect(Collectors.toList()); }
+    }
 
     @Override
     public List<EventListenerCallInfo<?>> generateCallInfo(TArgs args)
-    { return generateCallInfoAsStream(args).collect(Collectors.toList()); }
+    { synchronized(listeners) { return generateCallInfoAsStream(args).collect(Collectors.toList()); } }
 
-    @Override
-    public Stream<EventListenerCallInfo<?>> generateCallInfoAsStream(TArgs args)
+    private Stream<EventListenerCallInfo<?>> generateCallInfoAsStream_unthreadsafe(TArgs args)
     {
         return Stream.concat(listeners.stream().map(x -> new EventListenerCallInfo<>(x, args)),
                              dependentEvents.values().stream().flatMap(x -> x.generateCallInfoAsStream(args)));
     }
+
+    @Override
+    public Stream<EventListenerCallInfo<?>> generateCallInfoAsStream(TArgs args)
+    { synchronized(listeners) { return generateCallInfoAsStream_unthreadsafe(args); } }
 }

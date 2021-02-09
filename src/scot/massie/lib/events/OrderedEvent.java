@@ -12,6 +12,12 @@ import java.util.stream.Stream;
 
 public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArgs>
 {
+    /**
+     * Creates a new OrderedEvent with no listeners or dependent events.
+     */
+    public OrderedEvent()
+    {}
+
     protected final Set<EventListener<TArgs>> listenersWithoutPriority = new HashSet<>();
     protected final List<EventListenerPriorityPair<TArgs>> listenersWithPriority = new ArrayList<>();
     protected final Map<Event<?>, EventWithArgsConverter<TArgs, ?>> dependentEvents = new HashMap<>();
