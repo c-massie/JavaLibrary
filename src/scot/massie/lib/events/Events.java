@@ -16,7 +16,7 @@ public class Events
     private Events()
     {}
 
-    private static final Comparator<EventListenerCallInfo<?>> listenerCallInfoComparator = (a, b) ->
+    public static final Comparator<EventListenerCallInfo<?>> listenerCallInfoComparator = (a, b) ->
     {
         if(!a.hasPriority())
             return b.hasPriority() ? -1 : 0;
@@ -36,7 +36,7 @@ public class Events
      * @param <TArgs> The type of the EventArgs object passed to listeners of this event.
      */
     @SuppressWarnings("unchecked")
-    public <TArgs extends EventArgs> void invokeEvent(Event<TArgs> event, TArgs args)
+    public static <TArgs extends EventArgs> void invokeEvent(Event<TArgs> event, TArgs args)
     {
         List<EventListenerCallInfo<?>> listenersWithCallInfo = event.generateCallInfo(args);
         listenersWithCallInfo.sort(listenerCallInfoComparator);
@@ -58,7 +58,7 @@ public class Events
      *                      listeners of the corresponding event.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public void invokeEvents(Collection<EventAndArgsPair<?>> eventsAndArgs)
+    public static void invokeEvents(Collection<EventAndArgsPair<?>> eventsAndArgs)
     {
         List<EventListenerCallInfo<?>> listenersWithCallInfo = new ArrayList<>();
 
@@ -87,7 +87,7 @@ public class Events
      *                      the corresponding event.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public void invokeEvents(EventAndArgsPair<?>... eventsAndArgs)
+    public static void invokeEvents(EventAndArgsPair<?>... eventsAndArgs)
     {
         List<EventListenerCallInfo<?>> listenersWithCallInfo = new ArrayList<>();
 
