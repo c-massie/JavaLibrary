@@ -63,15 +63,19 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
     @Override
     public void register(Event<TArgs> dependentEvent)
     {
+        EventWithArgsConverter<TArgs, TArgs> ewac = new EventWithArgsConverter<>(dependentEvent, Function.identity());
+
         synchronized(listeners)
-        { dependentEvents.put(dependentEvent, new EventWithArgsConverter<>(dependentEvent, Function.identity())); }
+        { dependentEvents.put(dependentEvent, ewac); }
     }
 
     @Override
     public <TDependentArgs extends EventArgs> void register(Event<TDependentArgs> dependentEvent, Function<TArgs, TDependentArgs> argWrapper)
     {
+        EventWithArgsConverter<TArgs, TDependentArgs> ewac = new EventWithArgsConverter<>(dependentEvent, argWrapper);
+
         synchronized(listeners)
-        { dependentEvents.put(dependentEvent, new EventWithArgsConverter<>(dependentEvent, argWrapper)); }
+        { dependentEvents.put(dependentEvent, ewac); }
     }
 
     @Override
@@ -108,9 +112,9 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
             for(Event<?> e : dependentEvents.keySet())
                 if(e.listenerOrderMatters())
                     return true;
-
-            return false;
         }
+
+        return false;
     }
 
     @Override
@@ -126,7 +130,7 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
 
     @Override
     public List<EventListenerCallInfo<?>> generateCallInfo(TArgs args)
-    { synchronized(listeners) { return generateCallInfoAsStream(args).collect(Collectors.toList()); } }
+    { return generateCallInfoAsStream(args).collect(Collectors.toList()); }
 
     private Stream<EventListenerCallInfo<?>> generateCallInfoAsStream_unthreadsafe(TArgs args)
     {
