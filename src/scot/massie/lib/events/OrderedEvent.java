@@ -28,6 +28,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
     public void invoke(TArgs eventArgs)
     {
         boolean listenerOrderMatters = false;
+        Stream<EventListenerCallInfo<?>> listenerStream;
 
         synchronized(listenersWithoutPriority)
         {
@@ -38,33 +39,16 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
                     if(e.listenerOrderMatters())
                         listenerOrderMatters = true;
 
-            if(listenerOrderMatters)
-            {
-                if(dependentEvents.isEmpty())
-                {
-                    for(EventListener<TArgs> listener : listenersWithoutPriority)
-                        listener.onEvent(eventArgs);
-
-                    for(EventListenerPriorityPair<TArgs> elpp : listenersWithPriority)
-                        elpp.getListener().onEvent(eventArgs);
-
-                    return;
-                }
-
-                generateCallInfoAsStream_unthreadsafe(eventArgs).sorted(Events.listenerCallInfoComparator)
-                                                                .forEachOrdered(EventListenerCallInfo::callListener);
-            }
-            else
-            {
-                for(EventListener<TArgs> listener : listenersWithoutPriority)
-                    listener.onEvent(eventArgs);
-
-                // If listener order doesn't matter, there are no listeners with priority.
-
-                for(EventWithArgsConverter<TArgs, ?> ewac : dependentEvents.values())
-                    ewac.invokeEvent(eventArgs);
-            }
+            listenerStream = generateCallInfoAsStream_unthreadsafe(eventArgs);
         }
+
+        if(listenerOrderMatters)
+        {
+            listenerStream.sorted(Events.listenerCallInfoComparator)
+                          .forEachOrdered(EventListenerCallInfo::callListener);
+        }
+        else
+            listenerStream.forEach(EventListenerCallInfo::callListener);
     }
 
     @Override

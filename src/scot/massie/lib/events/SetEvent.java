@@ -33,6 +33,7 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
     public void invoke(TArgs eventArgs)
     {
         boolean listenerOrderMatters = false;
+        Stream<EventListenerCallInfo<?>> listenerStream;
 
         synchronized(listeners)
         {
@@ -40,20 +41,14 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
                 if(e.listenerOrderMatters())
                     listenerOrderMatters = true;
 
-            if(listenerOrderMatters)
-            {
-                generateCallInfoAsStream_unthreadsafe(eventArgs).sorted(Events.listenerCallInfoComparator)
-                                                                .forEachOrdered(EventListenerCallInfo::callListener);
-            }
-            else
-            {
-                for(EventListener<TArgs> listener : listeners)
-                    listener.onEvent(eventArgs);
-
-                for(EventWithArgsConverter<TArgs, ?> ewac : dependentEvents.values())
-                    ewac.invokeEvent(eventArgs);
-            }
+            listenerStream = generateCallInfoAsStream_unthreadsafe(eventArgs);
         }
+
+        if(listenerOrderMatters)
+            listenerStream.sorted(Events.listenerCallInfoComparator)
+                          .forEachOrdered(EventListenerCallInfo::callListener);
+        else
+            listenerStream.forEach(EventListenerCallInfo::callListener);
     }
 
     @Override
