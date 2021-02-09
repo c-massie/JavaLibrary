@@ -64,6 +64,13 @@ public interface Event<TArgs extends EventArgs>
     void clearListeners();
 
     /**
+     * Gets whether or not listeners to this event are called in any particular order. e.g. if it supports event
+     * listener priority.
+     * @return True if listener call order matters. Otherwise, false.
+     */
+    boolean listenerOrderMatters();
+
+    /**
      * Gets the listeners registered to this event.
      * @return A collections of the listeners registered to this event.
      */
