@@ -8,12 +8,18 @@ import scot.massie.lib.events.args.EventArgs;
  *
  * Exists because of Java's lack of support for named tuples.
  */
-public final class EventListenerPriorityPair<TArgs extends EventArgs>
+public final class EventListenerPriorityPair<TArgs extends EventArgs> implements Comparable<EventListenerPriorityPair<TArgs>>
 {
     public EventListenerPriorityPair(EventListener<TArgs> listener, double priority)
     {
         this.listener = listener;
         this.priority = priority;
+    }
+
+    public EventListenerPriorityPair(EventListener<TArgs> listener)
+    {
+        this.listener = listener;
+        this.priority = Double.NEGATIVE_INFINITY;
     }
 
     private final EventListener<TArgs> listener;
@@ -24,4 +30,11 @@ public final class EventListenerPriorityPair<TArgs extends EventArgs>
 
     public double getPriority()
     { return priority; }
+
+    public EventListenerCallInfo<TArgs> toCallInfo(TArgs args)
+    { return new EventListenerCallInfo<>(listener, priority, args); }
+
+    @Override
+    public int compareTo(EventListenerPriorityPair<TArgs> o)
+    { return Double.compare(this.priority, o.priority); }
 }
