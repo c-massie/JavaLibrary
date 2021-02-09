@@ -70,6 +70,17 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
     { listeners.clear(); }
 
     @Override
+    public void clearDependentEvents()
+    { dependentEvents.clear(); }
+
+    @Override
+    public void clear()
+    {
+        listeners.clear();
+        dependentEvents.clear();
+    }
+
+    @Override
     public boolean listenerOrderMatters()
     {
         for(Event<?> e : dependentEvents.keySet())
@@ -82,6 +93,10 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
     @Override
     public Collection<EventListener<TArgs>> getListeners()
     { return new HashSet<>(listeners); }
+
+    @Override
+    public Collection<Event<?>> getDependentEvents()
+    { return dependentEvents.values().stream().map(EventWithArgsConverter::getEvent).collect(Collectors.toList()); }
 
     @Override
     public List<EventListenerCallInfo<?>> generateCallInfo(TArgs args)

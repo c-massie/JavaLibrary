@@ -65,6 +65,16 @@ public interface Event<TArgs extends EventArgs>
     void clearListeners();
 
     /**
+     * Removes all dependent events from this event.
+     */
+    void clearDependentEvents();
+
+    /**
+     * Removes all listeners to this event and all dependent events from this event.
+     */
+    void clear();
+
+    /**
      * Gets whether or not listeners to this event are called in any particular order. e.g. if it supports event
      * listener priority.
      * @return True if listener call order matters. Otherwise, false.
@@ -76,6 +86,12 @@ public interface Event<TArgs extends EventArgs>
      * @return A collections of the listeners registered to this event.
      */
     Collection<EventListener<TArgs>> getListeners();
+
+    /**
+     * Gets the events dependent on this one.
+     * @return A collection of all the events that will be invoked when this event is invoked.
+     */
+    Collection<Event<?>> getDependentEvents();
 
     /**
      * Generates the information required to call all listeners of this event and all dependent events appropriately as
