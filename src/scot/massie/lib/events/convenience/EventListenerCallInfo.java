@@ -42,4 +42,7 @@ public final class EventListenerCallInfo<TArgs extends EventArgs>
 
     public TArgs getArgs()
     { return args; }
+
+    public void callListener()
+    { listener.onEvent(args); }
 }

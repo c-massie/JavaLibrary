@@ -5,6 +5,7 @@ import scot.massie.lib.events.convenience.EventAndArgsPair;
 import scot.massie.lib.events.convenience.EventListenerCallInfo;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -35,17 +36,11 @@ public class Events
      * @param args The EventArgs object to pass to listeners of this event.
      * @param <TArgs> The type of the EventArgs object passed to listeners of this event.
      */
-    @SuppressWarnings("unchecked")
     public static <TArgs extends EventArgs> void invokeEvent(Event<TArgs> event, TArgs args)
     {
-        List<EventListenerCallInfo<?>> listenersWithCallInfo = event.generateCallInfo(args);
-        listenersWithCallInfo.sort(listenerCallInfoComparator);
-
-        for(EventListenerCallInfo<?> i : listenersWithCallInfo)
-        {
-            // i.getListener().onEvent(...) is guaranteed to accept the same type as is returned by i.getArgs()
-            ((EventListener<EventArgs>)i.getListener()).onEvent(i.getArgs());
-        }
+        event.generateCallInfoAsStream(args)
+             .sorted(Events.listenerCallInfoComparator)
+             .forEachOrdered(EventListenerCallInfo::callListener);
     }
 
     /**
@@ -57,24 +52,12 @@ public class Events
      * @param eventsAndArgs A collection of events to invoke, paired with the event args objects to pass to the
      *                      listeners of the corresponding event.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public static void invokeEvents(Collection<EventAndArgsPair<?>> eventsAndArgs)
     {
-        List<EventListenerCallInfo<?>> listenersWithCallInfo = new ArrayList<>();
-
-        for(EventAndArgsPair<?> eaap : eventsAndArgs)
-        {
-            // eaap.getEvent().generateCallInfo is guaranteed to accept the same type as is returned by eaap.getArgs()
-            listenersWithCallInfo.addAll(((Event)eaap.getEvent()).generateCallInfo(eaap.getArgs()));
-        }
-
-        listenersWithCallInfo.sort(listenerCallInfoComparator);
-
-        for(EventListenerCallInfo<?> i : listenersWithCallInfo)
-        {
-            // i.getListener().onEvent(...) is guaranteed to accept the same type as is returned by i.getArgs()
-            ((EventListener<EventArgs>)i.getListener()).onEvent(i.getArgs());
-        }
+        eventsAndArgs.stream()
+                     .flatMap(EventAndArgsPair::generateCallInfoAsStream)
+                     .sorted(listenerCallInfoComparator)
+                     .forEachOrdered(EventListenerCallInfo::callListener);
     }
 
     /**
@@ -86,23 +69,11 @@ public class Events
      * @param eventsAndArgs An array of events to invoke, paired with the event args objects to pass to the listeners of
      *                      the corresponding event.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public static void invokeEvents(EventAndArgsPair<?>... eventsAndArgs)
     {
-        List<EventListenerCallInfo<?>> listenersWithCallInfo = new ArrayList<>();
-
-        for(EventAndArgsPair<?> eaap : eventsAndArgs)
-        {
-            // eaap.getEvent().generateCallInfo is guaranteed to accept the same type as is returned by eaap.getArgs()
-            listenersWithCallInfo.addAll(((Event)eaap.getEvent()).generateCallInfo(eaap.getArgs()));
-        }
-
-        listenersWithCallInfo.sort(listenerCallInfoComparator);
-
-        for(EventListenerCallInfo<?> i : listenersWithCallInfo)
-        {
-            // i.getListener().onEvent(...) is guaranteed to accept the same type as is returned by i.getArgs()
-            ((EventListener<EventArgs>)i.getListener()).onEvent(i.getArgs());
-        }
+        Stream.of(eventsAndArgs)
+              .flatMap(EventAndArgsPair::generateCallInfoAsStream)
+              .sorted(listenerCallInfoComparator)
+              .forEachOrdered(EventListenerCallInfo::callListener);
     }
 }

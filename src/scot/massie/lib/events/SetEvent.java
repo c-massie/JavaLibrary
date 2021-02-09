@@ -4,6 +4,7 @@ import scot.massie.lib.events.args.EventArgs;
 import scot.massie.lib.events.convenience.EventListenerCallInfo;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,15 +32,8 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
     {
         if(listenerOrderMatters())
         {
-            Iterator<EventListenerCallInfo<?>> listenerIterator = generateCallInfoAsStream(eventArgs)
-                                                                          .sorted(Events.listenerCallInfoComparator)
-                                                                          .iterator();
-
-            while(listenerIterator.hasNext())
-            {
-                EventListenerCallInfo<?> i = listenerIterator.next();
-                ((EventListener)i.getListener()).onEvent(i.getArgs());
-            }
+            generateCallInfoAsStream(eventArgs).sorted(Events.listenerCallInfoComparator)
+                                               .forEachOrdered(EventListenerCallInfo::callListener);
         }
         else
         {

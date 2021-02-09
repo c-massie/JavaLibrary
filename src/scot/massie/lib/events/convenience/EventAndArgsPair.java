@@ -3,6 +3,9 @@ package scot.massie.lib.events.convenience;
 import scot.massie.lib.events.Event;
 import scot.massie.lib.events.args.EventArgs;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 /**
  * A pairing of an event and an event args object to pass into an invocation of the event.
  *
@@ -24,4 +27,10 @@ public final class EventAndArgsPair<TArgs extends EventArgs>
 
     public TArgs getArgs()
     { return args; }
+
+    public List<EventListenerCallInfo<?>> generateCallInfo()
+    { return event.generateCallInfo(args); }
+
+    public Stream<EventListenerCallInfo<?>> generateCallInfoAsStream()
+    { return event.generateCallInfoAsStream(args); }
 }
