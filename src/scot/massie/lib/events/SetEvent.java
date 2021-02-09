@@ -5,6 +5,8 @@ import scot.massie.lib.events.convenience.EventListenerCallInfo;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Basic Event implementation.
@@ -29,12 +31,13 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
     {
         if(listenerOrderMatters())
         {
-            List<EventListenerCallInfo<?>> listenersWithCallInfo = generateCallInfo(eventArgs);
-            listenersWithCallInfo.sort(Events.listenerCallInfoComparator);
+            Iterator<EventListenerCallInfo<?>> listenerIterator = generateCallInfoAsStream(eventArgs)
+                                                                          .sorted(Events.listenerCallInfoComparator)
+                                                                          .iterator();
 
-            for(EventListenerCallInfo<?> i : listenersWithCallInfo)
+            while(listenerIterator.hasNext())
             {
-                // i.getListener().onEvent(...) is guaranteed to accept the same type as is returned by i.getArgs()
+                EventListenerCallInfo<?> i = listenerIterator.next();
                 ((EventListener)i.getListener()).onEvent(i.getArgs());
             }
         }
@@ -46,7 +49,7 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
             for(Map.Entry<Event<?>, Function<TArgs, ? extends EventArgs>> dependentEvent : dependentEvents.entrySet())
             {
                 // Return type of the function is guaranteed to be the same as the type accepted by event's invoke method.
-                ((Event) dependentEvent.getKey()).invoke(dependentEvent.getValue().apply(eventArgs));
+                ((Event)dependentEvent.getKey()).invoke(dependentEvent.getValue().apply(eventArgs));
             }
         }
     }
@@ -90,18 +93,21 @@ public class SetEvent<TArgs extends EventArgs> implements Event<TArgs>
     { return new HashSet<>(listeners); }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public List<EventListenerCallInfo<?>> generateCallInfo(TArgs args)
-    {
-        List<EventListenerCallInfo<?>> result = new ArrayList<>();
+    { return generateCallInfoAsStream(args).collect(Collectors.toList()); }
 
-        for(EventListener<TArgs> el : listeners)
-            result.add(new EventListenerCallInfo<>(el, args));
+    @Override
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public Stream<EventListenerCallInfo<?>> generateCallInfoAsStream(TArgs args)
+    {
+        Stream<EventListenerCallInfo<?>> result = listeners.stream().map(x -> new EventListenerCallInfo<>(x, args));
 
         for(Map.Entry<Event<?>, Function<TArgs, ? extends EventArgs>> e : dependentEvents.entrySet())
         {
-            // Return type of the function is guaranteed to be the same as the type accepted by event's generateCallInfo method.
-            result.addAll(((Event)e.getKey()).generateCallInfo(e.getValue().apply(args)));
+            // Return type of the function is guaranteed to be the same as the type accepted by event's generateCallInfo
+            // method.
+
+            result = Stream.concat(result, ((Event)e.getKey()).generateCallInfoAsStream(e.getValue().apply(args)));
         }
 
         return result;
