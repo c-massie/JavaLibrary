@@ -26,7 +26,7 @@ abstract class EventTest<T extends Event<EventTest.TestEventArgs>>
         { return text; }
     }
 
-    private static final class TestFlag
+    static final class TestFlag
     {
         public TestFlag(String initialText)
         { this.text = initialText; }
@@ -43,6 +43,9 @@ abstract class EventTest<T extends Event<EventTest.TestEventArgs>>
         public String get()
         { return text; }
 
+        public void append(String toAppend)
+        { text += toAppend; }
+
         public EventListener<TestEventArgs> getSetListener()
         { return settingEventListener; }
 
@@ -50,7 +53,7 @@ abstract class EventTest<T extends Event<EventTest.TestEventArgs>>
         { Assertions.assertEquals(expected, text); }
     }
 
-    private static final class FlagList implements Iterable<TestFlag>
+    static final class FlagList implements Iterable<TestFlag>
     {
         public FlagList(int size)
         {

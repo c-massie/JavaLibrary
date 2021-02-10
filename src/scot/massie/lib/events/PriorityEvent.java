@@ -19,6 +19,15 @@ public interface PriorityEvent<TArgs extends EventArgs> extends Event<TArgs>
     void register(EventListener<TArgs> listener, double priority);
 
     /**
+     * Registers an event listener to this event.
+     *
+     * Listeners registered without a priority can be considered to have a priority of negative infinity.
+     * @param listener The listener to be called when this event is invoked.
+     */
+    @Override
+    void register(EventListener<TArgs> listener);
+
+    /**
      * Gets the event listeners registered to this event. Listeners not registered with a priority will be said to have
      * a priority of negative infinity.
      * @return A list of the event listeners registered to this event, paired with the priorities they were registered

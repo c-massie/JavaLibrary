@@ -61,7 +61,14 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
         EventListenerPriorityPair<TArgs> elpp = new EventListenerPriorityPair<>(listener, priority);
 
         synchronized(listenersWithoutPriority)
-        { listenersWithPriority.add(Collections.binarySearch(listenersWithPriority, elpp), elpp); }
+        {
+            int index = Collections.binarySearch(listenersWithPriority, elpp);
+
+            if(index < 0)
+                index = -(index + 1);
+
+            listenersWithPriority.add(index, elpp);
+        }
     }
 
     @Override
