@@ -20,16 +20,31 @@ import java.util.stream.Stream;
  */
 public interface Tree<TNode, TLeaf>
 {
+    /**
+     * Exception for attempting to access an item at a path when no such item exists.
+     */
     class NoItemAtPathException extends RuntimeException
     {
         // TO DO: write
     }
 
+    /**
+     * An item paired with whether or not the item was present.
+     * @param <T> The type of the item
+     */
     class ValueWithPresence<T>
     {
+        /**
+         * Gets a new instance, which represents nothing being found.
+         */
         public ValueWithPresence()
         { this(false, null); }
 
+        /**
+         * Gets a new value representing an item and whether or not it was present.
+         * @param wasPresent Whether or not it was present.
+         * @param value The item.
+         */
         public ValueWithPresence(boolean wasPresent, T value)
         {
             this.valueWasPresent = wasPresent;
@@ -39,18 +54,37 @@ public interface Tree<TNode, TLeaf>
         protected final boolean valueWasPresent;
         protected final T value;
 
+        /**
+         * Gets whether or not the item was present.
+         * @return True if the item was present. Otherwise, false.
+         */
         public boolean valueWasPresent()
         { return valueWasPresent; }
 
+        /**
+         * Gets the item.
+         * @return The item.
+         */
         public T getValue()
         { return value; }
 
+        /**
+         * Does something with the item the represents and whether or not an item was present. This method is primarily
+         * for chaining calls.
+         * @param thingToDo The thing to do.
+         * @return This.
+         */
         public ValueWithPresence<T> then(BiConsumer<Boolean, T> thingToDo)
         {
             thingToDo.accept(valueWasPresent, value);
             return this;
         }
 
+        /**
+         * Gets whether or not the item this represents and whether or not an item was present meets a given test.
+         * @param test The check to perform.
+         * @return True if the check passes. Otherwise, false.
+         */
         public boolean matches(BiFunction<Boolean, T, Boolean> test)
         { return test.apply(valueWasPresent, value); }
 
@@ -72,8 +106,19 @@ public interface Tree<TNode, TLeaf>
         }
     }
 
+    /**
+     * A pairing of an item in a tree and its tree path within the tree.
+     * @param <TNode> The type of the nodes in the tree and tree path.
+     * @param <TLeaf> The type of the item contained.
+     */
     class Entry<TNode, TLeaf>
     {
+        /**
+         * Gets a new tree entry.
+         * @param sourceTree The tree this entries represents a path and value from.
+         * @param path The path of the item in the tree.
+         * @param item The item at the given path in the tree.
+         */
         public Entry(Tree<TNode, TLeaf> sourceTree, TNode[] path, TLeaf item)
         {
             this.sourceTree = sourceTree;
@@ -81,6 +126,12 @@ public interface Tree<TNode, TLeaf>
             this.item = item;
         }
 
+        /**
+         * Gets a new tree entry.
+         * @param sourceTree The tree this entries represents a path and value from.
+         * @param path The path of the item in the tree.
+         * @param item The item at the given path in the tree.
+         */
         public Entry(Tree<TNode, TLeaf> sourceTree, List<TNode> path, TLeaf item)
         {
             this.sourceTree = sourceTree;
@@ -88,6 +139,12 @@ public interface Tree<TNode, TLeaf>
             this.item = item;
         }
 
+        /**
+         * Gets a new tree entry.
+         * @param sourceTree The tree this entries represents a path and value from.
+         * @param path The path of the item in the tree.
+         * @param item The item at the given path in the tree.
+         */
         public Entry(Tree<TNode, TLeaf> sourceTree, TreePath<TNode> path, TLeaf item)
         {
             this.sourceTree = sourceTree;
@@ -95,20 +152,48 @@ public interface Tree<TNode, TLeaf>
             this.item = item;
         }
 
+        /**
+         * The tree this represents a path and item from.
+         */
         protected final Tree<TNode, TLeaf> sourceTree;
+
+        /**
+         * The path of the item in the tree.
+         */
         protected final TreePath<TNode> path;
+
+        /**
+         * The item at the path in the tree.
+         */
         protected final TLeaf item;
 
+        /**
+         * Gets the path of the item in the tree.
+         * @return The path of the item in the tree.
+         */
         public final TreePath<TNode> getPath()
         { return path; }
 
+        /**
+         * Gets the item at the path in the tree.
+         * @return The item that was at the path this entry represents.
+         */
         public final TLeaf getItem()
         { return item; }
 
         // getKey and getValue provided in imitation of Map.Entry<K, V>
+
+        /**
+         * Gets the path of the item in the tree.
+         * @return The path of the item in the tree.
+         */
         public final TreePath<TNode> getKey()
         { return path; }
 
+        /**
+         * Gets the item at the path in the tree.
+         * @return The item that was at the path this entry represents.
+         */
         public final TLeaf getValue()
         { return item; }
 
@@ -116,38 +201,91 @@ public interface Tree<TNode, TLeaf>
         public String toString()
         { return "[" + path.toString() + "] = " + (item != null ? item : "(null)"); }
     }
-    
+
+    /**
+     * A series of node objects forming a path used for traversing a tree.
+     * @param <TNode> The type of the nodes of the path.
+     */
     final class TreePath<TNode>
     {
+        /**
+         * Creates a new empty tree path. An empty tree path refers to the root of a tree or branch.
+         */
         public TreePath()
         { this.nodes = Collections.emptyList(); }
 
+        /**
+         * Creates a new tree path.
+         * @param nodes The nodes to make up the tree path in order.
+         */
         public TreePath(TNode... nodes)
         { this.nodes = Collections.unmodifiableList(Arrays.asList(nodes)); }
 
+        /**
+         * Creates a new tree path.
+         * @param nodes The nodes to make up the tree path in order.
+         */
         public TreePath(List<TNode> nodes)
         { this.nodes = Collections.unmodifiableList(nodes); }
 
+        /**
+         * Creates a new tree path.
+         * @param s The nodes to make up the tree path, in the order returned by the stream.
+         * @param <TNode> The type of the nodes of the path.
+         * @return A new tree path made up of the nodes returned by the given stream.
+         */
         public static <TNode> TreePath<TNode> fromStream(Stream<TNode> s)
         { return new TreePath<>(s.collect(Collectors.toList())); }
 
+        /**
+         * Gets a new empty tree path. An empty tree path refers to the root of a tree or branch.
+         * @param <TNode> The type of the nodes of the path.
+         * @return A new empty tree path.
+         */
         public static <TNode> TreePath<TNode> root()
         { return new TreePath<>(); }
 
-        final List<TNode> nodes;
+        /**
+         * The nodes in this path.
+         */
+        private final List<TNode> nodes;
 
+        /**
+         * Gets a list of the nodes in this tree path, in the same order as they make up the path.
+         * @return An unmodifiable list of the nodes of this tree path.
+         */
         public List<TNode> getNodes()
         { return nodes; }
 
+        /**
+         * Gets the number of nodes in this tree path.
+         * @return The number of nodes in this tree path.
+         */
         public int getLength()
         { return nodes.size(); }
 
+        /**
+         * Gets the number of nodes in this tree path.
+         * @return The number of nodes in this tree path.
+         */
         public int size()
         { return nodes.size(); }
 
+        /**
+         * Gets the first element of this tree path.
+         * @return The first element of this tree path.
+         */
         public TNode getFirst()
         { return nodes.get(0); }
 
+        /**
+         * Gets whether or not this tree path is an ancestor of the provided one. That is, whether or not the provided
+         * tree path is a specialised version of this one. Or, more simply, whether or not the given tree path begins
+         * with this one, but does not equal it.
+         * @param other The tree path to compare.
+         * @return True if the other tree path has more nodes than this one and the nodes of the other tree path begin
+         *         with the nodes of this one in the same order. Otherwise, false.
+         */
         public boolean isParentOf(TreePath<TNode> other)
         {
             if(other.nodes.size() <= nodes.size())
@@ -156,6 +294,14 @@ public interface Tree<TNode, TLeaf>
             return other.nodes.subList(0, nodes.size()).equals(nodes);
         }
 
+        /**
+         * Gets whether or not this tree path is the same as or an ancestor of the provided one. That is, whether or not
+         * the provided tree path is the same or a specialised version of this one. Or, more simply, whether or not the
+         * given tree path begins with this one.
+         * @param other The tree path to compare.
+         * @return True if the nodes of the other tree path begin with the nodes of this one in the same order.
+         *         Otherwise, false.
+         */
         public boolean isEqualToOrParentOf(TreePath<TNode> other)
         {
             if(other.nodes.size() < nodes.size())
@@ -164,15 +310,42 @@ public interface Tree<TNode, TLeaf>
             return other.nodes.subList(0, nodes.size()).equals(nodes);
         }
 
+        /**
+         * Gets whether or not this tree path is a descendant of the provided one. That is, whether or not the provided
+         * tree path is a generalisation or truncation of this one. Or, more simply, whether or not the given tree path
+         * is shorter than and the start of this one.
+         * @param other The tree path to compare.
+         * @return True if the other tree path has fewer nodes than this one and the nodes of this tree path begin with
+         *         the nodes of the other in the same order. Otherwise, false.
+         */
         public boolean isChildOf(TreePath<TNode> other)
         { return other.isParentOf(this); }
 
+        /**
+         * Gets whether or not this tree path is the same as or a descendant of the provided one. That is, whether or
+         * not the provided tree path is the same as, or is a generalisation or truncation of, this one. Or, more
+         * simply, whether or not the given tree path is the start of this one.
+         * @param other The tree path to compare.
+         * @return True if the nodes of this tree path begin with the nodes of the other in the same order. Otherwise,
+         *         false.
+         */
         public boolean isEqualToOrChildOf(TreePath<TNode> other)
         { return other.isEqualToOrParentOf(this); }
 
+        /**
+         * Gets whether or not this tree path represents the root of a tree or branch. That is, whether or not this tree
+         * path contains no nodes.
+         * @return True if this tree path contains no nodes Otherwise, false.
+         */
         public boolean isRoot()
         { return nodes.isEmpty(); }
 
+        /**
+         * Gets a version of this tree path with the first so many nodes removed.
+         * @param numberOfElementsToDrop The number of nodes to drop from the start of the returned tree path.
+         * @return A tree path of the length of this one minus the given number, containing the last nodes of this tree
+         *         path in the same order. Where no nodes are removed, returns this.
+         */
         public TreePath<TNode> withoutFirstNodes(int numberOfElementsToDrop)
         {
             if(numberOfElementsToDrop <= 0)
@@ -198,7 +371,16 @@ public interface Tree<TNode, TLeaf>
             return nodes.stream().map(x -> x == null ? "(null)" : x.toString()).collect(Collectors.joining("."));
         }
 
-        // Where TNode is not Comparable<TNode>, the behaviour of the returned comparator is undefined.
+        /**
+         * <P>Gets a comparator for comparing two tree node paths based on their nodes.</p>
+         *
+         * <p>This compares each node in order from first to last until it finds a node that's not equal in the two
+         * tree paths, then returns the comparison of those nodes. Where two tree paths are different lengths, but
+         * contain the same nodes up to the shorter one's length, (that is, where one starts with the other) the shorter
+         * tree path is considered to come before the longer one.</p>
+         * @param <TNode> The type of the nodes of the tree paths being compared.
+         * @return A comparable that compares tree paths in the above specified manner.
+         */
         public static <TNode extends Comparable<TNode>> Comparator<TreePath<TNode>> getComparator()
         {
             return new Comparator<TreePath<TNode>>()
