@@ -9,7 +9,12 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * Generic event for calling arbitrary listeners.
+ * <p>Generic event for calling arbitrary listeners.</p>
+ *
+ * <p>Events may be exposed as fields. Events should generally always be final, as each Event object represents
+ * something happening to that object and isn't expected to be reässigned.</p>
+ *
+ * <p>Example: {@code public final Event<ThingHappenedEventArgs> thingHappened = new SetEvent<>();}</p>
  * @param <TArgs> The type of the event args objects passed to listeners of this event.
  */
 public interface Event<TArgs extends EventArgs>
