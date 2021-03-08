@@ -21,9 +21,20 @@ public interface Event<TArgs extends EventArgs>
 {
     /**
      * Calls all listeners to this event.
+     * @apiNote {@link #invoke(EventArgs)} and {@link #trigger(EventArgs)} should be aliases.
      * @param eventArgs A fresh event arguments object, possibly with information relating to this invocation.
+     * @see #trigger(EventArgs) 
      */
     void invoke(TArgs eventArgs);
+
+    /**
+     * Calls all listeners to this event.
+     * @apiNote {@link #invoke(EventArgs)} and {@link #trigger(EventArgs)} should be aliases.
+     * @param eventArgs A fresh event arguments object, possibly with information relating to this invocation.
+     * @see #invoke(EventArgs)
+     */
+    default void trigger(TArgs eventArgs)
+    { invoke(eventArgs); }
 
     /**
      * Registers an event listener to this event.
