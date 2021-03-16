@@ -25,4 +25,49 @@ public final class StringUtils
      */
     public static String trimEnd(String s)
     { return s.replaceFirst("\\s+$", ""); }
+
+    /**
+     * Gets the position of the terminator matching the opener at the given position.
+     * @param s The string to look in.
+     * @param opener The character to use as an opener.
+     * @param terminator The character being used as a terminator.
+     * @param openerPosition The position of the opener in the given string. Where the character in the given string
+     *                       isn't an opener, it will be treated as though it is.
+     * @return The position of the matching terminator in the provided string, or -1 if no matching terminator is found.
+     */
+    public static int getMatchingTerminatorPosition(String s, char opener, char terminator, int openerPosition)
+    {
+        int slength = s.length();
+        char[] chars = s.toCharArray();
+        int depth = 1;
+
+        for(int i = openerPosition + 1; i < slength; i++)
+        {
+            char ichar = chars[i];
+
+            if(ichar == terminator)
+            {
+                if(--depth == 0)
+                    return i;
+            }
+            else if(ichar == opener)
+            {
+                depth++;
+            }
+        }
+
+        return -1;
+    }
+
+    public static int getMatchingBracketPosition(String s, int openingBracketPosition)
+    { return getMatchingTerminatorPosition(s, '(', ')', openingBracketPosition); }
+
+    public static int getMatchingSquareBracketPosition(String s, int openingSquareBracketPosition)
+    { return getMatchingTerminatorPosition(s, '[', ']', openingSquareBracketPosition); }
+
+    public static int getMatchingCurlyBracketPosition(String s, int openingCurlyBracketPosition)
+    { return getMatchingTerminatorPosition(s, '{', '}', openingCurlyBracketPosition); }
+
+    public static int getMatchingPointyBracketPosition(String s, int openingPointyBracketPosition)
+    { return getMatchingTerminatorPosition(s, '<', '>', openingPointyBracketPosition); }
 }
