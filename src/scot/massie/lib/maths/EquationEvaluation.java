@@ -17,16 +17,49 @@ public final class EquationEvaluation
         {
             super("Equation was not parsable as an equation: " + fullEquation +
                   "\nSpecifically, this portion: " + equationSection);
+
+            this.fullEquation = fullEquation;
+            this.equationSection = equationSection;
         }
 
-        String equationSection;
-        String fullEquation;
+        UnparsableEquationException(String fullEquation, String equationSection, String msg)
+        {
+            super(msg);
+            this.fullEquation = fullEquation;
+            this.equationSection = equationSection;
+        }
+
+        final String equationSection;
+        final String fullEquation;
 
         public String getFullEquation()
         { return fullEquation; }
 
         public String getEquationSection()
         { return equationSection; }
+    }
+
+    public static class TrailingOperatorException extends UnparsableEquationException
+    {
+        public TrailingOperatorException(String fullEquation, String equationSection, boolean operatorIsAtEnd)
+        {
+            super(fullEquation,
+                  equationSection,
+                  "Equation was not parsable as an equation: " + fullEquation
+                  + "\nSpecifically, this portion, which "
+                  + (operatorIsAtEnd ? "ended with a non-postfix" : "started with a non-prefix") + " operator: "
+                  + equationSection);
+
+            this.operatorIsAtEnd = operatorIsAtEnd;
+        }
+
+        final boolean operatorIsAtEnd;
+
+        public boolean operatorIsAtEnd()
+        { return operatorIsAtEnd; }
+
+        public boolean isOperatorIsAtStart()
+        { return !operatorIsAtEnd; }
     }
 
     public static final class UnresolvedArgumentInEquationException extends RuntimeException
@@ -225,6 +258,17 @@ public final class EquationEvaluation
 
         if(possibleEquation.isEmpty())
             throw new UnparsableEquationException(possibleEquation, possibleEquation);
+
+        String[] notUnaryPrefixOperators = { "*", "×", "/", "÷", "^" };
+        String[] notUnarySuffixOperators = { "+", "-", "*", "×", "/", "÷", "^", "√" };
+
+        for(int i = 0; i < notUnaryPrefixOperators.length; i++)
+            if(possibleEquation.startsWith(notUnaryPrefixOperators[i]))
+                throw new TrailingOperatorException(possibleEquation, possibleEquation, false);
+
+        for(int i = 0; i < notUnarySuffixOperators.length; i++)
+            if(possibleEquation.endsWith(notUnarySuffixOperators[i]))
+                throw new TrailingOperatorException(possibleEquation, possibleEquation, true);
 
         if((possibleEquation.charAt(0) == '(')
         && (StringUtils.getMatchingBracketPosition(possibleEquation, 0) == possibleEquation.length() - 1))
