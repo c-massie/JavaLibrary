@@ -37,6 +37,9 @@ public final class EquationEvaluation
 
         public String getEquationSection()
         { return equationSection; }
+
+        public UnparsableEquationException withFullEquation(String fullEquation)
+        { return new UnparsableEquationException(fullEquation, equationSection); }
     }
 
     public static class TrailingOperatorException extends UnparsableEquationException
@@ -58,8 +61,11 @@ public final class EquationEvaluation
         public boolean operatorIsAtEnd()
         { return operatorIsAtEnd; }
 
-        public boolean isOperatorIsAtStart()
+        public boolean operatorIsAtStart()
         { return !operatorIsAtEnd; }
+
+        public TrailingOperatorException withFullEquation(String fullEquation)
+        { return new TrailingOperatorException(fullEquation, equationSection, operatorIsAtEnd); }
     }
 
     public static final class UnresolvedArgumentInEquationException extends RuntimeException
@@ -421,7 +427,10 @@ public final class EquationEvaluation
 
     public EquationEvaluation build()
     {
-        topLevelComponent = parse(variableValues, equation);
+        try
+        { topLevelComponent = parse(variableValues, equation); }
+        catch(UnparsableEquationException ex)
+        { throw ex.withFullEquation(equation); }
         return this;
     }
 
