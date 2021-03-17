@@ -6,8 +6,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 
 public final class EquationEvaluation
 {
@@ -82,6 +86,38 @@ public final class EquationEvaluation
         { return variableName; }
     }
 
+    public static final class MissingFunctionException extends RuntimeException
+    {
+        public MissingFunctionException(String functionName)
+        {
+            super("Function was missing: " + functionName);
+            this.functionName = functionName;
+        }
+
+        private final String functionName;
+
+        public String getFunctionName()
+        { return functionName; }
+    }
+
+    private static final class FunctionNameAndArgumentString
+    {
+        public FunctionNameAndArgumentString(String functionName, String argumentString)
+        {
+            this.functionName = functionName;
+            this.argumentString = argumentString;
+        }
+
+        String functionName;
+        String argumentString;
+
+        public String getFunctionName()
+        { return functionName; }
+
+        public String getArgumentString()
+        { return argumentString; }
+    }
+
     private static abstract class EquationComponent
     {
         public abstract double evaluate();
@@ -144,6 +180,14 @@ public final class EquationEvaluation
         { operand = o; }
 
         public EquationComponent operand;
+    }
+
+    private static abstract class VariadicOperation extends Operation
+    {
+        public VariadicOperation(EquationComponent... os)
+        { operands = os; }
+
+        public EquationComponent[] operands;
     }
 
     private static class Addition extends BinaryOperation
@@ -216,6 +260,37 @@ public final class EquationEvaluation
         { return -(operand.evaluate()); }
     }
 
+    private static class FunctionCall extends VariadicOperation
+    {
+        public FunctionCall(Map<String, ToDoubleFunction<double[]>> functionMap,
+                            String functionName,
+                            EquationComponent... os)
+        {
+            super(os);
+            this.functionName = functionName;
+            this.functionMap = functionMap;
+        }
+
+        String functionName;
+        Map<String, ToDoubleFunction<double[]>> functionMap;
+
+        @Override
+        public double evaluate()
+        {
+            ToDoubleFunction<double[]> f = functionMap.get(functionName);
+
+            if(f == null)
+                throw new MissingFunctionException(functionName);
+
+            double[] results = new double[operands.length];
+
+            for(int i = 0; i < results.length; i++)
+                results[i] = operands[i].evaluate();
+
+            return f.applyAsDouble(results);
+        }
+    }
+
     public EquationEvaluation(String equation)
     {
         this.unprocessedEquation = equation;
@@ -240,6 +315,12 @@ public final class EquationEvaluation
         variableValues.put("inf", Double.POSITIVE_INFINITY);
     }
 
+    private final Map<String, ToDoubleFunction<double[]>> functionMap = new HashMap<>();
+    {
+        // example test function. TO DO: Replace with proper premade functions like sin/cos/tan
+        functionMap.put("triple", value -> value[0] * 3);
+    }
+
     private static String preprocessEquation(String possibleEquation)
     {
         // TO DO: Write function to replace superscript numbers grouping them together, so "x²³" becomes "x^23" rather
@@ -258,7 +339,9 @@ public final class EquationEvaluation
         return possibleEquation;
     }
 
-    private static EquationComponent parse(Map<String, Double> variableValues, String possibleEquation)
+    private static EquationComponent parse(Map<String, Double> variableValues,
+                                           Map<String, ToDoubleFunction<double[]>> functionMap,
+                                           String possibleEquation)
     {
         possibleEquation = possibleEquation.trim();
 
@@ -279,7 +362,7 @@ public final class EquationEvaluation
         if((possibleEquation.charAt(0) == '(')
         && (StringUtils.getMatchingBracketPosition(possibleEquation, 0) == possibleEquation.length() - 1))
         {
-            return parse(variableValues, possibleEquation.substring(1, possibleEquation.length() - 1));
+            return parse(variableValues, functionMap, possibleEquation.substring(1, possibleEquation.length() - 1));
         }
 
         int opPosition;
@@ -288,72 +371,117 @@ public final class EquationEvaluation
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
-            return new Addition(parse(variableValues, l), parse(variableValues, r));
+            return new Addition(parse(variableValues, functionMap, l), parse(variableValues, functionMap, r));
         }
 
         if((opPosition = getOperatorPositionInString(possibleEquation, '-', 1)) >= 0)
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
-            return new Subtraction(parse(variableValues, l), parse(variableValues, r));
+            return new Subtraction(parse(variableValues, functionMap, l), parse(variableValues, functionMap, r));
         }
 
         if((opPosition = getOperatorPositionInString(possibleEquation, '*')) >= 0)
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
-            return new Multiplication(parse(variableValues, l), parse(variableValues, r));
+            return new Multiplication(parse(variableValues, functionMap, l), parse(variableValues, functionMap, r));
         }
 
         if((opPosition = getOperatorPositionInString(possibleEquation, '×')) >= 0)
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
-            return new Multiplication(parse(variableValues, l), parse(variableValues, r));
+            return new Multiplication(parse(variableValues, functionMap, l), parse(variableValues, functionMap, r));
         }
 
         if((opPosition = getOperatorPositionInString(possibleEquation, '/')) >= 0)
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
-            return new Division(parse(variableValues, l), parse(variableValues, r));
+            return new Division(parse(variableValues, functionMap, l), parse(variableValues, functionMap, r));
         }
 
         if((opPosition = getOperatorPositionInString(possibleEquation, '÷')) >= 0)
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
-            return new Division(parse(variableValues, l), parse(variableValues, r));
+            return new Division(parse(variableValues, functionMap, l), parse(variableValues, functionMap, r));
         }
 
         if((opPosition = getOperatorPositionInString(possibleEquation, '^')) >= 0)
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
-            return new Exponent(parse(variableValues, l), parse(variableValues, r));
+            return new Exponent(parse(variableValues, functionMap, l), parse(variableValues, functionMap, r));
         }
 
         if((opPosition = getOperatorPositionInString(possibleEquation, '√', 1)) >= 0)
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
-            return new Root(parse(variableValues, l), parse(variableValues, r));
+            return new Root(parse(variableValues, functionMap, l), parse(variableValues, functionMap, r));
         }
 
         if(possibleEquation.startsWith("-"))
         {
             String o = possibleEquation.substring(1);
-            return new Negation(parse(variableValues, o));
+            return new Negation(parse(variableValues, functionMap, o));
         }
 
         if(possibleEquation.startsWith("√"))
         {
             String o = possibleEquation.substring(1);
-            return new Root(new LiteralNumber(2), parse(variableValues, o));
+            return new Root(new LiteralNumber(2), parse(variableValues, functionMap, o));
         }
 
         if(variableValues.containsKey(possibleEquation))
             return new EquationVariable(variableValues, possibleEquation);
+
+        FunctionNameAndArgumentString fAndA = getFunctionNameAndArgumentString(possibleEquation);
+
+        parseFunctionCall: // TO DO: Split off into own function
+        if((fAndA != null) && (functionMap.containsKey(fAndA.getFunctionName())))
+        {
+            String argsString = fAndA.getArgumentString();
+            int argsStringLength = argsString.length();
+            int bracketDepth = 0;
+            int lastSplit = -1;
+            List<String> arguments = new ArrayList<>();
+
+            if(argsString.startsWith(",") || argsString.endsWith(","))
+                break parseFunctionCall;
+
+            if(!argsString.isEmpty())
+            {
+                for(int i = 0; i < argsStringLength; i++)
+                {
+                    char ichar = argsString.charAt(i);
+
+                    if(ichar == '(')
+                        bracketDepth++;
+                    else if(ichar == ')')
+                    {
+                        if(--bracketDepth < 0)
+                            break parseFunctionCall;
+                    }
+                    else if(ichar == ',')
+                    {
+                        arguments.add(argsString.substring(lastSplit + 1, i).trim());
+                        lastSplit = i;
+                    }
+                }
+
+                arguments.add(argsString.substring(lastSplit + 1));
+            }
+
+            EquationComponent[] parsedArguments = new EquationComponent[arguments.size()];
+
+            for(int i = 0; i < parsedArguments.length; i++)
+                parsedArguments[i] = parse(variableValues, functionMap, arguments.get(i));
+
+            return new FunctionCall(functionMap, fAndA.getFunctionName(), parsedArguments);
+        }
 
         try
         {
@@ -425,10 +553,44 @@ public final class EquationEvaluation
     private static int getOperatorPositionInString(String s, String operator)
     { return getOperatorPositionInString(s, operator, 0); }
 
+    /**
+     * Gets the name of the function represented by the given string, paired with the string passed into it as
+     * arguments.
+     * @param s The string representation of a function call.
+     * @return The name of the function being called paired with a string representation of the arguments passed into
+     *         it, or null if the given string is not the representation of a function being called.
+     */
+    private static FunctionNameAndArgumentString getFunctionNameAndArgumentString(String s)
+    {
+        int openingBracketPosition = -1;
+        int slength = s.length();
+
+        for(int i = 0; i < slength; i++)
+        {
+            if(s.charAt(i) == '(')
+            {
+                openingBracketPosition = i;
+                break;
+            }
+        }
+
+        if(openingBracketPosition <= 0) // no bracket, or bracket is first character.
+            return null;
+
+        int closingBracketPosition = StringUtils.getMatchingBracketPosition(s, openingBracketPosition);
+
+        if(closingBracketPosition != (slength - 1))
+            return null;
+
+        String functionName = s.substring(0, openingBracketPosition);
+        String argumentString = s.substring(openingBracketPosition + 1, closingBracketPosition);
+        return new FunctionNameAndArgumentString(functionName, argumentString);
+    }
+
     public EquationEvaluation build()
     {
         try
-        { topLevelComponent = parse(variableValues, equation); }
+        { topLevelComponent = parse(variableValues, functionMap, equation); }
         catch(UnparsableEquationException ex)
         { throw ex.withFullEquation(equation); }
         return this;
@@ -445,6 +607,12 @@ public final class EquationEvaluation
     public EquationEvaluation withVariable(String argumentRepresentedBy, double argumentValue)
     {
         variableValues.put(argumentRepresentedBy, argumentValue);
+        return this;
+    }
+
+    public EquationEvaluation withFunction(String functionName, ToDoubleFunction<double[]> f)
+    {
+        functionMap.put(functionName, f);
         return this;
     }
 }
