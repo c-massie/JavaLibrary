@@ -2,15 +2,11 @@ package scot.massie.lib.maths;
 
 import scot.massie.lib.utils.StringUtils;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.math.RoundingMode;
-import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 
 public final class EquationEvaluation
@@ -98,6 +94,32 @@ public final class EquationEvaluation
 
         public String getFunctionName()
         { return functionName; }
+    }
+
+    public static final class MissingFunctionArgumentsException extends RuntimeException
+    {
+        public MissingFunctionArgumentsException(String functionName, int numberOfArgsRequired, int numberOfArgsProvided)
+        {
+            super("The function \"" + functionName + "\" requires at least " + numberOfArgsRequired + " arguments, but"
+                  + " only " + numberOfArgsProvided + " were provided.");
+
+            this.functionName = functionName;
+            this.numberOfArgsRequired = numberOfArgsRequired;
+            this.numberOfArgsProvided = numberOfArgsProvided;
+        }
+
+        final String functionName;
+        final int numberOfArgsRequired;
+        final int numberOfArgsProvided;
+
+        public String getFunctionName()
+        { return functionName; }
+
+        public int getNumberOfArgsRequired()
+        { return numberOfArgsRequired; }
+
+        public int getNumberOfArgsProvided()
+        { return numberOfArgsProvided; }
     }
 
     private static final class FunctionNameAndArgumentString
@@ -317,8 +339,165 @@ public final class EquationEvaluation
 
     private final Map<String, ToDoubleFunction<double[]>> functionMap = new HashMap<>();
     {
-        // example test function. TO DO: Replace with proper premade functions like sin/cos/tan
-        functionMap.put("triple", value -> value[0] * 3);
+        functionMap.put("cos", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("cos", 1, args.length);
+
+            return Math.cos(args[0]);
+        });
+
+        functionMap.put("sin", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("sin", 1, args.length);
+
+            return Math.sin(args[0]);
+        });
+
+        functionMap.put("tan", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("tan", 1, args.length);
+
+            return Math.tan(args[0]);
+        });
+
+        functionMap.put("sqrt", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("sqrt", 1, args.length);
+
+            return Math.sqrt(args[0]);
+        });
+
+        functionMap.put("cbrt", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("cbrt", 1, args.length);
+
+            return Math.cbrt(args[0]);
+        });
+
+        functionMap.put("log", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("log", 1, args.length);
+
+            return Math.log(args[0]);
+        });
+
+        functionMap.put("log10", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("log10", 1, args.length);
+
+            return Math.log10(args[0]);
+        });
+
+        functionMap.put("min", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("min", 1, args.length);
+
+            double min = args[0];
+
+            for(int i = 1; i < args.length; i++)
+                if(args[i] < min)
+                    min = args[i];
+
+            return min;
+        });
+
+        functionMap.put("max", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("max", 1, args.length);
+
+            double max = args[0];
+
+            for(int i = 1; i < args.length; i++)
+                if(args[i] > max)
+                    max = args[i];
+
+            return max;
+        });
+
+        functionMap.put("floor", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("floor", 1, args.length);
+
+            return Math.floor(args[0]);
+        });
+
+        functionMap.put("ceiling", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("ceiling", 1, args.length);
+
+            return Math.ceil(args[0]);
+        });
+
+        functionMap.put("ceil", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("ceil", 1, args.length);
+
+            return Math.ceil(args[0]);
+        });
+
+        functionMap.put("truncate", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("truncate", 1, args.length);
+
+            //return Math.(args[0]);
+            return (int)args[0];
+        });
+
+        functionMap.put("trunc", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("trunc", 1, args.length);
+
+            //return Math.(args[0]);
+            return (int)args[0];
+        });
+
+        functionMap.put("round", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("round", 1, args.length);
+
+            return Math.round(args[0]);
+        });
+
+        functionMap.put("avg", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("round", 1, args.length);
+
+            double avg = args[0];
+
+            for(int i = 1; i < args.length; i++)
+                avg += (args[i] - avg) / (i + 1);
+
+            return avg;
+        });
+
+        functionMap.put("median", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("median", 1, args.length);
+
+            Arrays.sort(args);
+
+            if(args.length % 2 == 0)
+                return (args[args.length / 2] + args[args.length / 2 - 1]) / 2;
+            else
+                return args[args.length / 2];
+        });
     }
 
     private static String preprocessEquation(String possibleEquation)
