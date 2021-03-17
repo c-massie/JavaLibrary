@@ -223,6 +223,9 @@ public final class EquationEvaluation
     {
         possibleEquation = possibleEquation.trim();
 
+        if(possibleEquation.isEmpty())
+            throw new UnparsableEquationException(possibleEquation, possibleEquation);
+
         if((possibleEquation.charAt(0) == '(')
         && (StringUtils.getMatchingBracketPosition(possibleEquation, 0) == possibleEquation.length() - 1))
         {
@@ -386,7 +389,7 @@ public final class EquationEvaluation
         return topLevelComponent.evaluate();
     }
 
-    public EquationEvaluation withArgument(String argumentRepresentedBy, double argumentValue)
+    public EquationEvaluation withVariable(String argumentRepresentedBy, double argumentValue)
     {
         variableValues.put(argumentRepresentedBy, argumentValue);
         return this;
