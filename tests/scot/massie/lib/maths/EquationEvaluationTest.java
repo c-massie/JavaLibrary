@@ -3,6 +3,8 @@ package scot.massie.lib.maths;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
+import java.util.function.ToDoubleFunction;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class EquationEvaluationTest
@@ -89,6 +91,28 @@ class EquationEvaluationTest
     }
 
     @Test
+    public void functions_premade()
+    { assertEquals(8.25, new EquationEvaluation("avg(5, 8, 9, 11)").evaluate()); }
+
+    @Test
+    public void functions_custom()
+    {
+        assertEquals(10.0, new EquationEvaluation("double(5)").withFunction("double", args -> args[0] * 2).evaluate());
+
+        assertEquals(120.0, new EquationEvaluation("multiplytogether(2, 3, 4, 5)").withFunction("multiplytogether", args ->
+        {
+            double current = args[0];
+
+            for(int i = 1; i < args.length; i++)
+                current *= args[i];
+
+            return current;
+        }).evaluate());
+
+        assertEquals(5.0, new EquationEvaluation("get5()").withFunction("get5", args -> 5).evaluate());
+    }
+
+    @Test
     public void invalid_unspecifiedVariableText()
     {
         assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
@@ -107,5 +131,23 @@ class EquationEvaluationTest
     {
         assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
         { new EquationEvaluation(" * 6 + 5 + 4").evaluate(); });
+    }
+
+    @Test
+    public void invalid_mismatchedBrackets()
+    {
+        assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
+        { new EquationEvaluation("(5 + 4").evaluate(); });
+
+
+        assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
+        { new EquationEvaluation("5 + 4)").evaluate(); });
+    }
+
+    @Test
+    public void invalid_mismatchedFunctionBrackets()
+    {
+        assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
+        { new EquationEvaluation("avg(5, 9").evaluate(); });
     }
 }
