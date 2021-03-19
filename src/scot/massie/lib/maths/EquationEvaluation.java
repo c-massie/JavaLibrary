@@ -1,5 +1,6 @@
 package scot.massie.lib.maths;
 
+import org.assertj.core.util.Lists;
 import scot.massie.lib.utils.StringUtils;
 
 import java.util.ArrayList;
@@ -617,50 +618,10 @@ public final class EquationEvaluation
         if(variableValues.containsKey(possibleEquation))
             return new EquationVariable(variableValues, possibleEquation);
 
-        FunctionNameAndArgumentString fAndA = getFunctionNameAndArgumentString(possibleEquation);
+        FunctionCall call = parseFunctionCall(variableValues, functionMap, possibleEquation);
 
-        parseFunctionCall: // TO DO: Split off into own function
-        if((fAndA != null) && (functionMap.containsKey(fAndA.getFunctionName())))
-        {
-            String argsString = fAndA.getArgumentString();
-            int argsStringLength = argsString.length();
-            int bracketDepth = 0;
-            int lastSplit = -1;
-            List<String> arguments = new ArrayList<>();
-
-            if(argsString.startsWith(",") || argsString.endsWith(","))
-                break parseFunctionCall;
-
-            if(!argsString.isEmpty())
-            {
-                for(int i = 0; i < argsStringLength; i++)
-                {
-                    char ichar = argsString.charAt(i);
-
-                    if(ichar == '(')
-                        bracketDepth++;
-                    else if(ichar == ')')
-                    {
-                        if(--bracketDepth < 0)
-                            break parseFunctionCall;
-                    }
-                    else if(ichar == ',')
-                    {
-                        arguments.add(argsString.substring(lastSplit + 1, i).trim());
-                        lastSplit = i;
-                    }
-                }
-
-                arguments.add(argsString.substring(lastSplit + 1));
-            }
-
-            EquationComponent[] parsedArguments = new EquationComponent[arguments.size()];
-
-            for(int i = 0; i < parsedArguments.length; i++)
-                parsedArguments[i] = parse(variableValues, functionMap, arguments.get(i));
-
-            return new FunctionCall(functionMap, fAndA.getFunctionName(), parsedArguments);
-        }
+        if(call != null)
+            return call;
 
         try
         {
@@ -671,6 +632,99 @@ public final class EquationEvaluation
         { }
 
         throw new UnparsableEquationException(possibleEquation, possibleEquation);
+    }
+
+    /**
+     * Gets the name of the function represented by the given string, paired with the string passed into it as
+     * arguments.
+     * @param s The string representation of a function call.
+     * @return The name of the function being called paired with a string representation of the arguments passed into
+     *         it, or null if the given string is not the representation of a function being called.
+     */
+    private static FunctionNameAndArgumentString getFunctionNameAndArgumentString(String s)
+    {
+        int openingBracketPosition = -1;
+        int slength = s.length();
+
+        for(int i = 0; i < slength; i++)
+        {
+            if(s.charAt(i) == '(')
+            {
+                openingBracketPosition = i;
+                break;
+            }
+        }
+
+        if(openingBracketPosition <= 0) // no bracket, or bracket is first character.
+            return null;
+
+        int closingBracketPosition = StringUtils.getMatchingBracketPosition(s, openingBracketPosition);
+
+        if(closingBracketPosition != (slength - 1))
+            return null;
+
+        String functionName = s.substring(0, openingBracketPosition);
+        String argumentString = s.substring(openingBracketPosition + 1, closingBracketPosition);
+        return new FunctionNameAndArgumentString(functionName, argumentString);
+    }
+
+    private static List<String> splitFunctionArgString(String argString)
+    {
+        argString = argString.trim();
+
+        if(argString.startsWith(",") || argString.endsWith(","))
+            return null;
+
+        if(argString.isEmpty())
+            return Lists.emptyList();
+
+        int argStringLength = argString.length();
+        int bracketDepth = 0;
+        int lastSplit = -1;
+        List<String> arguments = new ArrayList<>();
+
+        for(int i = 0; i < argStringLength; i++)
+        {
+            char ichar = argString.charAt(i);
+
+            if(ichar == '(')
+                bracketDepth++;
+            else if(ichar == ')')
+            {
+                if(--bracketDepth < 0)
+                    return null;
+            }
+            else if(ichar == ',')
+            {
+                arguments.add(argString.substring(lastSplit + 1, i).trim());
+                lastSplit = i;
+            }
+        }
+
+        arguments.add(argString.substring(lastSplit + 1));
+        return arguments;
+    }
+
+    private static FunctionCall parseFunctionCall(Map<String, Double> variableValues,
+                                                  Map<String, ToDoubleFunction<double[]>> functionMap,
+                                                  String functionCallString)
+    {
+        FunctionNameAndArgumentString fAndA = getFunctionNameAndArgumentString(functionCallString);
+
+        if(fAndA == null || !functionMap.containsKey(fAndA.getFunctionName()))
+            return null;
+
+        List<String> arguments = splitFunctionArgString(fAndA.getArgumentString());
+
+        if(arguments == null)
+            return null;
+
+        EquationComponent[] parsedArguments = new EquationComponent[arguments.size()];
+
+        for(int i = 0; i < parsedArguments.length; i++)
+            parsedArguments[i] = parse(variableValues, functionMap, arguments.get(i));
+
+        return new FunctionCall(functionMap, fAndA.getFunctionName(), parsedArguments);
     }
 
     private static int getOperatorPositionInString(String s, char operator, int positionToStartLookingAt)
@@ -731,40 +785,6 @@ public final class EquationEvaluation
 
     private static int getOperatorPositionInString(String s, String operator)
     { return getOperatorPositionInString(s, operator, 0); }
-
-    /**
-     * Gets the name of the function represented by the given string, paired with the string passed into it as
-     * arguments.
-     * @param s The string representation of a function call.
-     * @return The name of the function being called paired with a string representation of the arguments passed into
-     *         it, or null if the given string is not the representation of a function being called.
-     */
-    private static FunctionNameAndArgumentString getFunctionNameAndArgumentString(String s)
-    {
-        int openingBracketPosition = -1;
-        int slength = s.length();
-
-        for(int i = 0; i < slength; i++)
-        {
-            if(s.charAt(i) == '(')
-            {
-                openingBracketPosition = i;
-                break;
-            }
-        }
-
-        if(openingBracketPosition <= 0) // no bracket, or bracket is first character.
-            return null;
-
-        int closingBracketPosition = StringUtils.getMatchingBracketPosition(s, openingBracketPosition);
-
-        if(closingBracketPosition != (slength - 1))
-            return null;
-
-        String functionName = s.substring(0, openingBracketPosition);
-        String argumentString = s.substring(openingBracketPosition + 1, closingBracketPosition);
-        return new FunctionNameAndArgumentString(functionName, argumentString);
-    }
 
     public EquationEvaluation build()
     {
