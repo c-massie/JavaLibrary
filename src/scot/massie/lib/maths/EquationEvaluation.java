@@ -5,6 +5,7 @@ import scot.massie.lib.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,18 @@ import java.util.function.ToDoubleFunction;
 
 public final class EquationEvaluation
 {
+    @FunctionalInterface
+    public interface UnaryOperatorAction
+    {
+        double performOperation(double x);
+    }
+
+    @FunctionalInterface
+    public interface BinaryOperatorAction
+    {
+        double performOperation(double x, double y);
+    }
+
     public static class UnparsableEquationException extends RuntimeException
     {
         public UnparsableEquationException(String fullEquation, String equationSection)
@@ -141,6 +154,85 @@ public final class EquationEvaluation
         { return argumentString; }
     }
 
+    private static final class BinaryOperatorWithPosition
+    {
+        public BinaryOperatorWithPosition(BinaryOperator op, int position)
+        {
+            this.op = op;
+            this.position = position;
+        }
+
+        BinaryOperator op;
+        int position;
+
+        public BinaryOperator getOperator()
+        { return op; }
+
+        public int getPosition()
+        { return position; }
+    }
+
+    private static class BinaryOperatorGroup
+    {
+        public BinaryOperatorGroup(double priority)
+        { this.priority = priority; }
+
+        double priority;
+        List<BinaryOperator> operators = new ArrayList<>();
+
+        public int size()
+        { return operators.size(); }
+
+        public void addOperator(BinaryOperator op)
+        { operators.add(op); }
+
+        public List<BinaryOperator> getOperators()
+        { return Collections.unmodifiableList(operators); }
+
+        public BinaryOperator getFirst()
+        { return operators.get(0); }
+    }
+
+    private static class Operator
+    {
+        public Operator(String lex, double priority)
+        {
+            this.lex = lex;
+            this.priority = priority;
+        }
+
+        String lex;
+        double priority;
+    }
+
+    private static class UnaryOperator extends Operator
+    {
+        public UnaryOperator(String lex, double priority, UnaryOperatorAction action)
+        {
+            super(lex, priority);
+            this.action = action;
+        }
+
+        public UnaryOperator(String lex, UnaryOperatorAction action)
+        { this(lex, 0, action); }
+
+        UnaryOperatorAction action;
+    }
+
+    private static class BinaryOperator extends Operator
+    {
+        public BinaryOperator(String lex, double priority, BinaryOperatorAction action)
+        {
+            super(lex, priority);
+            this.action = action;
+        }
+
+        public BinaryOperator(String lex, BinaryOperatorAction action)
+        { this(lex, 0, action); }
+
+        BinaryOperatorAction action;
+    }
+
     private static abstract class EquationComponent
     {
         public abstract double evaluate();
@@ -182,48 +274,48 @@ public final class EquationEvaluation
     }
 
     private static abstract class Operation extends EquationComponent
-    {
-        public Operation(double priority)
-        { this.priority = priority; }
-
-        double priority;
-    }
+    { }
 
     private static abstract class BinaryOperation extends Operation
     {
-        public BinaryOperation(EquationComponent l, EquationComponent r, double priority)
+        public BinaryOperation(EquationComponent l, EquationComponent r)
         {
-            super(priority);
             leftOperand = l;
             rightOperand = r;
         }
-
-        public BinaryOperation(EquationComponent l, EquationComponent r)
-        { this(l, r, 0); }
 
         public EquationComponent leftOperand, rightOperand;
     }
 
     private static abstract class UnaryOperation extends Operation
     {
-        public UnaryOperation(EquationComponent o, double priority)
-        {
-            super(priority);
-            operand = o;
-        }
-
         public UnaryOperation(EquationComponent o)
-        { this(o, 0); }
+        { operand = o; }
 
         public EquationComponent operand;
     }
 
-    private static abstract class VariadicOperation extends EquationComponent
+    private static abstract class VariadicOperation extends Operation
     {
         public VariadicOperation(EquationComponent... os)
         { operands = os; }
 
         public EquationComponent[] operands;
+    }
+
+    private static class CustomBinaryOperation extends BinaryOperation
+    {
+        public CustomBinaryOperation(EquationComponent l, EquationComponent r, BinaryOperatorAction action)
+        {
+            super(l, r);
+            this.action = action;
+        }
+
+        BinaryOperatorAction action;
+
+        @Override
+        public double evaluate()
+        { return action.performOperation(leftOperand.evaluate(), rightOperand.evaluate()); }
     }
 
     private static class Addition extends BinaryOperation
@@ -514,6 +606,27 @@ public final class EquationEvaluation
         });
     }
 
+    private final List<BinaryOperatorGroup> binaryOperatorGroups = new ArrayList<>();
+    {
+        BinaryOperatorGroup group1 = new BinaryOperatorGroup(1);
+
+        // Temporary examples.
+
+        group1.addOperator(new BinaryOperator("§", (x, y) ->
+        {
+            System.out.println(x + " § " + y + " = " + (x + y + y));
+            return x + y + y;
+        }));
+
+        group1.addOperator(new BinaryOperator("◊", (x, y) ->
+        {
+            System.out.println(x + " ◊ " + y + " = " + (x * y));
+            return x * y;
+        }));
+
+        binaryOperatorGroups.add(group1);
+    }
+
     private static String preprocessEquation(String possibleEquation)
     {
         // TO DO: Write function to replace superscript numbers grouping them together, so "x²³" becomes "x^23" rather
@@ -556,6 +669,13 @@ public final class EquationEvaluation
             return parse(possibleEquation.substring(1, possibleEquation.length() - 1));
         }
 
+
+        BinaryOperation op = parseBinaryOperation(possibleEquation);
+
+        if(op != null)
+            return op;
+
+
         int opPosition;
 
         if((opPosition = getOperatorPositionInString(possibleEquation, '+')) >= 0)
@@ -565,7 +685,7 @@ public final class EquationEvaluation
             return new Addition(parse(l), parse(r));
         }
 
-        if((opPosition = getOperatorPositionInString(possibleEquation, '-', 1)) >= 0)
+        if((opPosition = getOperatorPositionInString(possibleEquation, '-', 1, true)) >= 0)
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
@@ -607,7 +727,7 @@ public final class EquationEvaluation
             return new Exponent(parse(l), parse(r));
         }
 
-        if((opPosition = getOperatorPositionInString(possibleEquation, '√', 1)) >= 0)
+        if((opPosition = getOperatorPositionInString(possibleEquation, '√', 1, true)) >= 0)
         {
             String l = possibleEquation.substring(0, opPosition);
             String r = possibleEquation.substring(opPosition + 1);
@@ -643,6 +763,40 @@ public final class EquationEvaluation
         { }
 
         throw new UnparsableEquationException(possibleEquation, possibleEquation);
+    }
+
+    private BinaryOperation parseBinaryOperation(String binaryOperationString)
+    {
+        for(BinaryOperatorGroup biopgroup : binaryOperatorGroups)
+        {
+            int groupSize = biopgroup.size();
+
+            if(groupSize > 1)
+            {
+                BinaryOperatorWithPosition opWithPos = getOperatorWithPosition(binaryOperationString, biopgroup);
+
+                if(opWithPos != null)
+                {
+                    String l = binaryOperationString.substring(0, opWithPos.position);
+                    String r = binaryOperationString.substring(opWithPos.position + opWithPos.op.lex.length());
+                    return new CustomBinaryOperation(parse(l), parse(r), opWithPos.op.action);
+                }
+            }
+            else if(groupSize == 1)
+            {
+                BinaryOperator op = biopgroup.getFirst();
+                int opPos = getOperatorPositionInString(binaryOperationString, op.lex);
+
+                if(opPos >= 0)
+                {
+                    String l = binaryOperationString.substring(0, opPos);
+                    String r = binaryOperationString.substring(opPos + op.lex.length());
+                    return new CustomBinaryOperation(parse(l), parse(r), op.action);
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -736,55 +890,45 @@ public final class EquationEvaluation
         return new FunctionCall(functionMap, fAndA.getFunctionName(), parsedArguments);
     }
 
-    private static int getOperatorPositionInString(String s, char operator, int positionToStartLookingAt)
+    private static int getOperatorPositionInString(String s,
+                                                   char operator,
+                                                   int positionToStartLookingAt,
+                                                   boolean isForLeftAssociative)
     {
         final int maxi = s.length() - 1;
         int bracketDepth = 0;
 
-        for(int i = positionToStartLookingAt; i <= maxi; i++)
+        if(isForLeftAssociative)
         {
-            char ichar = s.charAt(i);
-
-            if(ichar == '(')
-                bracketDepth++;
-            else if(ichar == ')')
+            for(int i = maxi; i >= positionToStartLookingAt; i--)
             {
-                if(bracketDepth > 0)
-                    bracketDepth--;
+                char ichar = s.charAt(i);
+
+                if(ichar == ')')
+                    bracketDepth++;
+                else if(ichar == '(')
+                {
+                    if(bracketDepth > 0)
+                        bracketDepth--;
+                }
+                else if(ichar == operator && bracketDepth == 0)
+                    return i;
             }
-            else if(ichar == operator && bracketDepth == 0)
-                return i;
         }
-
-        return -1;
-    }
-
-    private static int getOperatorPositionInString(String s, char operator)
-    { return getOperatorPositionInString(s, operator, 0); }
-
-    private static int getOperatorPositionInString(String s, String operator, int positionToStartLookingAt)
-    {
-        final int maxi = s.length() - operator.length();
-        final int opLength = operator.length();
-        int bracketDepth = 0;
-
-        if(opLength == 1)
-            return getOperatorPositionInString(s, operator.charAt(0), positionToStartLookingAt);
-
-        for(int i = positionToStartLookingAt; i <= maxi; i++)
+        else
         {
-            char ichar = s.charAt(i);
+            for(int i = positionToStartLookingAt; i <= maxi; i++)
+            {
+                char ichar = s.charAt(i);
 
-            if(ichar == '(')
-                bracketDepth++;
-            else if(ichar == ')')
-            {
-                if(bracketDepth > 0)
-                    bracketDepth--;
-            }
-            else if(bracketDepth == 0)
-            {
-                if(s.substring(i, i + opLength).equals(operator))
+                if(ichar == '(')
+                    bracketDepth++;
+                else if(ichar == ')')
+                {
+                    if(bracketDepth > 0)
+                        bracketDepth--;
+                }
+                else if(ichar == operator && bracketDepth == 0)
                     return i;
             }
         }
@@ -792,8 +936,124 @@ public final class EquationEvaluation
         return -1;
     }
 
+    private static int getOperatorPositionInString(String s, char operator)
+    { return getOperatorPositionInString(s, operator, 0, true); }
+
+    private static int getOperatorPositionInString(String s,
+                                                   String operator,
+                                                   int positionToStartLookingAt,
+                                                   boolean isForLeftAssociative)
+    {
+        final int maxi = s.length() - operator.length();
+        final int opLength = operator.length();
+        int bracketDepth = 0;
+
+        if(opLength == 1)
+            return getOperatorPositionInString(s, operator.charAt(0), positionToStartLookingAt, true);
+
+        if(isForLeftAssociative)
+        {
+            for(int i = maxi; i >= positionToStartLookingAt; i--)
+            {
+                char ichar = s.charAt(i);
+
+                if(ichar == ')')
+                    bracketDepth++;
+                else if(ichar == '(')
+                {
+                    if(bracketDepth > 0)
+                        bracketDepth--;
+                }
+                else if(bracketDepth == 0)
+                {
+                    if(s.startsWith(operator, i))
+                        return i;
+                }
+            }
+        }
+        else
+        {
+            for(int i = positionToStartLookingAt; i <= maxi; i++)
+            {
+                char ichar = s.charAt(i);
+
+                if(ichar == '(')
+                    bracketDepth++;
+                else if(ichar == ')')
+                {
+                    if(bracketDepth > 0)
+                        bracketDepth--;
+                }
+                else if(bracketDepth == 0)
+                {
+                    if(s.substring(i, i + opLength).equals(operator))
+                        return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
     private static int getOperatorPositionInString(String s, String operator)
-    { return getOperatorPositionInString(s, operator, 0); }
+    { return getOperatorPositionInString(s, operator, 0, true); }
+
+    private static BinaryOperatorWithPosition getOperatorWithPosition(String s, BinaryOperatorGroup opGroup)
+    { return getOperatorWithPosition(s, opGroup, 0, true); }
+
+    private static BinaryOperatorWithPosition getOperatorWithPosition(String s,
+                                                                      BinaryOperatorGroup opGroup,
+                                                                      int positionToStartLookingAt,
+                                                                      boolean isForLeftAssociative)
+    {
+        final int maxi = s.length() - 1;
+        int bracketDepth = 0;
+
+        if(isForLeftAssociative)
+        {
+            for(int i = maxi; i >= positionToStartLookingAt; i--)
+            {
+                char ichar = s.charAt(i);
+
+                if(ichar == ')')
+                    bracketDepth++;
+                else if(ichar == '(')
+                {
+                    if(bracketDepth > 0)
+                        bracketDepth--;
+                }
+                else if(bracketDepth == 0)
+                {
+                    for(BinaryOperator op : opGroup.operators)
+                        if(s.startsWith(op.lex, i))
+                            return new BinaryOperatorWithPosition(op, i);
+                }
+            }
+        }
+        else
+        {
+            for(int i = positionToStartLookingAt; i <= maxi; i++)
+            {
+                char ichar = s.charAt(i);
+
+                if(ichar == '(')
+                    bracketDepth++;
+                else if(ichar == ')')
+                {
+                    if(bracketDepth > 0)
+                        bracketDepth--;
+                }
+                else if(bracketDepth == 0)
+                {
+                    for(BinaryOperator op : opGroup.operators)
+                        if(s.startsWith(op.lex, i))
+                            return new BinaryOperatorWithPosition(op, i);
+                }
+            }
+        }
+
+        return null;
+    }
 
     public EquationEvaluation build()
     {
