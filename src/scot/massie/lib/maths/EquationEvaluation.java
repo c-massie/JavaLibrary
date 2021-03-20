@@ -359,20 +359,20 @@ public final class EquationEvaluation
         this.equation = preprocessEquation(equation);
     }
 
+    private static final double PHI = (1 + Math.sqrt(5)) / 2;
+
     private final String unprocessedEquation;
     private final String equation;
     private EquationComponent topLevelComponent = null;
 
     private final Map<String, Double> variableValues = new HashMap<>();
     {
-        double phi = (1 + Math.sqrt(5)) / 2;
-
         variableValues.put("π", Math.PI);
         variableValues.put("pi", Math.PI);
         variableValues.put("e", Math.E);
-        variableValues.put("ϕ", phi);
-        variableValues.put("φ", phi);
-        variableValues.put("phi", phi);
+        variableValues.put("ϕ", PHI);
+        variableValues.put("φ", PHI);
+        variableValues.put("phi", PHI);
         variableValues.put("∞", Double.POSITIVE_INFINITY);
         variableValues.put("inf", Double.POSITIVE_INFINITY);
     }
@@ -537,6 +537,16 @@ public final class EquationEvaluation
                 return (args[args.length / 2] + args[args.length / 2 - 1]) / 2;
             else
                 return args[args.length / 2];
+        });
+
+        functionMap.put("fib", args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException("fib", 1, args.length);
+
+            double n = args[0];
+            double result = (Math.pow(PHI, n) - (Math.pow(-PHI, -n))) / (Math.sqrt(5));
+            return n % 1 == 0 ? Math.round(result) : result;
         });
     }
 
