@@ -6,8 +6,10 @@ import scot.massie.lib.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.ToDoubleFunction;
 
 public final class EquationEvaluation
@@ -580,6 +582,12 @@ public final class EquationEvaluation
         binaryOpPrecedenceLevels.put('^', 9.0);
     }
 
+    private final Set<Character> operatorsThatArentPrefixes = new HashSet<>();
+    { operatorsThatArentPrefixes.addAll(Arrays.asList('/', '÷', '*', '×', '%', '^')); }
+
+    private final Set<Character> operatorsThatArentSuffixes = new HashSet<>();
+    { operatorsThatArentSuffixes.addAll(Arrays.asList('-', '+', '/', '÷', '*', '×', '√', '^')); }
+
     private static String preprocessEquation(String possibleEquation)
     {
         // TO DO: Write function to replace superscript numbers grouping them together, so "x²³" becomes "x^23" rather
@@ -605,15 +613,12 @@ public final class EquationEvaluation
         if(possibleEquation.isEmpty())
             throw new UnparsableEquationException(possibleEquation, possibleEquation);
 
-        String[] notUnaryPrefixOperators = { "*", "×", "/", "÷", "^" };
-        String[] notUnarySuffixOperators = { "+", "-", "*", "×", "/", "÷", "^", "√" };
-
-        for(int i = 0; i < notUnaryPrefixOperators.length; i++)
-            if(possibleEquation.startsWith(notUnaryPrefixOperators[i]))
+        for(char op : operatorsThatArentPrefixes)
+            if(possibleEquation.charAt(0) == op)
                 throw new TrailingOperatorException(possibleEquation, possibleEquation, false);
 
-        for(int i = 0; i < notUnarySuffixOperators.length; i++)
-            if(possibleEquation.endsWith(notUnarySuffixOperators[i]))
+        for(char op : operatorsThatArentSuffixes)
+            if(possibleEquation.charAt(possibleEquation.length() - 1) == op)
                 throw new TrailingOperatorException(possibleEquation, possibleEquation, true);
 
         if((possibleEquation.charAt(0) == '(')
