@@ -66,6 +66,13 @@ class EquationEvaluationTest
     { assertEquals(65.0, new EquationEvaluation("5 * (6 + 7)").evaluate()); }
 
     @Test
+    public void correctlyHandlesMixedBinaryAndUnaryOperators()
+    {
+        assertEquals(-25.0, new EquationEvaluation("5 * - 5").evaluate());
+        assertEquals(3.5, new EquationEvaluation("50% * 7").evaluate());
+    }
+
+    @Test
     public void variables_premade()
     {
         assertEquals(Math.PI, new EquationEvaluation("π").evaluate());

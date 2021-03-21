@@ -155,6 +155,18 @@ public final class EquationEvaluation
         { return argumentString; }
     }
 
+    private static final class StringAndPosition
+    {
+        public StringAndPosition(String s, int pos)
+        {
+            this.string = s;
+            this.position = pos;
+        }
+
+        public final String string;
+        public final int position;
+    }
+
     private static class OperatorGroup
     {
         public OperatorGroup(double priority)
@@ -566,7 +578,7 @@ public final class EquationEvaluation
         operatorGroups.add(new OperatorGroup( 8).withOp(new BinaryOperator('√', 8, (x, y) -> Math.pow(y, 1.0 / x))));
         operatorGroups.add(new OperatorGroup( 9).withOp(new BinaryOperator('^', 9, (x, y) -> Math.pow(x, y), false)));
         operatorGroups.add(new OperatorGroup(10).withOp(new UnaryOperator ('√', 10, x -> Math.sqrt(x))));
-        operatorGroups.add(new OperatorGroup(11).withOp(new UnaryOperator ('%', 11, x -> x / 100)));
+        operatorGroups.add(new OperatorGroup(11).withOp(new UnaryOperator ('%', 11, x -> x / 100, true)));
     }
 
     private final Map<Character, Double> binaryOpPrecedenceLevels = new HashMap<>();
@@ -587,6 +599,9 @@ public final class EquationEvaluation
 
     private final Set<Character> operatorsThatArentSuffixes = new HashSet<>();
     { operatorsThatArentSuffixes.addAll(Arrays.asList('-', '+', '/', '÷', '*', '×', '√', '^')); }
+
+    private final Set<Character> operatorChars = new HashSet<>();
+    { operatorChars.addAll(Arrays.asList('-', '+', '/', '÷', '*', '×', '%', '√', '^')); }
 
     private static String preprocessEquation(String possibleEquation)
     {
@@ -722,19 +737,16 @@ public final class EquationEvaluation
                 if(i == 0 || i == slength - 1)
                     continue;
 
-                Double otherCharPrecedence = binaryOpPrecedenceLevels.get(getCharLeftOf(s, i));
-
-                if(otherCharPrecedence != null && otherCharPrecedence > og.priority)
-                    continue;
-
-                otherCharPrecedence = binaryOpPrecedenceLevels.get(getCharRightOf(s, i));
-
-                if(otherCharPrecedence != null && otherCharPrecedence > og.priority)
-                    continue;
-
                 for(BinaryOperator op : og.leftAssociativeBinaryOperators)
+                {
                     if(ichar == op.lex)
+                    {
+                        if(!canBeBinaryOperator(s, i))
+                            break;
+
                         return new BinaryOperation(parse(s.substring(0, i)), parse(s.substring(i + 1)), op.action);
+                    }
+                }
             }
         }
 
@@ -762,19 +774,16 @@ public final class EquationEvaluation
                 if(i == 0 || i == slength - 1)
                     continue;
 
-                Double otherCharPrecedence = binaryOpPrecedenceLevels.get(getCharLeftOf(s, i));
-
-                if(otherCharPrecedence != null && otherCharPrecedence > og.priority)
-                    continue;
-
-                otherCharPrecedence = binaryOpPrecedenceLevels.get(getCharRightOf(s, i));
-
-                if(otherCharPrecedence != null && otherCharPrecedence > og.priority)
-                    continue;
-
                 for(BinaryOperator op : og.rightAssociativeBinaryOperators)
+                {
                     if(ichar == op.lex)
+                    {
+                        if(!canBeBinaryOperator(s, i))
+                            break;
+
                         return new BinaryOperation(parse(s.substring(0, i)), parse(s.substring(i + 1)), op.action);
+                    }
+                }
             }
         }
 
@@ -794,37 +803,65 @@ public final class EquationEvaluation
     {
         int lastPos = s.length() - 1;
 
-        for(UnaryOperator uop : og.prefixOperators)
+        for(UnaryOperator uop : og.suffixOperators)
             if(s.charAt(lastPos) == uop.lex)
                 return new UnaryOperation(parse(s.substring(0, lastPos)), uop.action);
 
         return null;
     }
 
-    private static char getCharLeftOf(String s, int pos)
+    private boolean canBeBinaryOperator(String s, int pos)
     {
-        for(int i = pos - 1; i >= 0; i--)
-        {
-            char ichar = s.charAt(i);
+        StringAndPosition opRun = getOpRunForBinaryOp(s, pos);
 
-            if(ichar != ' ')
-                return ichar;
+        if(opRun == null)
+            return false;
+
+        for(int i = opRun.position - 1; i >= 0; i--)
+        {
+            char ichar = opRun.string.charAt(i);
+
+            if((ichar != ' ') && (operatorsThatArentSuffixes.contains(ichar)))
+                return false;
         }
 
-        return Character.MIN_VALUE;
+        for(int i = opRun.position + 1; i < opRun.string.length(); i++)
+        {
+            char ichar = opRun.string.charAt(i);
+
+            if((ichar != ' ') && (operatorsThatArentPrefixes.contains(ichar)))
+                return false;
+        }
+
+        return true;
     }
 
-    private static char getCharRightOf(String s, int pos)
+    private StringAndPosition getOpRunForBinaryOp(String s, int opPosition)
     {
-        for(int i = pos + 1, slength = s.length(); i < slength; i++)
-        {
-            char ichar = s.charAt(i);
+        // From and to are the min and max positions (both inclusive) of the operator run in the provided string.
+        int from = opPosition - 1;
+        int to = opPosition + 1;
 
-            if(ichar != ' ')
-                return ichar;
+        for(char c = s.charAt(from); (c == ' ') || (operatorChars.contains(c)); c = s.charAt(--from))
+        {
+            // If the op run stretches to the start of the string, it's not a valid op run for a binary operator.
+            if(from == 0)
+                return null;
         }
 
-        return Character.MIN_VALUE;
+        from++;
+
+        for(char c = s.charAt(to); (c == ' ') || (operatorChars.contains(c)); c = s.charAt(++to))
+        {
+            // If the op run stretches to the end of the string, it's not a valid op run for a binary operator.
+            if(to == s.length() - 1)
+                return null;
+        }
+
+        to--;
+
+        String opRun = s.substring(from, to + 1);
+        return new StringAndPosition(opRun, opPosition - from);
     }
 
     /**
