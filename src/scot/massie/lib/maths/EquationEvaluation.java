@@ -14,6 +14,28 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.ToDoubleFunction;
 
+/**
+ * <p>A representation of an evaluation of an equation.</p>
+ *
+ * <p>Is finalised with .build(). Before being finalised, can have custom functions, variables, and operators defined. Once
+ * finalised, can no longer have custom operators defined as this would require the equation to be reëvaluated, but can
+ * still have variables and functions re-assigned.</p>
+ *
+ * <p>The default operators have the following precedence levels:</p>
+ *
+ * <ul>
+ *     <li>Custom binary operators by default: 0</li>
+ *     <li>Addition/subtraction: 100</li>
+ *     <li>Multiplication/division: 200</li>
+ *     <li>Modulo: 300</li>
+ *     <li>Custom unary operators by default: 400</li>
+ *     <li>Unary positive/negative: 500</li>
+ *     <li>nth root: 600</li>
+ *     <li>Square root unary: 700</li>
+ *     <li>Exponentiation: 800</li>
+ *     <li>Percentage: 900</li>
+ * </ul>
+ */
 public final class EquationEvaluation
 {
     //region Inner classes
@@ -50,8 +72,18 @@ public final class EquationEvaluation
     //endregion
 
     //region Exceptions
+
+    /**
+     * Thrown to indicate that the contained equation cannot be parsed given the operators, functions, and variables
+     * available to it.
+     */
     public static class UnparsableEquationException extends RuntimeException
     {
+        /**
+         * Creates a new UnparsableEquationException.
+         * @param fullEquation The full equation that could not be parsed.
+         * @param equationSection The specific section of the equation that could not be parsed.
+         */
         public UnparsableEquationException(String fullEquation, String equationSection)
         {
             super("Equation was not parsable as an equation: " + fullEquation +
@@ -61,6 +93,12 @@ public final class EquationEvaluation
             this.equationSection = equationSection;
         }
 
+        /**
+         * Creates a new UnparsableEquationException with a custom message.
+         * @param fullEquation The full equation that could not be parsed.
+         * @param equationSection The specific section of the equation that could not be parsed.
+         * @param msg The exception message.
+         */
         UnparsableEquationException(String fullEquation, String equationSection, String msg)
         {
             super(msg);
@@ -71,18 +109,42 @@ public final class EquationEvaluation
         final String equationSection;
         final String fullEquation;
 
+        /**
+         * Gets the full equation that could not be parsed.
+         * @return The full equation that could not be parsed.
+         */
         public String getFullEquation()
         { return fullEquation; }
 
+        /**
+         * Gets the specific section of the equation that could not be parsed.
+         * @return The specific section of the equation that could not be parsed.
+         */
         public String getEquationSection()
         { return equationSection; }
 
+        /**
+         * Creates a copy of this exception replacing the full equation stored with the given one.
+         * @param fullEquation The full equation that could not be parsed.
+         * @return The copy created.
+         */
         public UnparsableEquationException withFullEquation(String fullEquation)
         { return new UnparsableEquationException(fullEquation, equationSection); }
     }
 
+    /**
+     * Thrown to indicate that the contained equation could not be parsed, as it started or ended with a binary operator
+     * that could not be a prefix or suffix respectively.
+     */
     public static class TrailingOperatorException extends UnparsableEquationException
     {
+        /**
+         * Creates a new TrailingOperatorException.
+         * @param fullEquation The full equation that could not be parsed.
+         * @param equationSection The specific section of the equation that could not be parsed.
+         * @param operatorIsAtEnd Whether or not the dangling binary operator was at the end. If not, then it's assumed
+         *                        to be at the start.
+         */
         public TrailingOperatorException(String fullEquation, String equationSection, boolean operatorIsAtEnd)
         {
             super(fullEquation,
@@ -97,18 +159,39 @@ public final class EquationEvaluation
 
         final boolean operatorIsAtEnd;
 
+        /**
+         * Gets whether or not the dangling binary operator is at the end of the equation.
+         * @return True if the dangling binary operator is at the end of the equation. Otherwise, false.
+         */
         public boolean operatorIsAtEnd()
         { return operatorIsAtEnd; }
 
+        /**
+         * Gets whether or not the dangling binary operator is at the start of the equation.
+         * @return True if the dangling binary operator is at the start of the equation. Otherwise, false.
+         */
         public boolean operatorIsAtStart()
         { return !operatorIsAtEnd; }
 
+        /**
+         * Creates a copy of this exception replacing the full equation stored with the given one.
+         * @param fullEquation The full equation that could not be parsed.
+         * @return The copy created.
+         */
+        @Override
         public TrailingOperatorException withFullEquation(String fullEquation)
         { return new TrailingOperatorException(fullEquation, equationSection, operatorIsAtEnd); }
     }
 
+    /**
+     * Thrown when a parsed variable in an equation is not present in the variables assigned to the equation.
+     */
     public static final class UnresolvedArgumentInEquationException extends RuntimeException
     {
+        /**
+         * Creates a new UnresolvedArgumentInEquationException.
+         * @param variableName The name of the variable not found.
+         */
         public UnresolvedArgumentInEquationException(String variableName)
         {
             super("Variable was unresolved: " + variableName);
@@ -117,12 +200,23 @@ public final class EquationEvaluation
 
         private final String variableName;
 
+        /**
+         * Gets the name of the variable not found.
+         * @return The name of the variable not found.
+         */
         public String getVariableName()
         { return variableName; }
     }
 
+    /**
+     * Thrown when a parsed function in an equation is not present in the functions assigned to the equation.
+     */
     public static final class MissingFunctionException extends RuntimeException
     {
+        /**
+         * Creates a new MissingFunctionException
+         * @param functionName The name of the function not found.
+         */
         public MissingFunctionException(String functionName)
         {
             super("Function was missing: " + functionName);
@@ -131,13 +225,28 @@ public final class EquationEvaluation
 
         private final String functionName;
 
+        /**
+         * Gets the name of the function not found.
+         * @return The name of the function not found.
+         */
         public String getFunctionName()
         { return functionName; }
     }
 
+    /**
+     * Thrown when a function requires more arguments than were assigned to it.
+     */
     public static final class MissingFunctionArgumentsException extends RuntimeException
     {
-        public MissingFunctionArgumentsException(String functionName, int numberOfArgsRequired, int numberOfArgsProvided)
+        /**
+         * Creates a new MissingFunctionArgumentsException.
+         * @param functionName The name of the function missing arguments.
+         * @param numberOfArgsRequired The number of arguments provided.
+         * @param numberOfArgsProvided The number of arguments required.
+         */
+        public MissingFunctionArgumentsException(String functionName,
+                                                 int numberOfArgsRequired,
+                                                 int numberOfArgsProvided)
         {
             super("The function \"" + functionName + "\" requires at least " + numberOfArgsRequired + " arguments, but"
                   + " only " + numberOfArgsProvided + " were provided.");
@@ -151,28 +260,58 @@ public final class EquationEvaluation
         final int numberOfArgsRequired;
         final int numberOfArgsProvided;
 
+        /**
+         * Gets the name of the function requiring more arguments.
+         * @return The name of the function.
+         */
         public String getFunctionName()
         { return functionName; }
 
+        /**
+         * Gets the number of arguments required by the function.
+         * @return The number of arguments required.
+         */
         public int getNumberOfArgsRequired()
         { return numberOfArgsRequired; }
 
+        /**
+         * Gets the number of arguments passed into the function.
+         * @return The number of arguments passed.
+         */
         public int getNumberOfArgsProvided()
         { return numberOfArgsProvided; }
     }
     //endregion
 
     //region Operator actions
+
+    /**
+     * An action performable in an equation by a unary operator.
+     */
     @FunctionalInterface
     public interface UnaryOperatorAction
     {
+        /**
+         * Performs an operation on the passed operand.
+         * @param x The operand.
+         * @return The result of the operation.
+         */
         double performOperation(double x);
     }
 
+    /**
+     * An action performable in an equation by a binary operator.
+     */
     @FunctionalInterface
     public interface BinaryOperatorAction
     {
-        double performOperation(double x, double y);
+        /**
+         * Performs an operation on the passed operands.
+         * @param l The left operand.
+         * @param r The right operand.
+         * @return The result of the operation.
+         */
+        double performOperation(double l, double r);
     }
     //endregion
 
@@ -384,6 +523,12 @@ public final class EquationEvaluation
     //endregion
 
     //region Initialisation
+
+    /**
+     * Creates a new evaluation of the passed in equation. The result of the equation may be accessed by calling
+     * .evaluate() on the EquationEvaluation instance.
+     * @param equation The equation to evaluate.
+     */
     public EquationEvaluation(String equation)
     {
         this.unprocessedEquation = equation;
@@ -1080,6 +1225,12 @@ public final class EquationEvaluation
     //endregion
 
     //region Public interface
+
+    /**
+     * Finalises the equation evaluation. After being finalised, the equation can be evaluated without having re-parse
+     * it. Once finalised, new operators may not be registered, but operators and functions may still be reassigned.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation build()
     {
         try
@@ -1089,6 +1240,10 @@ public final class EquationEvaluation
         return this;
     }
 
+    /**
+     * Gets the result of the contained equation. If the equation evaluation isn't finalised, finalises it first.
+     * @return The result of the contained equation.
+     */
     public double evaluate()
     {
         if(topLevelComponent == null)
@@ -1097,18 +1252,42 @@ public final class EquationEvaluation
         return topLevelComponent.evaluate();
     }
 
+    /**
+     * Registers a new variable available to the contained equation. Variables may be any string not containing
+     * operators.
+     * @param argumentRepresentedBy How the argument may be referred to in the equation.
+     * @param argumentValue The value of the argument.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withVariable(String argumentRepresentedBy, double argumentValue)
     {
         variableValues.put(argumentRepresentedBy, argumentValue);
         return this;
     }
 
+    /**
+     * Registers a new function available to the contained equation. Functions may be called by having the name of the
+     * function followed by the arguments to pass into the function in brackets, or an empty pair of brackets where
+     * no arguments are to be passed in. Function names may be any string not containing operators.
+     * @param functionName The name of the function, by which the function may be referred to in the equation.
+     * @param f The function to register. The arguments are passed in as an array of doubles.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withFunction(String functionName, ToDoubleFunction<double[]> f)
     {
         functionMap.put(functionName, f);
         return this;
     }
 
+    /**
+     * Registers a new binary operator. Operators being registered will not be factored into the equation until the next
+     * time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of the
+     * equation. Operators are left-associative by default.
+     * @param operatorCharacter The character by which the operator may be referred to in the equation.
+     * @param precedenceLevel The precedence level of the operator. Higher levels are more "sticky".
+     * @param calculation The calculation of a result of the two operands.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withOperator(char operatorCharacter,
                                            double precedenceLevel,
                                            BinaryOperatorAction calculation)
@@ -1117,11 +1296,29 @@ public final class EquationEvaluation
         return this;
     }
 
-    // Defaults the operator precedence to 0, or 100 below addition/subtraction.
+    /**
+     * <p>Registers a new binary operator. Operators being registered will not be factored into the equation until the next
+     * time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of the
+     * equation. Operators are left-associative by default.</p>
+     *
+     * <p>Binary operators have a default precedence level of 0.</p>
+     * @param operatorCharacter The character by which the operator may be referred to in the equation.
+     * @param calculation The calculation of a result of the two operands.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withOperator(char operatorCharacter,
                                            BinaryOperatorAction calculation)
     { return withOperator(operatorCharacter, 0, calculation); }
 
+    /**
+     * Registers a new right-associative binary operator. Operators being registered will not be factored into the
+     * equation until the next time it's built, (and not simply evaluated) as the introduction of a new operator may
+     * change the parsing of the equation.
+     * @param operatorCharacter The character by which the operator may be referred to in the equation.
+     * @param precedenceLevel The precedence level of the operator. Higher levels are more "sticky".
+     * @param calculation The calculation of a result of the two operands.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withRightAssociativeOperator(char operatorCharacter,
                                                            double precedenceLevel,
                                                            BinaryOperatorAction calculation)
@@ -1130,11 +1327,29 @@ public final class EquationEvaluation
         return this;
     }
 
-    // Defaults the operator precedence to 0, or 100 below addition/subtraction.
+    /**
+     * <p>Registers a new right-associative binary operator. Operators being registered will not be factored into the
+     * equation until the next time it's built, (and not simply evaluated) as the introduction of a new operator may
+     * change the parsing of the equation.</p>
+     *
+     * <p>Binary operators have a default precedence level of 0.</p>
+     * @param operatorCharacter The character by which the operator may be referred to in the equation.
+     * @param calculation The calculation of a result of the two operands.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withRightAssociativeOperator(char operatorCharacter,
                                                            BinaryOperatorAction calculation)
     { return withRightAssociativeOperator(operatorCharacter, 0, calculation); }
 
+    /**
+     * Registers a new prefix operator. Operators being registered will not be factored into the equation until the next
+     * time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of the
+     * equation.
+     * @param operatorCharacter The character by which the operator may be referred to in the equation.
+     * @param precedenceLevel The precedence level of the operator. Higher levels are more "sticky".
+     * @param calculation The calculation of a result of the operand.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withPrefixOperator(char operatorCharacter,
                                                  double precedenceLevel,
                                                  UnaryOperatorAction calculation)
@@ -1143,7 +1358,16 @@ public final class EquationEvaluation
         return this;
     }
 
-    // Defaults the operator precedence to 400, or 100 below the positive/negative unary operators
+    /**
+     * <p>Registers a new prefix operator. Operators being registered will not be factored into the equation until the
+     * next time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of
+     * the equation.</p>
+     *
+     * <p>Unary operators have a default precedence level of 0.</p>
+     * @param operatorCharacter The character by which the operator may be referred to in the equation.
+     * @param calculation The calculation of a result of the operand.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withPrefixOperator(char operatorCharacter,
                                                  UnaryOperatorAction calculation)
     {
@@ -1151,6 +1375,15 @@ public final class EquationEvaluation
         return this;
     }
 
+    /**
+     * Registers a new suffix operator. Operators being registered will not be factored into the equation until the next
+     * time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of the
+     * equation.
+     * @param operatorCharacter The character by which the operator may be referred to in the equation.
+     * @param precedenceLevel The precedence level of the operator. Higher levels are more "sticky".
+     * @param calculation The calculation of a result of the operand.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withSuffixOperator(char operatorCharacter,
                                                  double precedenceLevel,
                                                  UnaryOperatorAction calculation)
@@ -1159,7 +1392,16 @@ public final class EquationEvaluation
         return this;
     }
 
-    // Defaults the operator precedence to 400, or 100 below the positive/negative unary operators
+    /**
+     * <p>Registers a new suffix operator. Operators being registered will not be factored into the equation until the
+     * next time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of
+     * the equation.</p>
+     *
+     * <p>Unary operators have a default precedence level of 0.</p>
+     * @param operatorCharacter The character by which the operator may be referred to in the equation.
+     * @param calculation The calculation of a result of the operand.
+     * @return This equation evaluation.
+     */
     public EquationEvaluation withSuffixOperator(char operatorCharacter,
                                                  UnaryOperatorAction calculation)
     {
