@@ -5,6 +5,8 @@ import scot.massie.lib.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -371,9 +373,29 @@ public final class EquationEvaluation
     {
         this.unprocessedEquation = equation;
         this.equation = preprocessEquation(equation);
+
+        for(int i = 0; i < defaultOperators.length; i++)
+            addOperatorDumbly(defaultOperators[i]);
     }
 
     private static final double PHI = (1 + Math.sqrt(5)) / 2;
+
+    private static final Operator[] defaultOperators =
+    {
+            new BinaryOperator('-', 1,  (x, y) -> x - y),
+            new BinaryOperator('+', 2,  (x, y) -> x + y),
+            new BinaryOperator('/', 3,  (x, y) -> x / y),
+            new BinaryOperator('÷', 3,  (x, y) -> x / y),
+            new BinaryOperator('*', 4,  (x, y) -> x * y),
+            new BinaryOperator('×', 4,  (x, y) -> x * y),
+            new BinaryOperator('%', 5,  (x, y) -> x % y),
+            new UnaryOperator ('-', 6,  x -> -x),
+            new UnaryOperator ('+', 7,  x -> x),
+            new BinaryOperator('√', 8,  (x, y) -> Math.pow(y, 1.0 / x)),
+            new BinaryOperator('^', 9,  (x, y) -> Math.pow(x, y), false),
+            new UnaryOperator ('√', 10, x -> Math.sqrt(x)),
+            new UnaryOperator ('%', 11, x -> x / 100, true)
+    };
 
     private final String unprocessedEquation;
     private final String equation;
@@ -565,43 +587,122 @@ public final class EquationEvaluation
     }
 
     private final List<OperatorGroup> operatorGroups = new ArrayList<>();
-    {
-        operatorGroups.add(new OperatorGroup( 1).withOp(new BinaryOperator('-', 1, (x, y) -> x - y)));
-        operatorGroups.add(new OperatorGroup( 2).withOp(new BinaryOperator('+', 2, (x, y) -> x + y)));
-        operatorGroups.add(new OperatorGroup( 3).withOp(new BinaryOperator('/', 3, (x, y) -> x / y))
-                                                .withOp(new BinaryOperator('÷', 3, (x, y) -> x / y)));
-        operatorGroups.add(new OperatorGroup( 4).withOp(new BinaryOperator('*', 4, (x, y) -> x * y))
-                                                .withOp(new BinaryOperator('×', 4, (x, y) -> x * y)));
-        operatorGroups.add(new OperatorGroup( 5).withOp(new BinaryOperator('%', 5, (x, y) -> x % y)));
-        operatorGroups.add(new OperatorGroup( 6).withOp(new UnaryOperator ('-', 6, x -> -x)));
-        operatorGroups.add(new OperatorGroup( 7).withOp(new UnaryOperator ('+', 7, x -> x)));
-        operatorGroups.add(new OperatorGroup( 8).withOp(new BinaryOperator('√', 8, (x, y) -> Math.pow(y, 1.0 / x))));
-        operatorGroups.add(new OperatorGroup( 9).withOp(new BinaryOperator('^', 9, (x, y) -> Math.pow(x, y), false)));
-        operatorGroups.add(new OperatorGroup(10).withOp(new UnaryOperator ('√', 10, x -> Math.sqrt(x))));
-        operatorGroups.add(new OperatorGroup(11).withOp(new UnaryOperator ('%', 11, x -> x / 100, true)));
-    }
 
-    private final Map<Character, Double> binaryOpPrecedenceLevels = new HashMap<>();
-    {
-        binaryOpPrecedenceLevels.put('-', 1.0);
-        binaryOpPrecedenceLevels.put('+', 2.0);
-        binaryOpPrecedenceLevels.put('/', 3.0);
-        binaryOpPrecedenceLevels.put('÷', 3.0);
-        binaryOpPrecedenceLevels.put('*', 4.0);
-        binaryOpPrecedenceLevels.put('×', 4.0);
-        binaryOpPrecedenceLevels.put('%', 5.0);
-        binaryOpPrecedenceLevels.put('√', 8.0);
-        binaryOpPrecedenceLevels.put('^', 9.0);
-    }
+    private final Map<Character, BinaryOperator> binaryOperators = new HashMap<>();
 
-    private final Set<Character> operatorsThatArentPrefixes = new HashSet<>();
-    { operatorsThatArentPrefixes.addAll(Arrays.asList('/', '÷', '*', '×', '%', '^')); }
+    private final Map<Character, UnaryOperator> prefixOperators = new HashMap<>();
 
-    private final Set<Character> operatorsThatArentSuffixes = new HashSet<>();
-    { operatorsThatArentSuffixes.addAll(Arrays.asList('-', '+', '/', '÷', '*', '×', '√', '^')); }
+    private final Map<Character, UnaryOperator> suffixOperators = new HashMap<>();
 
     private final Set<Character> operatorChars = new HashSet<>();
-    { operatorChars.addAll(Arrays.asList('-', '+', '/', '÷', '*', '×', '%', '√', '^')); }
+
+    private OperatorGroup getOrCreateOpGroup(double priority)
+    {
+        for(OperatorGroup og : operatorGroups)
+            if(og.priority == priority)
+                return og;
+
+        OperatorGroup newOg = new OperatorGroup(priority);
+        int p = -(Collections.binarySearch(operatorGroups, newOg, Comparator.comparingDouble(a -> a.priority)) + 1);
+        operatorGroups.add(p, newOg);
+        return newOg;
+    }
+
+    private void removeBinaryOpFromOpGroupsIfRegistered(BinaryOperator op)
+    {
+        BinaryOperator existingOp = binaryOperators.get(op.lex);
+
+        if(existingOp != null)
+        {
+            for(OperatorGroup og : operatorGroups)
+            {
+                if(og.leftAssociativeBinaryOperators.remove(existingOp))
+                    break;
+
+                if(og.rightAssociativeBinaryOperators.remove(existingOp))
+                    break;
+            }
+        }
+    }
+
+    private void removePrefixOpFromOpGroupsIfRegistered(UnaryOperator op)
+    {
+        UnaryOperator existingOp = prefixOperators.get(op.lex);
+
+        if(existingOp != null)
+            for(OperatorGroup og : operatorGroups)
+                if(og.prefixOperators.remove(existingOp))
+                    break;
+    }
+
+    private void removeSuffixOpFromOpGroupsIfRegistered(UnaryOperator op)
+    {
+        UnaryOperator existingOp = prefixOperators.get(op.lex);
+
+        if(existingOp != null)
+            for(OperatorGroup og : operatorGroups)
+                if(og.suffixOperators.remove(existingOp))
+                    break;
+    }
+
+    private void addOperator(Operator op)
+    {
+        if(op instanceof BinaryOperator)
+        {
+            removeBinaryOpFromOpGroupsIfRegistered((BinaryOperator)op);
+            binaryOperators.put(op.lex, (BinaryOperator)op);
+        }
+        else
+        {
+            UnaryOperator uop = (UnaryOperator)op;
+
+            if(uop.isSuffixOperator)
+            {
+                removeSuffixOpFromOpGroupsIfRegistered(uop);
+                suffixOperators.put(uop.lex, uop);
+            }
+            else
+            {
+                removePrefixOpFromOpGroupsIfRegistered(uop);
+                prefixOperators.put(uop.lex, uop);
+            }
+        }
+
+        getOrCreateOpGroup(op.priority).addOperator(op);
+        operatorChars.add(op.lex);
+    }
+
+    private void addOperatorDumbly(Operator op)
+    {
+        if(op instanceof BinaryOperator)
+            binaryOperators.put(op.lex, (BinaryOperator)op);
+        else
+        {
+            UnaryOperator uop = (UnaryOperator)op;
+            (uop.isSuffixOperator ? suffixOperators : prefixOperators).put(uop.lex, uop);
+        }
+
+        getOrCreateOpGroup(op.priority).addOperator(op);
+        operatorChars.add(op.lex);
+    }
+
+    private boolean charIsNonPrefixOperator(char c)
+    {
+        for(char oc : operatorChars)
+            if(c == oc)
+                return !prefixOperators.containsKey(c);
+
+        return false;
+    }
+
+    private boolean charIsNonSuffixOperator(char c)
+    {
+        for(char oc : operatorChars)
+            if(c == oc)
+                return !suffixOperators.containsKey(c);
+
+        return false;
+    }
 
     private static String preprocessEquation(String possibleEquation)
     {
@@ -628,13 +729,11 @@ public final class EquationEvaluation
         if(possibleEquation.isEmpty())
             throw new UnparsableEquationException(possibleEquation, possibleEquation);
 
-        for(char op : operatorsThatArentPrefixes)
-            if(possibleEquation.charAt(0) == op)
-                throw new TrailingOperatorException(possibleEquation, possibleEquation, false);
+        if(charIsNonPrefixOperator(possibleEquation.charAt(0)))
+            throw new TrailingOperatorException(possibleEquation, possibleEquation, false);
 
-        for(char op : operatorsThatArentSuffixes)
-            if(possibleEquation.charAt(possibleEquation.length() - 1) == op)
-                throw new TrailingOperatorException(possibleEquation, possibleEquation, true);
+        if(charIsNonSuffixOperator(possibleEquation.charAt(possibleEquation.length() - 1)))
+            throw new TrailingOperatorException(possibleEquation, possibleEquation, true);
 
         if((possibleEquation.charAt(0) == '(')
         && (StringUtils.getMatchingBracketPosition(possibleEquation, 0) == possibleEquation.length() - 1))
@@ -821,7 +920,7 @@ public final class EquationEvaluation
         {
             char ichar = opRun.string.charAt(i);
 
-            if((ichar != ' ') && (operatorsThatArentSuffixes.contains(ichar)))
+            if((ichar != ' ') && (!suffixOperators.containsKey(ichar)))
                 return false;
         }
 
@@ -829,7 +928,7 @@ public final class EquationEvaluation
         {
             char ichar = opRun.string.charAt(i);
 
-            if((ichar != ' ') && (operatorsThatArentPrefixes.contains(ichar)))
+            if((ichar != ' ') && (!prefixOperators.containsKey(ichar)))
                 return false;
         }
 
