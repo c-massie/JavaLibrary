@@ -63,6 +63,76 @@ class EquationEvaluationTest
     }
 
     @Test
+    void op_custom_binary_leftAssociative()
+    {
+        assertEquals(37.0, new EquationEvaluation("5§7§9")
+                                   .withOperator('§', (a, b) -> a + b + b)
+                                   .evaluate());
+    }
+
+    @Test
+    void op_custom_binary_rightAssociative()
+    {
+        assertEquals(55.0, new EquationEvaluation("5§7§9")
+                                   .withRightAssociativeOperator('§', (a, b) -> a + b + b)
+                                   .evaluate());
+    }
+
+    @Test
+    void op_custom_unary_prefix()
+    {
+        assertEquals(45.0, new EquationEvaluation("§9")
+                                   .withPrefixOperator('§', x -> x * 5)
+                                   .evaluate());
+    }
+
+    @Test
+    void op_custom_unary_suffix()
+    {
+        assertEquals(45.0, new EquationEvaluation("9§")
+                                   .withSuffixOperator('§', x -> x * 5)
+                                   .evaluate());
+    }
+
+    @Test
+    void op_custom_order_mixedUnaries()
+    {
+        assertEquals(32.0, new EquationEvaluation("§9§")
+                                .withPrefixOperator('§', x -> x * 3)
+                                .withSuffixOperator('§', x -> x + 5)
+                                .evaluate());
+
+        assertEquals(32.0, new EquationEvaluation("§9§")
+                                   .withPrefixOperator('§', 5, x -> x * 3)
+                                   .withSuffixOperator('§', 4, x -> x + 5)
+                                   .evaluate());
+
+        assertEquals(42.0, new EquationEvaluation("§9§")
+                                   .withPrefixOperator('§', 5, x -> x * 3)
+                                   .withSuffixOperator('§', 6, x -> x + 5)
+                                   .evaluate());
+    }
+
+    @Test
+    void op_custom_order_mixedAssociativityBinaries()
+    {
+        assertEquals(108.0, new EquationEvaluation("5 § 7 ◊ 9")
+                                    .withOperator                ('§', (a, b) -> a + b)
+                                    .withRightAssociativeOperator('◊', (a, b) -> a * b)
+                                    .evaluate());
+
+        assertEquals(108.0, new EquationEvaluation("5 § 7 ◊ 9")
+                                    .withOperator                ('§', 5, (a, b) -> a + b)
+                                    .withRightAssociativeOperator('◊', 4, (a, b) -> a * b)
+                                    .evaluate());
+
+        assertEquals(68.0, new EquationEvaluation("5 § 7 ◊ 9")
+                                    .withOperator                ('§', 5, (a, b) -> a + b)
+                                    .withRightAssociativeOperator('◊', 6, (a, b) -> a * b)
+                                    .evaluate());
+    }
+
+    @Test
     public void brackets()
     {
         assertEquals(5.0, new EquationEvaluation("(5)").evaluate());
@@ -157,11 +227,13 @@ class EquationEvaluationTest
     @Test
     public void invalid_onlyUnaryNoBinaryOperators()
     {
-        // TO DO: Implement
-        // Cannot test until custom variables implemented.
-
-        // assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
-        // { new EquationEvaluation("").evaluate(); });
+        assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
+        {
+            new EquationEvaluation("4§◊6")
+                    .withSuffixOperator('§', x -> x * 3)
+                    .withPrefixOperator('◊', x -> x + 5)
+                    .evaluate();
+        });
     }
 
     @Test

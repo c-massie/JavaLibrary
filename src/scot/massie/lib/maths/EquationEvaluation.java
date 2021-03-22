@@ -778,14 +778,6 @@ public final class EquationEvaluation
 
     private Operation parseOperation(String s, OperatorGroup og)
     {
-        if(!og.leftAssociativeBinaryOperators.isEmpty())
-        {
-            Operation o = parseOperation_leftAssociative(s, og);
-
-            if(o != null)
-                return o;
-        }
-
         if(!og.rightAssociativeBinaryOperators.isEmpty())
         {
             Operation o = parseOperation_rightAssociative(s, og);
@@ -794,9 +786,9 @@ public final class EquationEvaluation
                 return o;
         }
 
-        if(!og.prefixOperators.isEmpty())
+        if(!og.leftAssociativeBinaryOperators.isEmpty())
         {
-            Operation o = parseOperation_prefix(s, og);
+            Operation o = parseOperation_leftAssociative(s, og);
 
             if(o != null)
                 return o;
@@ -805,6 +797,14 @@ public final class EquationEvaluation
         if(!og.suffixOperators.isEmpty())
         {
             Operation o = parseOperation_suffix(s, og);
+
+            if(o != null)
+                return o;
+        }
+
+        if(!og.prefixOperators.isEmpty())
+        {
+            Operation o = parseOperation_prefix(s, og);
 
             if(o != null)
                 return o;
