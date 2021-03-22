@@ -16,18 +16,40 @@ import java.util.function.ToDoubleFunction;
 
 public final class EquationEvaluation
 {
-    @FunctionalInterface
-    public interface UnaryOperatorAction
+    //region Inner classes
+    //region Pairings
+    private static final class FunctionNameAndArgumentString
     {
-        double performOperation(double x);
+        public FunctionNameAndArgumentString(String functionName, String argumentString)
+        {
+            this.functionName = functionName;
+            this.argumentString = argumentString;
+        }
+
+        String functionName;
+        String argumentString;
+
+        public String getFunctionName()
+        { return functionName; }
+
+        public String getArgumentString()
+        { return argumentString; }
     }
 
-    @FunctionalInterface
-    public interface BinaryOperatorAction
+    private static final class StringAndPosition
     {
-        double performOperation(double x, double y);
-    }
+        public StringAndPosition(String s, int pos)
+        {
+            this.string = s;
+            this.position = pos;
+        }
 
+        public final String string;
+        public final int position;
+    }
+    //endregion
+
+    //region Exceptions
     public static class UnparsableEquationException extends RuntimeException
     {
         public UnparsableEquationException(String fullEquation, String equationSection)
@@ -138,37 +160,23 @@ public final class EquationEvaluation
         public int getNumberOfArgsProvided()
         { return numberOfArgsProvided; }
     }
+    //endregion
 
-    private static final class FunctionNameAndArgumentString
+    //region Operator actions
+    @FunctionalInterface
+    public interface UnaryOperatorAction
     {
-        public FunctionNameAndArgumentString(String functionName, String argumentString)
-        {
-            this.functionName = functionName;
-            this.argumentString = argumentString;
-        }
-
-        String functionName;
-        String argumentString;
-
-        public String getFunctionName()
-        { return functionName; }
-
-        public String getArgumentString()
-        { return argumentString; }
+        double performOperation(double x);
     }
 
-    private static final class StringAndPosition
+    @FunctionalInterface
+    public interface BinaryOperatorAction
     {
-        public StringAndPosition(String s, int pos)
-        {
-            this.string = s;
-            this.position = pos;
-        }
-
-        public final String string;
-        public final int position;
+        double performOperation(double x, double y);
     }
+    //endregion
 
+    //region misc
     private static class OperatorGroup
     {
         public OperatorGroup(double priority)
@@ -209,7 +217,9 @@ public final class EquationEvaluation
             return this;
         }
     }
+    //endregion
 
+    //region Operators
     private static class Operator
     {
         public Operator(char lex, double priority)
@@ -253,7 +263,9 @@ public final class EquationEvaluation
         BinaryOperatorAction action;
         boolean isLeftAssociative;
     }
+    //endregion
 
+    //region Equation components
     private static abstract class EquationComponent
     {
         public abstract double evaluate();
@@ -368,7 +380,10 @@ public final class EquationEvaluation
             return f.applyAsDouble(results);
         }
     }
+    //endregion
+    //endregion
 
+    //region Initialisation
     public EquationEvaluation(String equation)
     {
         this.unprocessedEquation = equation;
@@ -377,7 +392,9 @@ public final class EquationEvaluation
         for(int i = 0; i < defaultOperators.length; i++)
             addOperatorDumbly(defaultOperators[i]);
     }
+    //endregion
 
+    //region Static variables and constants
     private static final double PHI = (1 + Math.sqrt(5)) / 2;
 
     private static final Operator[] defaultOperators =
@@ -396,7 +413,9 @@ public final class EquationEvaluation
             new BinaryOperator('^', 800,  (x, y) -> Math.pow(x, y), false),
             new UnaryOperator ('%', 900, x -> x / 100, true)
     };
+    //endregion
 
+    //region Instance variables
     private final String unprocessedEquation;
     private final String equation;
     private EquationComponent topLevelComponent = null;
@@ -593,7 +612,30 @@ public final class EquationEvaluation
     private final Map<Character, UnaryOperator> suffixOperators = new HashMap<>();
 
     private final Set<Character> operatorChars = new HashSet<>();
+    //endregion
 
+    //region Methods
+    //region Methods about state
+    private boolean charIsNonPrefixOperator(char c)
+    {
+        for(char oc : operatorChars)
+            if(c == oc)
+                return !prefixOperators.containsKey(c);
+
+        return false;
+    }
+
+    private boolean charIsNonSuffixOperator(char c)
+    {
+        for(char oc : operatorChars)
+            if(c == oc)
+                return !suffixOperators.containsKey(c);
+
+        return false;
+    }
+    //endregion
+
+    //region Internal operator registration
     private OperatorGroup getOrCreateOpGroup(double priority)
     {
         for(OperatorGroup og : operatorGroups)
@@ -683,25 +725,9 @@ public final class EquationEvaluation
         getOrCreateOpGroup(op.priority).addOperator(op);
         operatorChars.add(op.lex);
     }
+    //endregion
 
-    private boolean charIsNonPrefixOperator(char c)
-    {
-        for(char oc : operatorChars)
-            if(c == oc)
-                return !prefixOperators.containsKey(c);
-
-        return false;
-    }
-
-    private boolean charIsNonSuffixOperator(char c)
-    {
-        for(char oc : operatorChars)
-            if(c == oc)
-                return !suffixOperators.containsKey(c);
-
-        return false;
-    }
-
+    //region Parsing
     private static String preprocessEquation(String possibleEquation)
     {
         // TO DO: Write function to replace superscript numbers grouping them together, so "x²³" becomes "x^23" rather
@@ -734,7 +760,7 @@ public final class EquationEvaluation
             throw new TrailingOperatorException(possibleEquation, possibleEquation, true);
 
         if((possibleEquation.charAt(0) == '(')
-        && (StringUtils.getMatchingBracketPosition(possibleEquation, 0) == possibleEquation.length() - 1))
+           && (StringUtils.getMatchingBracketPosition(possibleEquation, 0) == possibleEquation.length() - 1))
         {
             return parse(possibleEquation.substring(1, possibleEquation.length() - 1));
         }
@@ -1051,7 +1077,9 @@ public final class EquationEvaluation
 
         return new FunctionCall(functionMap, fAndA.getFunctionName(), parsedArguments);
     }
+    //endregion
 
+    //region Public interface
     public EquationEvaluation build()
     {
         try
@@ -1138,4 +1166,6 @@ public final class EquationEvaluation
         addOperator(new UnaryOperator(operatorCharacter, 4, calculation, true));
         return this;
     }
+    //endregion
+    //endregion
 }
