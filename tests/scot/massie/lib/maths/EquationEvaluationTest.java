@@ -14,48 +14,61 @@ class EquationEvaluationTest
     { assertEquals(5.0, new EquationEvaluation("5").evaluate()); }
 
     @Test
-    public void addition()
-    { assertEquals(5.0, new EquationEvaluation("2 + 3").evaluate()); }
+    void op_binary_add()
+    { assertEquals(21.0, new EquationEvaluation("13 + 8").evaluate()); }
 
     @Test
-    public void subtraction()
-    { assertEquals(5.0, new EquationEvaluation("9 - 4").evaluate()); }
+    void op_binary_minus()
+    { assertEquals(5.0, new EquationEvaluation("13 - 8").evaluate()); }
 
     @Test
-    public void multiplication()
-    { assertEquals(12.0, new EquationEvaluation("3 * 4").evaluate()); }
+    void op_binary_divide()
+    {
+        assertEquals(13.0, new EquationEvaluation("65 / 5").evaluate());
+        assertEquals(13.0, new EquationEvaluation("65 ÷ 5").evaluate());
+    }
 
     @Test
-    public void multiplication_alt1()
-    { assertEquals(12.0, new EquationEvaluation("3 × 4").evaluate()); }
+    void op_binary_multiply()
+    {
+        assertEquals(104.0, new EquationEvaluation("13 * 8").evaluate());
+        assertEquals(104.0, new EquationEvaluation("13 × 8").evaluate());
+    }
 
     @Test
-    public void division()
-    { assertEquals(5.0, new EquationEvaluation("65 / 13").evaluate()); }
+    void op_binary_mod()
+    { assertEquals(5.0, new EquationEvaluation("13 % 8").evaluate()); }
 
     @Test
-    public void division_alt1()
-    { assertEquals(5.0, new EquationEvaluation("65 ÷ 13").evaluate()); }
+    void op_binary_root()
+    { assertEquals(5.0, new EquationEvaluation("3 √ 125").evaluate(), Math.ulp(5.0)); }
 
     @Test
-    public void power()
-    { assertEquals(216.0, new EquationEvaluation("6^3").evaluate()); }
+    void op_binary_power()
+    { assertEquals(625.0, new EquationEvaluation("5^4").evaluate()); }
 
     @Test
-    public void root()
-    { assertEquals(5.0, new EquationEvaluation("3√125").evaluate(), Math.ulp(5.0)); }
+    void op_unary_prefix_negation()
+    { assertEquals(-9.0, new EquationEvaluation("-9").evaluate()); }
 
     @Test
-    public void negation()
-    { assertEquals(-5.0, new EquationEvaluation("-5").evaluate()); }
+    void op_unary_prefix_positive()
+    { assertEquals(9.0, new EquationEvaluation("+ 9").evaluate()); }
 
     @Test
-    public void squareRoot()
-    { assertEquals(5.0, new EquationEvaluation("√25").evaluate(), Math.ulp(5.0)); }
+    void op_unary_postfix_percent()
+    {
+        assertEquals(0.5, new EquationEvaluation("50%").evaluate());
+        assertEquals(7.0, new EquationEvaluation("700 %").evaluate());
+    }
 
     @Test
     public void brackets()
-    { assertEquals(5.0, new EquationEvaluation("(5)").evaluate()); }
+    {
+        assertEquals(5.0, new EquationEvaluation("(5)").evaluate());
+        assertEquals(14.0, new EquationEvaluation("(5 + 9)").evaluate());
+        assertEquals(17.0, new EquationEvaluation("4 + (6 + 7)").evaluate());
+    }
 
     @Test
     public void orderOfOperations()
@@ -70,6 +83,7 @@ class EquationEvaluationTest
     {
         assertEquals(-25.0, new EquationEvaluation("5 * - 5").evaluate());
         assertEquals(3.5, new EquationEvaluation("50% * 7").evaluate());
+        assertEquals(-24.0, new EquationEvaluation("75% * -32").evaluate());
     }
 
     @Test
@@ -138,6 +152,16 @@ class EquationEvaluationTest
     {
         assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
         { new EquationEvaluation(" * 6 + 5 + 4").evaluate(); });
+    }
+
+    @Test
+    public void invalid_onlyUnaryNoBinaryOperators()
+    {
+        // TO DO: Implement
+        // Cannot test until custom variables implemented.
+
+        // assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
+        // { new EquationEvaluation("").evaluate(); });
     }
 
     @Test
