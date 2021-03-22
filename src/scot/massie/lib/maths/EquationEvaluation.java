@@ -382,19 +382,19 @@ public final class EquationEvaluation
 
     private static final Operator[] defaultOperators =
     {
-            new BinaryOperator('-', 1,  (x, y) -> x - y),
-            new BinaryOperator('+', 1,  (x, y) -> x + y),
-            new BinaryOperator('/', 2,  (x, y) -> x / y),
-            new BinaryOperator('÷', 2,  (x, y) -> x / y),
-            new BinaryOperator('*', 2,  (x, y) -> x * y),
-            new BinaryOperator('×', 2,  (x, y) -> x * y),
-            new BinaryOperator('%', 3,  (x, y) -> x % y),
-            new UnaryOperator ('-', 4,  x -> -x),
-            new UnaryOperator ('+', 4,  x -> x),
-            new BinaryOperator('√', 5,  (x, y) -> Math.pow(y, 1.0 / x)),
-            new UnaryOperator ('√', 6, x -> Math.sqrt(x)),
-            new BinaryOperator('^', 7,  (x, y) -> Math.pow(x, y), false),
-            new UnaryOperator ('%', 8, x -> x / 100, true)
+            new BinaryOperator('-', 100,  (x, y) -> x - y),
+            new BinaryOperator('+', 100,  (x, y) -> x + y),
+            new BinaryOperator('/', 200,  (x, y) -> x / y),
+            new BinaryOperator('÷', 200,  (x, y) -> x / y),
+            new BinaryOperator('*', 200,  (x, y) -> x * y),
+            new BinaryOperator('×', 200,  (x, y) -> x * y),
+            new BinaryOperator('%', 300,  (x, y) -> x % y),
+            new UnaryOperator ('-', 500,  x -> -x),
+            new UnaryOperator ('+', 500,  x -> x),
+            new BinaryOperator('√', 600,  (x, y) -> Math.pow(y, 1.0 / x)),
+            new UnaryOperator ('√', 700, x -> Math.sqrt(x)),
+            new BinaryOperator('^', 800,  (x, y) -> Math.pow(x, y), false),
+            new UnaryOperator ('%', 900, x -> x / 100, true)
     };
 
     private final String unprocessedEquation;
@@ -528,7 +528,6 @@ public final class EquationEvaluation
             if(args.length < 1)
                 throw new MissingFunctionArgumentsException("truncate", 1, args.length);
 
-            //return Math.(args[0]);
             return (int)args[0];
         });
 
@@ -537,7 +536,6 @@ public final class EquationEvaluation
             if(args.length < 1)
                 throw new MissingFunctionArgumentsException("trunc", 1, args.length);
 
-            //return Math.(args[0]);
             return (int)args[0];
         });
 
@@ -1080,6 +1078,64 @@ public final class EquationEvaluation
     public EquationEvaluation withFunction(String functionName, ToDoubleFunction<double[]> f)
     {
         functionMap.put(functionName, f);
+        return this;
+    }
+
+    public EquationEvaluation withOperator(char operatorCharacter,
+                                           double precedenceLevel,
+                                           BinaryOperatorAction calculation)
+    {
+        addOperator(new BinaryOperator(operatorCharacter, precedenceLevel, calculation));
+        return this;
+    }
+
+    // Defaults the operator precedence to 0, or 100 below addition/subtraction.
+    public EquationEvaluation withOperator(char operatorCharacter,
+                                           BinaryOperatorAction calculation)
+    { return withOperator(operatorCharacter, 0, calculation); }
+
+    public EquationEvaluation withRightAssociativeOperator(char operatorCharacter,
+                                                           double precedenceLevel,
+                                                           BinaryOperatorAction calculation)
+    {
+        addOperator(new BinaryOperator(operatorCharacter, precedenceLevel, calculation, false));
+        return this;
+    }
+
+    // Defaults the operator precedence to 0, or 100 below addition/subtraction.
+    public EquationEvaluation withRightAssociativeOperator(char operatorCharacter,
+                                                           BinaryOperatorAction calculation)
+    { return withRightAssociativeOperator(operatorCharacter, 0, calculation); }
+
+    public EquationEvaluation withPrefixOperator(char operatorCharacter,
+                                                 double precedenceLevel,
+                                                 UnaryOperatorAction calculation)
+    {
+        addOperator(new UnaryOperator(operatorCharacter, precedenceLevel, calculation, false));
+        return this;
+    }
+
+    // Defaults the operator precedence to 400, or 100 below the positive/negative unary operators
+    public EquationEvaluation withPrefixOperator(char operatorCharacter,
+                                                 UnaryOperatorAction calculation)
+    {
+        addOperator(new UnaryOperator(operatorCharacter, 4, calculation, false));
+        return this;
+    }
+
+    public EquationEvaluation withSuffixOperator(char operatorCharacter,
+                                                 double precedenceLevel,
+                                                 UnaryOperatorAction calculation)
+    {
+        addOperator(new UnaryOperator(operatorCharacter, precedenceLevel, calculation, true));
+        return this;
+    }
+
+    // Defaults the operator precedence to 400, or 100 below the positive/negative unary operators
+    public EquationEvaluation withSuffixOperator(char operatorCharacter,
+                                                 UnaryOperatorAction calculation)
+    {
+        addOperator(new UnaryOperator(operatorCharacter, 4, calculation, true));
         return this;
     }
 }
