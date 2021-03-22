@@ -383,18 +383,18 @@ public final class EquationEvaluation
     private static final Operator[] defaultOperators =
     {
             new BinaryOperator('-', 1,  (x, y) -> x - y),
-            new BinaryOperator('+', 2,  (x, y) -> x + y),
-            new BinaryOperator('/', 3,  (x, y) -> x / y),
-            new BinaryOperator('÷', 3,  (x, y) -> x / y),
-            new BinaryOperator('*', 4,  (x, y) -> x * y),
-            new BinaryOperator('×', 4,  (x, y) -> x * y),
-            new BinaryOperator('%', 5,  (x, y) -> x % y),
-            new UnaryOperator ('-', 6,  x -> -x),
-            new UnaryOperator ('+', 7,  x -> x),
-            new BinaryOperator('√', 8,  (x, y) -> Math.pow(y, 1.0 / x)),
-            new BinaryOperator('^', 9,  (x, y) -> Math.pow(x, y), false),
-            new UnaryOperator ('√', 10, x -> Math.sqrt(x)),
-            new UnaryOperator ('%', 11, x -> x / 100, true)
+            new BinaryOperator('+', 1,  (x, y) -> x + y),
+            new BinaryOperator('/', 2,  (x, y) -> x / y),
+            new BinaryOperator('÷', 2,  (x, y) -> x / y),
+            new BinaryOperator('*', 2,  (x, y) -> x * y),
+            new BinaryOperator('×', 2,  (x, y) -> x * y),
+            new BinaryOperator('%', 3,  (x, y) -> x % y),
+            new UnaryOperator ('-', 4,  x -> -x),
+            new UnaryOperator ('+', 4,  x -> x),
+            new BinaryOperator('√', 5,  (x, y) -> Math.pow(y, 1.0 / x)),
+            new UnaryOperator ('√', 6, x -> Math.sqrt(x)),
+            new BinaryOperator('^', 7,  (x, y) -> Math.pow(x, y), false),
+            new UnaryOperator ('%', 8, x -> x / 100, true)
     };
 
     private final String unprocessedEquation;
