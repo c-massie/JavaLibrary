@@ -204,6 +204,80 @@ class EquationEvaluationTest
     }
 
     @Test
+    void remove_variable_removedBeforeBuild()
+    {
+        assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
+        { new EquationEvaluation("π + 4").withoutVariable("π").evaluate(); });
+    }
+
+    @Test
+    void remove_variable_removedAfterBuild()
+    {
+        assertThrows(EquationEvaluation.UnresolvedArgumentInEquationException.class, () ->
+        { new EquationEvaluation("π + 4").build().withoutVariable("π").evaluate(); });
+    }
+
+    @Test
+    void remove_variable_removedBeforeBuild_different()
+    { assertEquals(Math.PI + 4.0, new EquationEvaluation("π + 4").withoutVariable("e").evaluate()); }
+
+    @Test
+    void remove_variable_removedAfterBuild_different()
+    { assertEquals(Math.PI + 4.0, new EquationEvaluation("π + 4").build().withoutVariable("e").evaluate()); }
+
+    @Test
+    void remove_function_removedBeforeBuild()
+    {
+        assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
+        { new EquationEvaluation("fib(6)").withoutFunction("fib").evaluate(); });
+    }
+
+    @Test
+    void remove_function_removedAfterBuild()
+    {
+        assertThrows(EquationEvaluation.MissingFunctionException.class, () ->
+        { new EquationEvaluation("fib(6)").build().withoutFunction("fib").evaluate(); });
+    }
+
+    @Test
+    void remove_function_removedBeforeBuild_different()
+    { assertEquals(8.0, new EquationEvaluation("fib(6)").withoutFunction("tan").evaluate()); }
+
+    @Test
+    void remove_function_removedAfterBuild_different()
+    { assertEquals(8.0, new EquationEvaluation("fib(6)").build().withoutFunction("tan").evaluate()); }
+
+    @Test
+    void remove_operator_removedBeforeBuild()
+    {
+        assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
+        { new EquationEvaluation("4 + 7").withoutBinaryOperator('+').evaluate(); });
+    }
+
+    @Test
+    void remove_operator_removedAfterBuild()
+    {
+        // Equation evaluation shouldn't be affected by the removal of an operator until the next time it's built.
+        assertEquals(11.0, new EquationEvaluation("4 + 7").build().withoutBinaryOperator('+').evaluate());
+    }
+
+    @Test
+    void remove_operator_removedBeforeBuild_different()
+    { assertEquals(11.0, new EquationEvaluation("4 + 7").withoutBinaryOperator('-').evaluate()); }
+
+    @Test
+    void remove_operator_removedAfterBuild_different()
+    { assertEquals(11.0, new EquationEvaluation("4 + 7").build().withoutBinaryOperator('-').evaluate()); }
+
+    @Test
+    void remove_operator_removedBeforeBuild_sameButDifferentType()
+    { assertEquals(11.0, new EquationEvaluation("4 + 7").withoutPrefixOperator('+').evaluate()); }
+
+    @Test
+    void remove_operator_removedAfterBuild_sameButDifferentType()
+    { assertEquals(11.0, new EquationEvaluation("4 + 7").build().withoutPrefixOperator('+').evaluate()); }
+
+    @Test
     public void invalid_unspecifiedVariableText()
     {
         assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
