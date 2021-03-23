@@ -1266,6 +1266,32 @@ public final class EquationEvaluation
     }
 
     /**
+     * Gets the result of the contained equation, rounded to the nearest int. If the equation evaluation isn't
+     * finalised, finalises it first.
+     * @return The result of the contained equation as an int.
+     */
+    public int evaluateToInt()
+    {
+        long result = evaluateToLong();
+
+        if(result > (long)Integer.MAX_VALUE)
+            return Integer.MAX_VALUE;
+
+        if(result < (long)Integer.MIN_VALUE)
+            return Integer.MIN_VALUE;
+
+        return (int)result;
+    }
+
+    /**
+     * Gets the result of the contained equation, rounded to the nearest 64-bit integer (long). If the equation
+     * evaluation isn't finalised, finalises it first. Is the equivalent to Math.round(evaluate()).
+     * @return The result of the contained equation as a long.
+     */
+    public long evaluateToLong()
+    { return Math.round(evaluate()); }
+
+    /**
      * Registers a new variable available to the contained equation. Variables may be any string not containing
      * operators.
      * @param argumentRepresentedBy How the argument may be referred to in the equation.
