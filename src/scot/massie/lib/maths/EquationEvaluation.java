@@ -17,9 +17,9 @@ import java.util.function.ToDoubleFunction;
 /**
  * <p>A representation of an evaluation of an equation.</p>
  *
- * <p>Is finalised with .build(). Before being finalised, can have custom functions, variables, and operators defined. Once
- * finalised, can no longer have custom operators defined as this would require the equation to be reëvaluated, but can
- * still have variables and functions re-assigned.</p>
+ * <p>Is finalised with .build(). Before being finalised, can have custom functions, variables, and operators defined.
+ * Once finalised, can no longer have custom operators defined as this would require the equation to be reëvaluated, but
+ * can still have variables and functions re-assigned.</p>
  *
  * <p>The default operators have the following precedence levels:</p>
  *
@@ -147,7 +147,7 @@ public final class EquationEvaluation
 
     /**
      * Thrown to indicate that the contained equation could not be parsed, as it started or ended with a binary operator
-     * that could not be a prefix or suffix respectively.
+     * that could not be a prefix or postfix respectively.
      */
     public static class TrailingOperatorException extends UnparsableEquationException
     {
@@ -339,7 +339,7 @@ public final class EquationEvaluation
         List<BinaryOperator> leftAssociativeBinaryOperators = new ArrayList<>();
         List<BinaryOperator> rightAssociativeBinaryOperators = new ArrayList<>();
         List<UnaryOperator> prefixOperators = new ArrayList<>();
-        List<UnaryOperator> suffixOperators = new ArrayList<>();
+        List<UnaryOperator> postfixOperators = new ArrayList<>();
 
         public void addOperator(Operator op)
         {
@@ -356,8 +356,8 @@ public final class EquationEvaluation
             {
                 UnaryOperator uop = (UnaryOperator)op;
 
-                if(uop.isSuffixOperator)
-                    suffixOperators.add(uop);
+                if(uop.isPostfixOperator)
+                    postfixOperators.add(uop);
                 else
                     prefixOperators.add(uop);
             }
@@ -386,18 +386,18 @@ public final class EquationEvaluation
 
     private static class UnaryOperator extends Operator
     {
-        public UnaryOperator(char lex, double priority, UnaryOperatorAction action, boolean isSuffixOperator)
+        public UnaryOperator(char lex, double priority, UnaryOperatorAction action, boolean isPostfixOperator)
         {
             super(lex, priority);
             this.action = action;
-            this.isSuffixOperator = isSuffixOperator;
+            this.isPostfixOperator = isPostfixOperator;
         }
 
         public UnaryOperator(char lex, double priority, UnaryOperatorAction action)
         { this(lex, priority, action, false); }
 
         UnaryOperatorAction action;
-        boolean isSuffixOperator;
+        boolean isPostfixOperator;
     }
 
     private static class BinaryOperator extends Operator
@@ -767,7 +767,7 @@ public final class EquationEvaluation
 
     private final Map<Character, UnaryOperator> prefixOperators = new HashMap<>();
 
-    private final Map<Character, UnaryOperator> suffixOperators = new HashMap<>();
+    private final Map<Character, UnaryOperator> postfixOperators = new HashMap<>();
 
     private final Set<Character> operatorChars = new HashSet<>();
     //endregion
@@ -783,11 +783,11 @@ public final class EquationEvaluation
         return false;
     }
 
-    private boolean charIsNonSuffixOperator(char c)
+    private boolean charIsNonPostfixOperator(char c)
     {
         for(char oc : operatorChars)
             if(c == oc)
-                return !suffixOperators.containsKey(c);
+                return !postfixOperators.containsKey(c);
 
         return false;
     }
@@ -833,13 +833,13 @@ public final class EquationEvaluation
                     break;
     }
 
-    private void removeSuffixOpFromOpGroupsIfRegistered(UnaryOperator op)
+    private void removePostfixOpFromOpGroupsIfRegistered(UnaryOperator op)
     {
         UnaryOperator existingOp = prefixOperators.get(op.lex);
 
         if(existingOp != null)
             for(OperatorGroup og : operatorGroups)
-                if(og.suffixOperators.remove(existingOp))
+                if(og.postfixOperators.remove(existingOp))
                     break;
     }
 
@@ -854,10 +854,10 @@ public final class EquationEvaluation
         {
             UnaryOperator uop = (UnaryOperator)op;
 
-            if(uop.isSuffixOperator)
+            if(uop.isPostfixOperator)
             {
-                removeSuffixOpFromOpGroupsIfRegistered(uop);
-                suffixOperators.put(uop.lex, uop);
+                removePostfixOpFromOpGroupsIfRegistered(uop);
+                postfixOperators.put(uop.lex, uop);
             }
             else
             {
@@ -877,7 +877,7 @@ public final class EquationEvaluation
         else
         {
             UnaryOperator uop = (UnaryOperator)op;
-            (uop.isSuffixOperator ? suffixOperators : prefixOperators).put(uop.lex, uop);
+            (uop.isPostfixOperator ? postfixOperators : prefixOperators).put(uop.lex, uop);
         }
 
         getOrCreateOpGroup(op.priority).addOperator(op);
@@ -914,7 +914,7 @@ public final class EquationEvaluation
         if(charIsNonPrefixOperator(possibleEquation.charAt(0)))
             throw new TrailingOperatorException(possibleEquation, possibleEquation, false);
 
-        if(charIsNonSuffixOperator(possibleEquation.charAt(possibleEquation.length() - 1)))
+        if(charIsNonPostfixOperator(possibleEquation.charAt(possibleEquation.length() - 1)))
             throw new TrailingOperatorException(possibleEquation, possibleEquation, true);
 
         if((possibleEquation.charAt(0) == '(')
@@ -978,9 +978,9 @@ public final class EquationEvaluation
                 return o;
         }
 
-        if(!og.suffixOperators.isEmpty())
+        if(!og.postfixOperators.isEmpty())
         {
-            Operation o = parseOperation_suffix(s, og);
+            Operation o = parseOperation_postfix(s, og);
 
             if(o != null)
                 return o;
@@ -1080,11 +1080,11 @@ public final class EquationEvaluation
         return null;
     }
 
-    private Operation parseOperation_suffix(String s, OperatorGroup og)
+    private Operation parseOperation_postfix(String s, OperatorGroup og)
     {
         int lastPos = s.length() - 1;
 
-        for(UnaryOperator uop : og.suffixOperators)
+        for(UnaryOperator uop : og.postfixOperators)
             if(s.charAt(lastPos) == uop.lex)
                 return new UnaryOperation(parse(s.substring(0, lastPos)), uop.action);
 
@@ -1102,7 +1102,7 @@ public final class EquationEvaluation
         {
             char ichar = opRun.string.charAt(i);
 
-            if((ichar != ' ') && (!suffixOperators.containsKey(ichar)))
+            if((ichar != ' ') && (!postfixOperators.containsKey(ichar)))
                 return false;
         }
 
@@ -1310,9 +1310,9 @@ public final class EquationEvaluation
     }
 
     /**
-     * <p>Registers a new binary operator. Operators being registered will not be factored into the equation until the next
-     * time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of the
-     * equation. Operators are left-associative by default.</p>
+     * <p>Registers a new binary operator. Operators being registered will not be factored into the equation until the
+     * next time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of
+     * the equation. Operators are left-associative by default.</p>
      *
      * <p>Binary operators have a default precedence level of 0.</p>
      * @param operatorCharacter The character by which the operator may be referred to in the equation.
@@ -1389,15 +1389,15 @@ public final class EquationEvaluation
     }
 
     /**
-     * Registers a new suffix operator. Operators being registered will not be factored into the equation until the next
-     * time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of the
-     * equation.
+     * Registers a new postfix operator. Operators being registered will not be factored into the equation until the
+     * next time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of
+     * the equation.
      * @param operatorCharacter The character by which the operator may be referred to in the equation.
      * @param precedenceLevel The precedence level of the operator. Higher levels are more "sticky".
      * @param calculation The calculation of a result of the operand.
      * @return This equation evaluation.
      */
-    public EquationEvaluation withSuffixOperator(char operatorCharacter,
+    public EquationEvaluation withPostfixOperator(char operatorCharacter,
                                                  double precedenceLevel,
                                                  UnaryOperatorAction calculation)
     {
@@ -1406,7 +1406,7 @@ public final class EquationEvaluation
     }
 
     /**
-     * <p>Registers a new suffix operator. Operators being registered will not be factored into the equation until the
+     * <p>Registers a new postfix operator. Operators being registered will not be factored into the equation until the
      * next time it's built, (and not simply evaluated) as the introduction of a new operator may change the parsing of
      * the equation.</p>
      *
@@ -1415,7 +1415,7 @@ public final class EquationEvaluation
      * @param calculation The calculation of a result of the operand.
      * @return This equation evaluation.
      */
-    public EquationEvaluation withSuffixOperator(char operatorCharacter,
+    public EquationEvaluation withPostfixOperator(char operatorCharacter,
                                                  UnaryOperatorAction calculation)
     {
         addOperator(new UnaryOperator(operatorCharacter, 4, calculation, true));
@@ -1476,7 +1476,7 @@ public final class EquationEvaluation
                        break ogloop;
                    }
 
-                for(UnaryOperator uop : og.suffixOperators)
+                for(UnaryOperator uop : og.postfixOperators)
                     if(uop.lex == operator)
                     {
                         opCharStillUsed = true;
@@ -1511,7 +1511,7 @@ public final class EquationEvaluation
             ogloop:
             for(OperatorGroup og: operatorGroups)
             {
-                for(UnaryOperator sop : og.suffixOperators)
+                for(UnaryOperator sop : og.postfixOperators)
                     if(sop.lex == operator)
                     {
                         opCharStillUsed = true;
@@ -1541,20 +1541,20 @@ public final class EquationEvaluation
     }
 
     /**
-     * Stops a suffix operator from being usable in the equation.
+     * Stops a postfix operator from being usable in the equation.
      * @param operator The operator to remove.
      * @return This equation evaluation.
      */
-    public EquationEvaluation withoutSuffixOperator(char operator)
+    public EquationEvaluation withoutPostfixOperator(char operator)
     {
-        UnaryOperator uop = suffixOperators.remove(operator);
+        UnaryOperator uop = postfixOperators.remove(operator);
 
         if(uop != null)
         {
             boolean opCharStillUsed = false;
 
             for(OperatorGroup og : operatorGroups)
-                if(og.suffixOperators.remove(uop))
+                if(og.postfixOperators.remove(uop))
                     break;
 
             ogloop:
@@ -1619,7 +1619,7 @@ public final class EquationEvaluation
         operatorChars.clear();
         binaryOperators.clear();
         prefixOperators.clear();
-        suffixOperators.clear();
+        postfixOperators.clear();
         return this;
     }
 

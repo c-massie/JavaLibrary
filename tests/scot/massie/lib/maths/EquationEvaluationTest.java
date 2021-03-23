@@ -84,10 +84,10 @@ class EquationEvaluationTest
     }
 
     @Test
-    void op_custom_unary_suffix()
+    void op_custom_unary_postfix()
     {
         assertEquals(45.0, new EquationEvaluation("9§")
-                                   .withSuffixOperator('§', x -> x * 5)
+                                   .withPostfixOperator('§', x -> x * 5)
                                    .evaluate());
     }
 
@@ -96,17 +96,17 @@ class EquationEvaluationTest
     {
         assertEquals(32.0, new EquationEvaluation("§9§")
                                 .withPrefixOperator('§', x -> x * 3)
-                                .withSuffixOperator('§', x -> x + 5)
+                                .withPostfixOperator('§', x -> x + 5)
                                 .evaluate());
 
         assertEquals(32.0, new EquationEvaluation("§9§")
                                    .withPrefixOperator('§', 5, x -> x * 3)
-                                   .withSuffixOperator('§', 4, x -> x + 5)
+                                   .withPostfixOperator('§', 4, x -> x + 5)
                                    .evaluate());
 
         assertEquals(42.0, new EquationEvaluation("§9§")
                                    .withPrefixOperator('§', 5, x -> x * 3)
-                                   .withSuffixOperator('§', 6, x -> x + 5)
+                                   .withPostfixOperator('§', 6, x -> x + 5)
                                    .evaluate());
     }
 
@@ -301,7 +301,7 @@ class EquationEvaluationTest
         assertThrows(EquationEvaluation.UnparsableEquationException.class, () ->
         {
             new EquationEvaluation("4§◊6")
-                    .withSuffixOperator('§', x -> x * 3)
+                    .withPostfixOperator('§', x -> x * 3)
                     .withPrefixOperator('◊', x -> x + 5)
                     .evaluate();
         });
