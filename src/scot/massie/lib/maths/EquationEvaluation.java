@@ -1408,6 +1408,214 @@ public final class EquationEvaluation
         addOperator(new UnaryOperator(operatorCharacter, 4, calculation, true));
         return this;
     }
+
+    /**
+     * Stops a variable from being usable in the equation.
+     * @param variable The variable to remove.
+     * @return This equation evaluation.
+     */
+    public EquationEvaluation withoutVariable(String variable)
+    {
+        variableValues.remove(variable);
+        return this;
+    }
+
+    /**
+     * Stops a function from being usable in the equation.
+     * @param functionName The name of the function to remove.
+     * @return This equation evaluation.
+     */
+    public EquationEvaluation withoutFunction(String functionName)
+    {
+        functionMap.remove(functionName);
+        return this;
+    }
+
+    /**
+     * Stops a binary operator from being usable in the equation.
+     * @param operator The operator to remove.
+     * @return This equation evaluation.
+     */
+    public EquationEvaluation withoutBinaryOperator(char operator)
+    {
+        BinaryOperator bop = binaryOperators.remove(operator);
+
+        if(bop != null)
+        {
+            boolean opCharStillUsed = false;
+
+            for(OperatorGroup og : operatorGroups)
+            {
+                if(og.leftAssociativeBinaryOperators.remove(bop))
+                    break;
+
+                if(og.rightAssociativeBinaryOperators.remove(bop))
+                    break;
+            }
+
+            ogloop:
+            for(OperatorGroup og : operatorGroups)
+            {
+                for(UnaryOperator uop : og.prefixOperators)
+                   if(uop.lex == operator)
+                   {
+                       opCharStillUsed = true;
+                       break ogloop;
+                   }
+
+                for(UnaryOperator uop : og.suffixOperators)
+                    if(uop.lex == operator)
+                    {
+                        opCharStillUsed = true;
+                        break ogloop;
+                    }
+            }
+
+            if(!opCharStillUsed)
+                operatorChars.remove(operator);
+        }
+
+        return this;
+    }
+
+    /**
+     * Stops a prefix operator from being usable in the equation.
+     * @param operator The operator to remove.
+     * @return This equation evaluation.
+     */
+    public EquationEvaluation withoutPrefixOperator(char operator)
+    {
+        UnaryOperator uop = prefixOperators.remove(operator);
+
+        if(uop != null)
+        {
+            boolean opCharStillUsed = false;
+
+            for(OperatorGroup og : operatorGroups)
+                if(og.prefixOperators.remove(uop))
+                    break;
+
+            ogloop:
+            for(OperatorGroup og: operatorGroups)
+            {
+                for(UnaryOperator sop : og.suffixOperators)
+                    if(sop.lex == operator)
+                    {
+                        opCharStillUsed = true;
+                        break ogloop;
+                    }
+
+                for(BinaryOperator bop : og.leftAssociativeBinaryOperators)
+                    if(bop.lex == operator)
+                    {
+                        opCharStillUsed = true;
+                        break ogloop;
+                    }
+
+                for(BinaryOperator bop : og.rightAssociativeBinaryOperators)
+                    if(bop.lex == operator)
+                    {
+                        opCharStillUsed = true;
+                        break ogloop;
+                    }
+            }
+
+            if(!opCharStillUsed)
+                operatorChars.remove(operator);
+        }
+
+        return this;
+    }
+
+    /**
+     * Stops a suffix operator from being usable in the equation.
+     * @param operator The operator to remove.
+     * @return This equation evaluation.
+     */
+    public EquationEvaluation withoutSuffixOperator(char operator)
+    {
+        UnaryOperator uop = suffixOperators.remove(operator);
+
+        if(uop != null)
+        {
+            boolean opCharStillUsed = false;
+
+            for(OperatorGroup og : operatorGroups)
+                if(og.suffixOperators.remove(uop))
+                    break;
+
+            ogloop:
+            for(OperatorGroup og: operatorGroups)
+            {
+                for(UnaryOperator sop : og.prefixOperators)
+                    if(sop.lex == operator)
+                    {
+                        opCharStillUsed = true;
+                        break ogloop;
+                    }
+
+                for(BinaryOperator bop : og.leftAssociativeBinaryOperators)
+                    if(bop.lex == operator)
+                    {
+                        opCharStillUsed = true;
+                        break ogloop;
+                    }
+
+                for(BinaryOperator bop : og.rightAssociativeBinaryOperators)
+                    if(bop.lex == operator)
+                    {
+                        opCharStillUsed = true;
+                        break ogloop;
+                    }
+            }
+
+            if(!opCharStillUsed)
+                operatorChars.remove(operator);
+        }
+
+        return this;
+    }
+
+    /**
+     * Stops all current variables from being usable in the equation.
+     * @return This equation evaluation.
+     */
+    public EquationEvaluation withClearedVariables()
+    {
+        variableValues.clear();
+        return this;
+    }
+
+    /**
+     * Stops all current functions from being usable in the equation.
+     * @return This equation evaluation.
+     */
+    public EquationEvaluation withClearedFunctions()
+    {
+        functionMap.clear();
+        return this;
+    }
+
+    /**
+     * Stops all current operators from being usable in the equation.
+     * @return This equation evaluation.
+     */
+    public EquationEvaluation withClearedOperators()
+    {
+        operatorGroups.clear();
+        operatorChars.clear();
+        binaryOperators.clear();
+        prefixOperators.clear();
+        suffixOperators.clear();
+        return this;
+    }
+
+    /**
+     * Stops all current variables, functions, and operators from being usable in the equation.
+     * @return This equation evaluation.
+     */
+    public EquationEvaluation withClearedFunctionality()
+    { return this.withClearedVariables().withClearedFunctions().withClearedOperators(); }
     //endregion
     //endregion
 }
