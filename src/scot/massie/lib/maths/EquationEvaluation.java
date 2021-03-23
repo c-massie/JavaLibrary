@@ -38,6 +38,19 @@ import java.util.function.ToDoubleFunction;
  */
 public final class EquationEvaluation
 {
+    /*
+
+    TO DO: Add support for operators of arbitrary length rather than one character. Operators should be tokenised in
+           order of registration, with a note to register operators that may be mistake as smaller operators sharing the
+           same characters first.
+
+           This may require the default operators, which are all single-character, to be registered after any custom
+           operators of more characters. Alternatively, they could be added with a tokenisation precedence level
+           making them be tokenised after custom operators. This may be the way to go if I add default multi-character
+           operators.
+
+     */
+
     //region Inner classes
     //region Pairings
     private static final class FunctionNameAndArgumentString
