@@ -1,9 +1,6 @@
 package scot.massie.lib.maths;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
-
-import java.util.function.ToDoubleFunction;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -213,7 +210,7 @@ class EquationEvaluationTest
     @Test
     void remove_variable_removedAfterBuild()
     {
-        assertThrows(EquationEvaluation.UnresolvedArgumentInEquationException.class, () ->
+        assertThrows(EquationEvaluation.MissingVariableException.class, () ->
         { new EquationEvaluation("π + 4").build().withoutVariable("π").evaluate(); });
     }
 

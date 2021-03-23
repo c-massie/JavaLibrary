@@ -199,13 +199,13 @@ public final class EquationEvaluation
     /**
      * Thrown when a parsed variable in an equation is not present in the variables assigned to the equation.
      */
-    public static final class UnresolvedArgumentInEquationException extends RuntimeException
+    public static final class MissingVariableException extends RuntimeException
     {
         /**
          * Creates a new UnresolvedArgumentInEquationException.
          * @param variableName The name of the variable not found.
          */
-        public UnresolvedArgumentInEquationException(String variableName)
+        public MissingVariableException(String variableName)
         {
             super("Variable was unresolved: " + variableName);
             this.variableName = variableName;
@@ -452,7 +452,7 @@ public final class EquationEvaluation
             Double result = variableValues.get(name);
 
             if(result == null)
-                throw new UnresolvedArgumentInEquationException(name);
+                throw new MissingVariableException(name);
 
             return result;
         }
