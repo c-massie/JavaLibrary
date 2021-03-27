@@ -3,17 +3,12 @@ package scot.massie.lib.events;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import scot.massie.lib.events.args.EventArgs;
-import scot.massie.lib.utils.wrappers.MutableWrapper;
-import scot.massie.lib.utils.wrappers.Wrapper;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-abstract class EventTest<T extends Event<EventTest.TestEventArgs>>
+abstract class EventTest<T extends InvokableEvent<EventTest.TestEventArgs>>
 {
     public static final class TestEventArgs implements EventArgs
     {

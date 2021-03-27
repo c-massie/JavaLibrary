@@ -5,12 +5,19 @@ import scot.massie.lib.events.convenience.EventListenerCallInfo;
 import scot.massie.lib.events.convenience.EventListenerPriorityPair;
 import scot.massie.lib.events.convenience.EventWithArgsConverter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArgs>
+public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityEvent<TArgs>
 {
     /**
      * Creates a new OrderedEvent with no listeners or dependent events.
@@ -20,7 +27,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
 
     protected final Set<EventListener<TArgs>> listenersWithoutPriority = new HashSet<>();
     protected final List<EventListenerPriorityPair<TArgs>> listenersWithPriority = new ArrayList<>();
-    protected final Map<Event<?>, EventWithArgsConverter<TArgs, ?>> dependentEvents = new HashMap<>();
+    protected final Map<InvokableEvent<?>, EventWithArgsConverter<TArgs, ?>> dependentEvents = new HashMap<>();
 
     // Synchronized on listenersWithoutPriority's lock, even where listenersWithPriority or dependentEvents is concerned
 
@@ -35,7 +42,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
             if(!listenersWithPriority.isEmpty())
                 listenerOrderMatters = true;
             else
-                for(Event<?> e : dependentEvents.keySet())
+                for(InvokableEvent<?> e : dependentEvents.keySet())
                     if(e.listenerOrderMatters())
                         listenerOrderMatters = true;
 
@@ -72,7 +79,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
     }
 
     @Override
-    public void register(Event<TArgs> dependentEvent)
+    public void register(InvokableEvent<TArgs> dependentEvent)
     {
         EventWithArgsConverter<TArgs, TArgs> ewac = new EventWithArgsConverter<>(dependentEvent, Function.identity());
 
@@ -81,7 +88,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
     }
 
     @Override
-    public <TDependentArgs extends EventArgs> void register(Event<TDependentArgs> dependentEvent, Function<TArgs, TDependentArgs> argWrapper)
+    public <TDependentArgs extends EventArgs> void register(InvokableEvent<TDependentArgs> dependentEvent, Function<TArgs, TDependentArgs> argWrapper)
     {
         EventWithArgsConverter<TArgs, TDependentArgs> ewac = new EventWithArgsConverter<>(dependentEvent, argWrapper);
 
@@ -100,7 +107,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
     }
 
     @Override
-    public void deregister(Event<?> event)
+    public void deregister(InvokableEvent<?> event)
     { synchronized(listenersWithoutPriority) { dependentEvents.remove(event); } }
 
     @Override
@@ -136,7 +143,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
             if(!listenersWithPriority.isEmpty())
                 return true;
 
-            for(Event<?> e : dependentEvents.keySet())
+            for(InvokableEvent<?> e : dependentEvents.keySet())
                 if(e.listenerOrderMatters())
                     return true;
         }
@@ -167,7 +174,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements PriorityEvent<TArg
     }
 
     @Override
-    public Collection<Event<?>> getDependentEvents()
+    public Collection<InvokableEvent<?>> getDependentEvents()
     { synchronized(listenersWithoutPriority) { return dependentEvents.keySet(); } }
 
     @Override

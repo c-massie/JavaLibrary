@@ -1,6 +1,6 @@
 package scot.massie.lib.events.convenience;
 
-import scot.massie.lib.events.Event;
+import scot.massie.lib.events.InvokableEvent;
 import scot.massie.lib.events.args.EventArgs;
 
 import java.util.List;
@@ -13,16 +13,16 @@ import java.util.stream.Stream;
  */
 public final class EventAndArgsPair<TArgs extends EventArgs>
 {
-    public EventAndArgsPair(Event<TArgs> event, TArgs args)
+    public EventAndArgsPair(InvokableEvent<TArgs> event, TArgs args)
     {
         this.event = event;
         this.args = args;
     }
 
-    private final Event<TArgs> event;
+    private final InvokableEvent<TArgs> event;
     private final TArgs args;
 
-    public Event<TArgs> getEvent()
+    public InvokableEvent<TArgs> getEvent()
     { return event; }
 
     public TArgs getArgs()

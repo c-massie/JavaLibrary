@@ -1,6 +1,6 @@
 package scot.massie.lib.events.convenience;
 
-import scot.massie.lib.events.Event;
+import scot.massie.lib.events.InvokableEvent;
 import scot.massie.lib.events.args.EventArgs;
 
 import java.util.function.Function;
@@ -17,16 +17,16 @@ import java.util.stream.Stream;
  */
 public final class EventWithArgsConverter<TInvokerArgs extends EventArgs, TInvokedArgs extends EventArgs>
 {
-    public EventWithArgsConverter(Event<TInvokedArgs> event, Function<TInvokerArgs, TInvokedArgs> conversion)
+    public EventWithArgsConverter(InvokableEvent<TInvokedArgs> event, Function<TInvokerArgs, TInvokedArgs> conversion)
     {
         this.event = event;
         this.conversion = conversion;
     }
 
-    private final Event<TInvokedArgs> event;
+    private final InvokableEvent<TInvokedArgs> event;
     private final Function<TInvokerArgs, TInvokedArgs> conversion;
 
-    public Event<TInvokedArgs> getEvent()
+    public InvokableEvent<TInvokedArgs> getEvent()
     { return event; }
 
     public Function<TInvokerArgs, TInvokedArgs> getConversion()

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-abstract class PriorityEventTest<T extends PriorityEvent<EventTest.TestEventArgs>> extends EventTest<T>
+abstract class PriorityEventTest<T extends InvokablePriorityEvent<EventTest.TestEventArgs>> extends EventTest<T>
 {
     @Test
     public void invokeListenersWithPriority()

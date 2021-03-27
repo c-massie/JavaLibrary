@@ -4,9 +4,8 @@ import scot.massie.lib.events.args.EventArgs;
 import scot.massie.lib.events.convenience.EventAndArgsPair;
 import scot.massie.lib.events.convenience.EventListenerCallInfo;
 
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.stream.Stream;
 
 /**
@@ -36,7 +35,7 @@ public class Events
      * @param args The EventArgs object to pass to listeners of this event.
      * @param <TArgs> The type of the EventArgs object passed to listeners of this event.
      */
-    public static <TArgs extends EventArgs> void invokeEvent(Event<TArgs> event, TArgs args)
+    public static <TArgs extends EventArgs> void invokeEvent(InvokableEvent<TArgs> event, TArgs args)
     {
         event.generateCallInfoAsStream(args)
              .sorted(Events.listenerCallInfoComparator)
