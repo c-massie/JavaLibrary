@@ -79,12 +79,33 @@ public final class StringUtils
     public static int getMatchingPointyBracketPosition(String s, int openingPointyBracketPosition)
     { return getMatchingTerminatorPosition(s, '<', '>', openingPointyBracketPosition); }
 
+    /**
+     * Splits a string into a key-value pair based on the position of the first colon in the string.
+     * @param s The string to convert into a key-value pair.
+     * @return A map entry object where the key is the text before the first colon and the value is the text after the
+     *         first colon. Where the provided string contains no colon, the contents of the string is used as the key
+     *         and the value is set to null. Keys and values are trimmed.
+     */
     public static Map.Entry<String, String> splitColonSeparatedValuePair(String s)
     {
+        s = s.trim();
+
+        if(s.isEmpty())
+            return new AbstractMap.SimpleImmutableEntry<>("", null);
+
         String[] split = s.split(":", 2);
         return new AbstractMap.SimpleImmutableEntry<>(split[0].trim(), split.length == 1 ? null : split[1].trim());
     }
 
+    /**
+     * Splits a string into a map by splitting it into lines then splitting each line into a key-value pair based on the
+     * position of the first colon in each line.
+     * @param s The string to convert into a map.
+     * @return A map where each key-value pair is a line in the provided string, split into a key-value pair by the
+     *         first colon in the line, where all the text before the first colon is the key and all the text after the
+     *         first colon is the value. Where a line contains no colon, the entire line is used as the key and the
+     *         value is set to null. Keys and values are trimmed.
+     */
     public static Map<String, String> splitColonSeparatedValuePairs(String s)
     {
         String[] lines = s.split("\\r?\\n|\\r");
@@ -92,6 +113,11 @@ public final class StringUtils
 
         for(String line : lines)
         {
+            line = line.trim();
+
+            if(line.isEmpty())
+                continue;
+
             String[] split = line.split(":", 2);
             result.put(split[0].trim(), split.length == 1 ? null : split[1].trim());
         }
@@ -99,7 +125,15 @@ public final class StringUtils
         return result;
     }
 
-    public static List<String> parseCSVLine(String line)
+    /**
+     * Parses a single row of CSV-formatted text. Follows RFC-4180 with the additions of allowing (and trimming) spaces
+     * around fields (that are enclosed in quotes or not) and attempting to produce reasonable results with invalid
+     * data. (such as invalid use of quotes) As this only attempts to parse a single row of CSV-formatted text, newline
+     * characters should not be treated as special characters and should not terminate the row nor field.
+     * @param line The CSV-formatted text to parse into a list of strings.
+     * @return A list of strings, where each string is a cell/field.
+     */
+    public static List<String> parseCSVRow(String line)
     {
         List<String> result = new ArrayList<>();
         int startOfField = 0;
@@ -155,6 +189,14 @@ public final class StringUtils
         return result;
     }
 
+    /**
+     * Parses a chunk of CSV-formatted text. Follows RFC-4180 with the additions of allowing (and trimming) spaces
+     * around fields (that are enclosed in quotes or not) and attempting to produce reasonable results with invalid
+     * data. (such as invalid use of quotes)
+     * @param csv The CSV-formatted text to parse into a list of lists of strings.
+     * @return A list of lists of strings, where each contained list is a row in the CSV table, and each string is a
+     *         cell/field.
+     */
     public static List<List<String>> parseCSV(String csv)
     {
         csv = csv.replaceAll("\\r\\n?", "\n");
@@ -255,7 +297,18 @@ public final class StringUtils
         return result;
     }
 
-    public static <T> String toCSVLine(List<T> fields, boolean spaceAfterCommas)
+    /**
+     * Converts a list of items into a CSV-formatted string representation as a single row. Items are converted to
+     * strings with {@link String#valueOf(Object)}.
+     * @param fields The fields of the CSV row.
+     * @param spaceAfterCommas Whether or not to add a space after delimiting commas. Passing true to this will produce
+     *                         a more human-readable CSV-formatted string representation, but one that will be
+     *                         incompatible with RFC-4180.
+     * @param <T> The type of the items in the list.
+     * @return A CSV-formatted string representation of the provided list of items. If not allowing spaces after commas,
+     *         the resulting CSV text will be compatible with RFC-4180.
+     */
+    public static <T> String toCSVRow(List<T> fields, boolean spaceAfterCommas)
     {
         if(fields.isEmpty())
             return "";
@@ -269,9 +322,29 @@ public final class StringUtils
         return sb.substring(spaceAfterCommas ? 2 : 1);
     }
 
-    public static String toCSVLine(List<String> fields)
-    { return toCSVLine(fields, false); }
+    /**
+     * Converts a list of items into a CSV-formatted string representation as a single row. Items are converted to
+     * strings with {@link String#valueOf(Object)} and enclosed in quotes if required to produce a valid CSV table and
+     * preserve it as a string.
+     * @param fields The fields of the CSV row.
+     * @param <T> The type of the items in the list.
+     * @return An RFC-4180 CSV-formatted string representation of the provided list of items.
+     */
+    public static <T> String toCSVRow(List<T> fields)
+    { return toCSVRow(fields, false); }
 
+    /**
+     * Converts a list of lists of items into a CSV-formatted string representation, where each list of items is a row
+     * and each item is a field/cell. Items are converted to strings with {@link String#valueOf(Object)} and enclosed in
+     * quotes if required to produce a valid CSV table and preserve it as a string.
+     * @param rows The list of rows to be converted into a string representation.
+     * @param spaceAfterCommas Whether or not to add a space after delimiting commas. Passing true to this will produce
+     *                         a more human-readable CSV-formatted string representation, but one that will be
+     *                         incompatible with RFC-4180.
+     * @param <T> The type of the items in the table.
+     * @return A CSV-formatted string representation of the provided list of lists of items. If not allowing spaces
+     * after commas, the resulting CSV text will be compatible with RFC-4180.
+     */
     public static <T> String toCSV(List<List<T>> rows, boolean spaceAfterCommas)
     {
         if(rows.isEmpty())
@@ -280,14 +353,36 @@ public final class StringUtils
         StringBuilder sb = new StringBuilder();
 
         for(List<T> row : rows)
-            sb.append("\n").append(toCSVLine(row, spaceAfterCommas));
+            sb.append("\n").append(toCSVRow(row, spaceAfterCommas));
 
         return sb.substring(1);
     }
 
-    public static String toCSV(List<List<String>> rows)
+    /**
+     * Converts a list of lists of items into a CSV-formatted string representation, where each list of items is a row
+     * and each item is a field/cell. Items are converted to strings with {@link String#valueOf(Object)} and enclosed in
+     * quotes if required to produce a valid CSV table and preserve it as a string.
+     * @param rows The list of rows to be converted into a string representation.
+     * @param <T> The type of the items in the table.
+     * @return An RFC-4180 CSV-formatted string representation of the provided list of lists of items.
+     */
+    public static <T> String toCSV(List<List<T>> rows)
     { return toCSV(rows, false); }
 
+    /**
+     * Converts a map into a CSV-formatted string representation, where each entry in the map is a row, containing the
+     * key then the value. Items are converted to strings with {@link String#valueOf(Object)} and enclosed in quotes if
+     * required to produce a valid CSV table and preserve it as a string. Rows are in the order returned by the iterator
+     * of the provided entry set, which may be no guaranteed order.
+     * @param map The item to convert into a CSV-formatted string representation.
+     * @param spaceAfterCommas Whether or not to add a space after delimiting commas. Passing true to this will produce
+     *                         a more human-readable CSV-formatted string representation, but one that will be
+     *                         incompatible with RFC-4180.
+     * @param <k> The type of the keys in the map.
+     * @param <v> The type of the values in the map.
+     * @return A CSV-formatted string representation of the provided map. If not allowing spaces after commas, the
+     *         resulting CSV text will be compatible with RFC-4180.
+     */
     public static <k, v> String toCSV(Map<k, v> map, boolean spaceAfterCommas)
     {
         if(map.isEmpty())
@@ -305,9 +400,34 @@ public final class StringUtils
         return sb.substring(1);
     }
 
+    /**
+     * Converts a map into a CSV-formatted string representation, where each entry in the map is a row, containing the
+     * key then the value. Items are converted to strings with {@link String#valueOf(Object)} and enclosed in quotes if
+     * required to produce a valid CSV table and preserve it as a string. Rows are in the order returned by the iterator
+     * of the provided entry set, which may be no guaranteed order.
+     * @param map The item to convert into a CSV-formatted string representation.
+     * @param <k> The type of the keys in the map.
+     * @param <v> The type of the values in the map.
+     * @return An RFC-4180 CSV-formatted string representation of the provided map.
+     */
     public static <k, v> String toCSV(Map<k, v> map)
     { return toCSV(map, false); }
 
+    /**
+     * Converts a map into a CSV-formatted string representation, where each entry in the map is a row, containing the
+     * key then the value. Items are converted to strings with {@link String#valueOf(Object)} and enclosed in quotes if
+     * required to produce a valid CSV table and preserve it as a string. Rows are in the order dictated by the provided
+     * comparator.
+     * @param map The item to convert into a CSV-formatted string representation.
+     * @param spaceAfterCommas Whether or not to add a space after delimiting commas. Passing true to this will produce
+     *                         a more human-readable CSV-formatted string representation, but one that will be
+     *                         incompatible with RFC-4180.
+     * @param comparator The comparator used to sort the rows of the resulting CSV table.
+     * @param <k> The type of the keys in the map.
+     * @param <v> The type of the values in the map.
+     * @return A CSV-formatted string representation of the provided map. If not allowing spaces after commas, the
+     *         resulting CSV text will be compatible with RFC-4180.
+     */
     public static <k, v> String toCSV(Map<k, v> map, boolean spaceAfterCommas, Comparator<Map.Entry<k, v>> comparator)
     {
         if(map.isEmpty())
@@ -325,6 +445,17 @@ public final class StringUtils
         return sb.substring(1);
     }
 
+    /**
+     * Converts a map into a CSV-formatted string representation, where each entry in the map is a row, containing the
+     * key then the value. Items are converted to strings with {@link String#valueOf(Object)} and enclosed in quotes if
+     * required to produce a valid CSV table and preserve it as a string. Rows are in the order dictated by the provided
+     * comparator.
+     * @param map The item to convert into a CSV-formatted string representation.
+     * @param comparator The comparator used to sort the rows of the resulting CSV table.
+     * @param <k> The type of the keys in the map.
+     * @param <v> The type of the values in the map.
+     * @return An RFC-4180 CSV-formatted string representation of the provided map.
+     */
     public static <k, v> String toCSV(Map<k, v> map, Comparator<Map.Entry<k, v>> comparator)
     { return toCSV(map, false, comparator); }
 
