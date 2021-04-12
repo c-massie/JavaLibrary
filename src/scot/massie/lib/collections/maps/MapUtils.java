@@ -1,7 +1,6 @@
 package scot.massie.lib.collections.maps;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BinaryOperator;
 
 public final class MapUtils
@@ -325,4 +324,39 @@ public final class MapUtils
      */
     public static <K> Map<K, Double> multiplyMatchingDoubleValues(Iterable<Map<K, Double>> maps)
     { return accumulateValues((a, b) -> a * b, maps); }
+
+    /**
+     * Creates a list of the entries in the given map in order as dictated by the given comparator.
+     * @param map The map to get the entries of.
+     * @param comparator The comparator to compare each entry.
+     * @param <K> The type of the map keys.
+     * @param <V> The type of the map values.
+     * @return A list of the entries of the given map ordered by the given comparator.
+     */
+    public static <K, V> List<Map.Entry<K, V>> entryList(Map<K, V> map, Comparator<Map.Entry<K, V>> comparator)
+    {
+        ArrayList<Map.Entry<K, V>> result = new ArrayList<>(map.entrySet());
+        result.sort(comparator);
+        return result;
+    }
+
+    /**
+     * Creates a list of the entries in the given map in no particular order.
+     * @param map The map to get the entries of.
+     * @param <K> The type of the map keys.
+     * @param <V> The type of the map values.
+     * @return An unordered list of the entries of the given map.
+     */
+    public static <K, V> List<Map.Entry<K, V>> entryList(Map<K, V> map)
+    { return new ArrayList<>(map.entrySet()); }
+
+    /**
+     * Creates a list of the entries in the given map orderd by their keys.
+     * @param map The map to get the entries of.
+     * @param <K> The type of the map keys.
+     * @param <V> The type of the map values.
+     * @return A list of the entries of the given map ordered by their keys.
+     */
+    public static <K extends Comparable<? super K>, V> List<Map.Entry<K, V>> entryListSortedByKey(Map<K, V> map)
+    { return entryList(map, Map.Entry.comparingByKey()); }
 }
