@@ -49,6 +49,12 @@ public final class EquationEvaluation
            making them be tokenised after custom operators. This may be the way to go if I add default multi-character
            operators.
 
+
+    NEXT TO DO:
+        - Implement parsing support for InfixOperator.
+        - Implement ability to register arbitrary N N-ary operators on the public interface.
+        - Replace all binary operators with infix operators.
+        - Remove binary operator code.
      */
 
     //region Inner classes
@@ -326,6 +332,17 @@ public final class EquationEvaluation
          */
         double performOperation(double l, double r);
     }
+
+    @FunctionalInterface
+    public interface InfixOperatorAction
+    {
+        /**
+         * Performs an operation on the passed operands.
+         * @param operands An array of operands being passed into this operator.
+         * @return The result of the operation.
+         */
+        double performOperation(double... operands);
+    }
     //endregion
 
     //region misc
@@ -336,6 +353,8 @@ public final class EquationEvaluation
 
         double priority;
 
+        List<InfixOperator> leftAssociativeInfixOperators = new ArrayList<>();
+        List<InfixOperator> rightAssociativeInfixOperators = new ArrayList<>();
         List<BinaryOperator> leftAssociativeBinaryOperators = new ArrayList<>();
         List<BinaryOperator> rightAssociativeBinaryOperators = new ArrayList<>();
         List<UnaryOperator> prefixOperators = new ArrayList<>();
@@ -351,6 +370,15 @@ public final class EquationEvaluation
                     leftAssociativeBinaryOperators.add(bop);
                 else
                     rightAssociativeBinaryOperators.add(bop);
+            }
+            else if(op instanceof InfixOperator)
+            {
+                InfixOperator iop = (InfixOperator)op;
+
+                if(iop.isLeftAssociative)
+                    leftAssociativeInfixOperators.add(iop);
+                else
+                    rightAssociativeInfixOperators.add(iop);
             }
             else // op is UnaryOperator
             {
@@ -413,6 +441,36 @@ public final class EquationEvaluation
         { this(lex, priority, action, true); }
 
         BinaryOperatorAction action;
+        boolean isLeftAssociative;
+    }
+
+    private static class InfixOperator extends Operator
+    {
+        public InfixOperator(char lex, double priority, InfixOperatorAction action)
+        { this(new char[]{ lex }, priority, action); }
+
+        public InfixOperator(char lex1, char lex2, double priority, InfixOperatorAction action)
+        { this(new char[]{ lex1, lex2 }, priority, action); }
+
+        public InfixOperator(char[] lex, double priority, InfixOperatorAction action)
+        { this(lex, priority, action, true); }
+
+        public InfixOperator(char lex, double priority, InfixOperatorAction action, boolean isLeftAssociative)
+        { this(new char[]{ lex }, priority, action); }
+
+        public InfixOperator(char lex1, char lex2, double priority, InfixOperatorAction action, boolean isLeftAssociative)
+        { this(new char[]{ lex1, lex2 }, priority, action); }
+
+        public InfixOperator(char[] lex, double priority, InfixOperatorAction action, boolean isLeftAssociative)
+        {
+            super(lex[0], priority);
+            this.lexes = lex;
+            this.action = action;
+            this.isLeftAssociative = isLeftAssociative;
+        }
+
+        char[] lexes;
+        InfixOperatorAction action;
         boolean isLeftAssociative;
     }
     //endregion
@@ -557,6 +615,7 @@ public final class EquationEvaluation
 
     private static final Operator[] defaultOperators =
     {
+            new InfixOperator('?', ':', -100, o -> o[0] >= 1 ? o[1] : o[2]),
             new BinaryOperator('-', 100,  (x, y) -> x - y),
             new BinaryOperator('+', 100,  (x, y) -> x + y),
             new BinaryOperator('/', 200,  (x, y) -> x / y),
@@ -765,6 +824,8 @@ public final class EquationEvaluation
 
     private final Map<Character, BinaryOperator> binaryOperators = new HashMap<>();
 
+    private final Map<List<Character>, InfixOperator> infixOperators = new HashMap<>();
+
     private final Map<Character, UnaryOperator> prefixOperators = new HashMap<>();
 
     private final Map<Character, UnaryOperator> postfixOperators = new HashMap<>();
@@ -773,6 +834,18 @@ public final class EquationEvaluation
     //endregion
 
     //region Methods
+    //region Convenience methods
+    private static List<Character> charArrayToList(char[] array)
+    {
+        List<Character> result = new ArrayList<>();
+
+        for(char i : array)
+            result.add(i);
+
+        return result;
+    }
+    //endregion
+
     //region Methods about state
     private boolean charIsNonPrefixOperator(char c)
     {
@@ -874,6 +947,8 @@ public final class EquationEvaluation
     {
         if(op instanceof BinaryOperator)
             binaryOperators.put(op.lex, (BinaryOperator)op);
+        else if(op instanceof InfixOperator)
+            infixOperators.put(charArrayToList(((InfixOperator)op).lexes), (InfixOperator)op);
         else
         {
             UnaryOperator uop = (UnaryOperator)op;
