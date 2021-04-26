@@ -472,6 +472,104 @@ public final class EquationEvaluation
         char[] lexes;
         InfixOperatorAction action;
         boolean isLeftAssociative;
+
+        public InfixOperation tryParse(EquationEvaluation ee, String s)
+        {
+            if(isLeftAssociative)
+            {
+                // TO DO: Implement for left associate arbitrary-N infix operators.
+                throw new UnsupportedOperationException("Not yet implemented.");
+            }
+            else
+            {
+                String[] operands = new String[lexes.length + 1];
+                int previousLexPosition = -1;
+
+                for(int i = 0; i < lexes.length; i++)
+                {
+                    int nextLexPosition = getNextLexPosition_rightAssociative(ee, lexes, s, lexes[i], previousLexPosition);
+
+                    if(nextLexPosition < 0)
+                        return null;
+
+                    operands[i] = s.substring(previousLexPosition + 1, nextLexPosition);
+                    previousLexPosition = nextLexPosition;
+                }
+
+                EquationComponent[] components = new EquationComponent[operands.length];
+
+                if(isLeftAssociative) // operands is reversed, and its strings are reversed
+                {
+                    for(int i = 0, ri = operands.length - 1; i < operands.length; i++, ri--)
+                        components[i] = ee.parse(new StringBuilder(operands[ri]).reverse().toString());
+                }
+                else
+                {
+                    for(int i = 0; i < operands.length; i++)
+                        components[i] = ee.parse(operands[i]);
+                }
+
+                return new InfixOperation(components, action);
+            }
+        }
+
+        private static int getNextLexPosition_rightAssociative
+                (EquationEvaluation ee, char[] lexes, String s, char nextLex, int startFrom)
+        {
+            int slength = s.length();
+            int bracketDepth = 0;
+            char firstLex = lexes[0];
+
+            for(int i = startFrom; i < slength; i++)
+            {
+                char c = s.charAt(i);
+
+                if(c == '(')
+                    bracketDepth++;
+                else if(c == ')')
+                {
+                    if(bracketDepth-- < 0)
+                        return -1;
+                }
+                else if(bracketDepth == 0)
+                {
+                    if(i == slength - 1)
+                        continue;
+
+                    if(!ee.canBeBinaryOperator(s, i))
+                        continue;
+
+                    if(c == nextLex)
+                        return i;
+
+                    if(c == firstLex)
+                    {
+                        int matchingLastLexPosition = getMatchingLastLexPosition_rightAssociative(ee, lexes, s, i);
+
+                        if(matchingLastLexPosition >= 0)
+                            i = matchingLastLexPosition;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        private static int getMatchingLastLexPosition_rightAssociative
+                (EquationEvaluation ee, char[] lexes, String s, int firstLexPosition)
+        {
+            int position = firstLexPosition;
+
+            for(int i = 1; i < lexes.length; i++)
+            {
+                position = getNextLexPosition_rightAssociative(ee, lexes, s, lexes[i], position + 1);
+
+                if(position < 0)
+                    return -1;
+            }
+
+            return position;
+        }
     }
     //endregion
 
@@ -550,6 +648,29 @@ public final class EquationEvaluation
         @Override
         public double evaluate()
         { return action.performOperation(operand.evaluate()); }
+    }
+
+    private static class InfixOperation extends Operation
+    {
+        public InfixOperation(EquationComponent[] operands, InfixOperatorAction action)
+        {
+            this.operands = operands;
+            this.action = action;
+        }
+
+        EquationComponent[] operands;
+        InfixOperatorAction action;
+
+        @Override
+        public double evaluate()
+        {
+            double[] evaluatedOps = new double[operands.length];
+
+            for(int i = evaluatedOps.length - 1; i >= 0; i--)
+                evaluatedOps[i] = operands[i].evaluate();
+
+            return action.performOperation(evaluatedOps);
+        }
     }
 
     private static abstract class VariadicOperation extends Operation
