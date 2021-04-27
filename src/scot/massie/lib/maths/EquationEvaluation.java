@@ -475,14 +475,26 @@ public final class EquationEvaluation
 
         public InfixOperation tryParse(EquationEvaluation ee, String s)
         {
+            String[] operands = new String[lexes.length + 1];
+            EquationComponent[] components = new EquationComponent[operands.length];
+
             if(isLeftAssociative)
             {
-                // TO DO: Implement for left associate arbitrary-N infix operators.
-                throw new UnsupportedOperationException("Not yet implemented.");
+                int nextLexPosition = -1;
+
+                for(int i = lexes.length - 1; i >= 0; i--)
+                {
+                    int previousLexPosition = getPreviousLexPosition_leftAssociative(ee, lexes, s, lexes[i], nextLexPosition);
+
+                    if(previousLexPosition < 0)
+                        return null;
+
+                    operands[i] = s.substring(previousLexPosition + 1, nextLexPosition);
+                    nextLexPosition = previousLexPosition;
+                }
             }
             else
             {
-                String[] operands = new String[lexes.length + 1];
                 int previousLexPosition = -1;
 
                 for(int i = 0; i < lexes.length; i++)
@@ -495,22 +507,12 @@ public final class EquationEvaluation
                     operands[i] = s.substring(previousLexPosition + 1, nextLexPosition);
                     previousLexPosition = nextLexPosition;
                 }
-
-                EquationComponent[] components = new EquationComponent[operands.length];
-
-                if(isLeftAssociative) // operands is reversed, and its strings are reversed
-                {
-                    for(int i = 0, ri = operands.length - 1; i < operands.length; i++, ri--)
-                        components[i] = ee.parse(new StringBuilder(operands[ri]).reverse().toString());
-                }
-                else
-                {
-                    for(int i = 0; i < operands.length; i++)
-                        components[i] = ee.parse(operands[i]);
-                }
-
-                return new InfixOperation(components, action);
             }
+
+            for(int i = 0; i < operands.length; i++)
+                components[i] = ee.parse(operands[i]);
+
+            return new InfixOperation(components, action);
         }
 
         private static int getNextLexPosition_rightAssociative
@@ -563,6 +565,63 @@ public final class EquationEvaluation
             for(int i = 1; i < lexes.length; i++)
             {
                 position = getNextLexPosition_rightAssociative(ee, lexes, s, lexes[i], position + 1);
+
+                if(position < 0)
+                    return -1;
+            }
+
+            return position;
+        }
+
+        private static int getPreviousLexPosition_leftAssociative(EquationEvaluation ee, char[] lexes, String s, char previousLex, int startFrom)
+        {
+            int slength = s.length();
+            int bracketDepth = 0;
+            char lastLex = lexes[lexes.length - 1];
+
+            for(int i = startFrom; i >= 0; i--)
+            {
+                char c = s.charAt(i);
+
+                if(c == ')')
+                    bracketDepth++;
+                else if(c == '(')
+                {
+                    if(bracketDepth-- < 0)
+                        return -1;
+                }
+                else if(bracketDepth == 0)
+                {
+                    if(i == 0)
+                        continue;
+
+                    if(!ee.canBeBinaryOperator(s, i))
+                        continue;
+
+                    if(c == previousLex)
+                        return i;
+
+                    if(c == lastLex)
+                    {
+                        int matchingFirstLexPosition = getMatchingFirstLexPosition_leftAssociative(ee, lexes, s, i);
+
+                        if(matchingFirstLexPosition >= 0)
+                            i = matchingFirstLexPosition;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        private static int getMatchingFirstLexPosition_leftAssociative
+                (EquationEvaluation ee, char[] lexes, String s, int lastLexPosition)
+        {
+            int position = lastLexPosition;
+
+            for(int i = lexes.length - 2; i >= 0; i--)
+            {
+                position = getPreviousLexPosition_leftAssociative(ee, lexes, s, lexes[i], position - 1);
 
                 if(position < 0)
                     return -1;
