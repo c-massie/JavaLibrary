@@ -5,6 +5,7 @@ import scot.massie.lib.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -52,6 +53,7 @@ public final class EquationEvaluation
 
     NEXT TO DO:
         - Implement parsing support for InfixOperator.
+        - - Includes recognising tokens used in N-ary infix operators.
         - Implement ability to register arbitrary N N-ary operators on the public interface.
         - Replace all binary operators with infix operators.
         - Remove binary operator code.
@@ -1217,9 +1219,11 @@ public final class EquationEvaluation
 
     private Operation parseOperation(String s, OperatorGroup og)
     {
+        Operation o;
+
         if(!og.rightAssociativeBinaryOperators.isEmpty())
         {
-            Operation o = parseOperation_rightAssociative(s, og);
+            o = parseOperation_rightAssociative(s, og);
 
             if(o != null)
                 return o;
@@ -1227,15 +1231,25 @@ public final class EquationEvaluation
 
         if(!og.leftAssociativeBinaryOperators.isEmpty())
         {
-            Operation o = parseOperation_leftAssociative(s, og);
+            o = parseOperation_leftAssociative(s, og);
 
             if(o != null)
                 return o;
         }
 
+        o = parseOperation_infix(s, og.rightAssociativeInfixOperators);
+
+        if(o != null)
+            return o;
+
+        o = parseOperation_infix(s, og.rightAssociativeInfixOperators);
+
+        if(o != null)
+            return o;
+
         if(!og.postfixOperators.isEmpty())
         {
-            Operation o = parseOperation_postfix(s, og);
+            o = parseOperation_postfix(s, og);
 
             if(o != null)
                 return o;
@@ -1243,7 +1257,7 @@ public final class EquationEvaluation
 
         if(!og.prefixOperators.isEmpty())
         {
-            Operation o = parseOperation_prefix(s, og);
+            o = parseOperation_prefix(s, og);
 
             if(o != null)
                 return o;
@@ -1321,6 +1335,19 @@ public final class EquationEvaluation
                     }
                 }
             }
+        }
+
+        return null;
+    }
+
+    private Operation parseOperation_infix(String s, Collection<InfixOperator> operators)
+    {
+        for(InfixOperator op : operators)
+        {
+            InfixOperation operation = op.tryParse(this, s);
+
+            if(operation != null)
+                return operation;
         }
 
         return null;
