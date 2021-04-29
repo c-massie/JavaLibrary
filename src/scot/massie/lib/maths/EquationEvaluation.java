@@ -1078,6 +1078,24 @@ public final class EquationEvaluation
         }
     }
 
+    private void removeInfixOpFromOpGroupsIfRegistered(InfixOperator op)
+    {
+        List<Character> lexes = charArrayToList(op.lexes);
+        InfixOperator existingOp = infixOperators.get(lexes);
+
+        if(existingOp != null)
+        {
+            for(OperatorGroup og : operatorGroups)
+            {
+                if(og.leftAssociativeInfixOperators.remove(existingOp))
+                    break;
+
+                if(og.rightAssociativeInfixOperators.remove(existingOp))
+                    break;
+            }
+        }
+    }
+
     private void removePrefixOpFromOpGroupsIfRegistered(UnaryOperator op)
     {
         UnaryOperator existingOp = prefixOperators.get(op.lex);
@@ -1105,6 +1123,11 @@ public final class EquationEvaluation
             removeBinaryOpFromOpGroupsIfRegistered((BinaryOperator)op);
             binaryOperators.put(op.lex, (BinaryOperator)op);
         }
+        else if(op instanceof InfixOperator)
+        {
+            removeInfixOpFromOpGroupsIfRegistered((InfixOperator)op);
+            infixOperators.put(charArrayToList(((InfixOperator)op).lexes), (InfixOperator)op);
+        }
         else
         {
             UnaryOperator uop = (UnaryOperator)op;
@@ -1122,7 +1145,14 @@ public final class EquationEvaluation
         }
 
         getOrCreateOpGroup(op.priority).addOperator(op);
-        operatorChars.add(op.lex);
+
+        if(op instanceof InfixOperator)
+        {
+            for(char i : ((InfixOperator)op).lexes)
+                operatorChars.add(i);
+        }
+        else
+            operatorChars.add(op.lex);
     }
 
     private void addOperatorDumbly(Operator op)
@@ -1138,7 +1168,14 @@ public final class EquationEvaluation
         }
 
         getOrCreateOpGroup(op.priority).addOperator(op);
-        operatorChars.add(op.lex);
+
+        if(op instanceof InfixOperator)
+        {
+            for(char i : ((InfixOperator)op).lexes)
+                operatorChars.add(i);
+        }
+        else
+            operatorChars.add(op.lex);
     }
     //endregion
 
