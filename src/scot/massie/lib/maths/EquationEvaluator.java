@@ -4,6 +4,7 @@ import com.sun.istack.internal.NotNull;
 
 import java.util.*;
 import java.util.function.ToDoubleFunction;
+import java.util.regex.Pattern;
 
 public class EquationEvaluator
 {
@@ -143,12 +144,94 @@ public class EquationEvaluator
         }
     }
 
+    private static class Tokeniser
+    {
+        List<Token> tokens;
+
+        public Tokeniser(List<Token> tokens)
+        { this.tokens = tokens; }
+
+        public List<Token> tokenise(String s)
+        {
+            List<Token> result = new ArrayList<>();
+            result.add(new UntokenisedString(s.trim()));
+
+            for(Token t : tokens)
+            {
+                String tStringEscaped = Pattern.quote(t.toString());
+
+                for(int i = 0; i < result.size(); i++)
+                {
+                    Token rt = result.get(i);
+
+                    if(!(rt instanceof UntokenisedString))
+                        continue;
+
+                    String rtString = rt.toString();
+                    String[] rtSplit = rtString.split(tStringEscaped);
+
+                    if(rtSplit.length > 1)
+                    {
+                        List<Token> rtTokens = new ArrayList<>(rtSplit.length * 2 - 1);
+                        int rtSplitLastIndex = rtSplit.length - 1;
+
+                        for(int j = 0; j < rtSplitLastIndex; j++)
+                        {
+                            rtTokens.add(new UntokenisedString(rtSplit[j].trim()));
+                            rtTokens.add(t);
+                        }
+
+                        rtTokens.add(new UntokenisedString(rtSplit[rtSplitLastIndex].trim()));
+
+                        result.remove(i);
+                        result.addAll(i, rtTokens);
+                        i += rtTokens.size() - 1;
+                    }
+                }
+            }
+
+            tokeniseNumbers(result);
+            return result;
+        }
+
+        /**
+         * Replaces all {@link UntokenisedString untokenised strings} in a list of tokens that are parseable as numbers
+         * with {@link NumberToken number tokens}.
+         * @param tokens The list of tokens to parse the numbers in.
+         */
+        private void tokeniseNumbers(List<Token> tokens)
+        {
+            for(int i = 0; i < tokens.size(); i++)
+            {
+                Token itoken = tokens.get(i);
+
+                if(!(itoken instanceof UntokenisedString))
+                    continue;
+
+                String itokenText = itoken.toString();
+                double asNumber;
+
+                try
+                { asNumber = Double.parseDouble(itokenText); }
+                catch(NumberFormatException e)
+                { continue; }
+
+                tokens.remove(i);
+                tokens.add(i, new NumberToken(itokenText, asNumber));
+            }
+        }
+    }
+
+    //region Tokens
     private static class Token
     {
-        public Token(@NotNull String asText)
-        { this.text = asText; }
+        public static final Token OPEN_BRACKET = new Token("(");
+        public static final Token CLOSE_BRACKET = new Token(")");
 
         final String text;
+
+        public Token(@NotNull String asText)
+        { this.text = asText; }
 
         @Override
         public String toString()
@@ -171,6 +254,27 @@ public class EquationEvaluator
         public int hashCode()
         { return text.hashCode(); }
     }
+
+    private static class UntokenisedString extends Token
+    {
+        public UntokenisedString(String s)
+        { super(s); }
+    }
+
+    private static class NumberToken extends Token
+    {
+        public NumberToken(String asText, double asNumber)
+        {
+            super(asText);
+            this.value = asNumber;
+        }
+
+        final double value;
+
+        public double getValue()
+        { return value; }
+    }
+    //endregion
 
     //region operators
     private static class Operator
@@ -359,11 +463,14 @@ public class EquationEvaluator
     //endregion
 
     //region variables
-
+    final EquationComponent topLevelComponent;
     //endregion
 
     //region initialisation
-
+    private EquationEvaluator(EquationComponent topLevelComponent)
+    {
+        this.topLevelComponent = topLevelComponent;
+    }
     //endregion
 
     //region methods
