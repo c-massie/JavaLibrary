@@ -13,6 +13,28 @@ public class EquationEvaluator
     {
         String unparsedEquation;
 
+        /**
+         * Fixed string tokens that may appear in an equation. Does not include variable names, function names,
+         * numbers, or unparsable portions of equation.
+         */
+        Set<Token> possibleTokens = new HashSet<>();
+        {
+            possibleTokens.add(Token.OPEN_BRACKET);
+            possibleTokens.add(Token.CLOSE_BRACKET);
+        }
+
+        /**
+         * {@link #possibleTokens}, but in order from first registered to last registered. This is the reverse of the
+         * order in which equations are tokenised. It should be noted that where a token whose text contains the text of
+         * other tokens is registered earlier (and thus tokenised later), matching strings will be parsed as the smaller
+         * tokens rather than the larger ones, as the smaller ones will be considered first.
+         */
+        List<Token> possibleTokensInOrder = new ArrayList<>();
+        {
+            possibleTokensInOrder.add(Token.OPEN_BRACKET);
+            possibleTokensInOrder.add(Token.CLOSE_BRACKET);
+        }
+
         Map<List<Token>, Operator> infixOperators;
         Map<Token, PrefixOperator> prefixOperators;
         Map<Token, PostfixOperator> postfixOperators;
@@ -75,46 +97,66 @@ public class EquationEvaluator
             return new HashMap<>();
         }
 
-        public Builder withVariable(String name, double value)
+        private void addOperator(Operator op)
         {
-            variables.put(name, value);
-            return this;
+            if(op instanceof PrefixOperator)
+            {
+                PrefixOperator pop = (PrefixOperator)op;
+                Token popToken = pop.getToken();
+                prefixOperators.put(popToken, pop);
+                addToken(popToken);
+            }
+            else if(op instanceof PostfixOperator)
+            {
+                PostfixOperator pop = (PostfixOperator)op;
+                Token popToken = pop.getToken();
+                postfixOperators.put(popToken, pop);
+                addToken(popToken);
+            }
+            else if(op instanceof InfixOperator)
+            {
+                InfixOperator iop = (InfixOperator)op;
+                List<Token> iopTokens = iop.getTokens();
+                infixOperators.put(iopTokens, iop);
+                addTokens(iopTokens);
+            }
+            else
+            { throw new UnsupportedOperationException("Unrecognised operator type: " + op.getClass().getName()); }
         }
+
+        private void addToken(Token token)
+        {
+            if(possibleTokens.add(token))
+                possibleTokensInOrder.add(token);
+        }
+
+        private void addTokens(List<Token> tokens)
+        {
+            for(Token token : tokens)
+                if(possibleTokens.add(token))
+                    possibleTokensInOrder.add(token);
+        }
+
+        public Builder withToken(String token)
+        { addToken(new Token(token)); return this; }
+
+        public Builder withVariable(String name, double value)
+        { variables.put(name, value); return this; }
 
         public Builder withFunction(String name, ToDoubleFunction<double[]> f)
-        {
-            functions.put(name, f);
-            return this;
-        }
+        { functions.put(name, f); return this; }
 
         public Builder withPrefixOperator(String token, UnaryOperatorAction action)
-        {
-            Token t = new Token(token);
-            prefixOperators.put(t, new PrefixOperator(t, action));
-            return this;
-        }
+        { addOperator(new PrefixOperator(new Token(token), action)); return this; }
 
         public Builder withPostfixOperator(String token, UnaryOperatorAction action)
-        {
-            Token t = new Token(token);
-            postfixOperators.put(t, new PostfixOperator(t, action));
-            return this;
-        }
+        { addOperator(new PostfixOperator(new Token(token), action)); return this; }
 
         public Builder withOperator(String token, BinaryOperatorAction action)
-        {
-            Token t = new Token(token);
-            infixOperators.put(Arrays.asList(t), new BinaryOperator(t, action));
-            return this;
-        }
+        { addOperator(new BinaryOperator(new Token(token), action)); return this; }
 
         public Builder withOperator(String token1, String token2, TernaryOperatorAction action)
-        {
-            Token t1 = new Token(token1);
-            Token t2 = new Token(token2);
-            infixOperators.put(Arrays.asList(t1, t2), new TernaryOperator(t1, t2, action));
-            return this;
-        }
+        { addOperator(new TernaryOperator(new Token(token1), new Token(token2), action)); return this; }
 
         public Builder withOperator(String[] tokens, OperatorAction action)
         {
@@ -123,7 +165,7 @@ public class EquationEvaluator
             for(String i : tokens)
                 ts.add(new Token(i));
 
-            infixOperators.put(ts, new InfixOperator(ts, action));
+            addOperator(new InfixOperator(ts, action));
             return this;
         }
 
@@ -134,12 +176,14 @@ public class EquationEvaluator
             for(String i : tokens)
                 ts.add(new Token(i));
 
-            infixOperators.put(ts, new InfixOperator(ts, action));
+            addOperator(new InfixOperator(ts, action));
             return this;
         }
 
         public EquationEvaluator build()
         {
+            List<Token> equationTokens = new Tokeniser(possibleTokensInOrder).tokenise(unparsedEquation);
+
             throw new UnsupportedOperationException("Not implemented yet");
         }
     }
@@ -156,19 +200,20 @@ public class EquationEvaluator
             List<Token> result = new ArrayList<>();
             result.add(new UntokenisedString(s.trim()));
 
-            for(Token t : tokens)
+            for(int tokenIndex = tokens.size() - 1; tokenIndex >= 0; tokenIndex--)
             {
-                String tStringEscaped = Pattern.quote(t.toString());
+                Token possibleToken = tokens.get(tokenIndex);
+                String possibleTokenTextEscaped = Pattern.quote(possibleToken.toString());
 
-                for(int i = 0; i < result.size(); i++)
+                for(int resultTokenIndex = 0; resultTokenIndex < result.size(); resultTokenIndex++)
                 {
-                    Token rt = result.get(i);
+                    Token resultToken = result.get(resultTokenIndex);
 
-                    if(!(rt instanceof UntokenisedString))
+                    if(!(resultToken instanceof UntokenisedString))
                         continue;
 
-                    String rtString = rt.toString();
-                    String[] rtSplit = rtString.split(tStringEscaped);
+                    String rtString = resultToken.toString();
+                    String[] rtSplit = rtString.split(possibleTokenTextEscaped);
 
                     if(rtSplit.length > 1)
                     {
@@ -178,14 +223,14 @@ public class EquationEvaluator
                         for(int j = 0; j < rtSplitLastIndex; j++)
                         {
                             rtTokens.add(new UntokenisedString(rtSplit[j].trim()));
-                            rtTokens.add(t);
+                            rtTokens.add(possibleToken);
                         }
 
                         rtTokens.add(new UntokenisedString(rtSplit[rtSplitLastIndex].trim()));
 
-                        result.remove(i);
-                        result.addAll(i, rtTokens);
-                        i += rtTokens.size() - 1;
+                        result.remove(resultTokenIndex);
+                        result.addAll(resultTokenIndex, rtTokens);
+                        resultTokenIndex += rtTokens.size() - 1;
                     }
                 }
             }
@@ -290,18 +335,24 @@ public class EquationEvaluator
 
         public Operator(List<Token> tokens, OperatorAction action)
         {
-            this.tokens = tokens;
+            this.tokens = Collections.unmodifiableList(tokens);
             this.action = action;
         }
 
         final List<Token> tokens;
         final OperatorAction action;
+
+        public List<Token> getTokens()
+        { return tokens; }
     }
 
     private static class UnaryOperator extends Operator
     {
         public UnaryOperator(Token token, UnaryOperatorAction action)
         { super(token, operands -> action.performOperation(operands[0])); }
+
+        public Token getToken()
+        { return this.tokens.get(0); }
     }
 
     private static class PrefixOperator extends UnaryOperator
@@ -319,28 +370,77 @@ public class EquationEvaluator
     private static class InfixOperator extends Operator
     {
         public InfixOperator(Token token, OperatorAction action)
-        { super(token, action); }
+        {
+            this(token, true, action);
+        }
 
         public InfixOperator(Token a, Token b, OperatorAction action)
-        { super(a, b, action); }
+        {
+            this(a, b, true, action);
+        }
 
         public InfixOperator(Token[] tokens, OperatorAction action)
-        { super(tokens, action); }
+        {
+            this(tokens, true, action);
+        }
 
         public InfixOperator(List<Token> tokens, OperatorAction action)
-        { super(tokens, action); }
+        {
+            this(tokens, true, action);
+        }
+
+        public InfixOperator(Token token, boolean isLeftAssociative, OperatorAction action)
+        {
+            super(token, action);
+            this.isLeftAssociative = isLeftAssociative;
+        }
+
+        public InfixOperator(Token a, Token b, boolean isLeftAssociative, OperatorAction action)
+        {
+            super(a, b, action);
+            this.isLeftAssociative = isLeftAssociative;
+        }
+
+        public InfixOperator(Token[] tokens, boolean isLeftAssociative, OperatorAction action)
+        {
+            super(tokens, action);
+            this.isLeftAssociative = isLeftAssociative;
+        }
+
+        public InfixOperator(List<Token> tokens, boolean isLeftAssociative, OperatorAction action)
+        {
+            super(tokens, action);
+            this.isLeftAssociative = isLeftAssociative;
+        }
+
+        final boolean isLeftAssociative;
+
+        public boolean isLeftAssociative()
+        { return isLeftAssociative; }
+
+        public boolean isRightAssociative()
+        { return !isLeftAssociative; }
     }
 
     private static class BinaryOperator extends InfixOperator
     {
         public BinaryOperator(Token token, BinaryOperatorAction action)
         { super(token, operands -> action.performOperation(operands[0], operands[1])); }
+
+        public Token getToken()
+        { return this.tokens.get(0); }
     }
 
     private static class TernaryOperator extends InfixOperator
     {
         public TernaryOperator(Token a, Token b, TernaryOperatorAction action)
         { super(a, b, operands -> action.performOperation(operands[0], operands[1], operands[2])); }
+
+        public Token getLeftToken()
+        { return this.tokens.get(0); }
+
+        public Token getRightToken()
+        { return this.tokens.get(1); }
     }
     //endregion
 
