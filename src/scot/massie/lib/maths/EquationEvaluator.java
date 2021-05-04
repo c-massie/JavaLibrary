@@ -5,12 +5,107 @@ import com.sun.istack.internal.NotNull;
 import java.util.*;
 import java.util.function.ToDoubleFunction;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class EquationEvaluator
 {
     //region inner classes
     public static final class Builder
     {
+        //region inner classes
+        //region exceptions
+        public static class EquationParseException extends RuntimeException
+        {
+            public EquationParseException(List<Token> fullEquation, List<Token> equationSection)
+            {
+                super("Equation was not parsable as an equation: " + Token.listToString(fullEquation)
+                      + "\nSpecifically, this portion: " + Token.listToString(equationSection));
+
+                this.fullEquation = fullEquation;
+                this.equationSection = equationSection;
+            }
+
+            public EquationParseException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            {
+                super(msg);
+                this.fullEquation = fullEquation;
+                this.equationSection = equationSection;
+            }
+
+            final List<Token> equationSection;
+            final List<Token> fullEquation;
+
+            public List<Token> getEquationSection()
+            { return equationSection; }
+
+            public String getEquationSectionAsString()
+            { return Token.listToString(equationSection); }
+
+            public List<Token> getFullEquation()
+            { return fullEquation; }
+
+            public String getFullEquationAsString()
+            { return Token.listToString(equationSection); }
+
+            public EquationParseException withFullEquation(List<Token> fullEquation)
+            { return new EquationParseException(fullEquation, equationSection); }
+        }
+
+        public static class DanglingOperatorException extends EquationParseException
+        {
+            public DanglingOperatorException(List<Token> fullEquation, List<Token> equationSection)
+            {
+                super(fullEquation, equationSection,
+                      "Equation contained a dangling operator that could not be a prefix nor postfix operator: "
+                        + Token.listToString(fullEquation)
+                        + "\nSpecifically, this portion: " + Token.listToString(equationSection));
+            }
+
+            public DanglingOperatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            { super(fullEquation, equationSection, msg); }
+
+            @Override
+            public DanglingOperatorException withFullEquation(List<Token> fullEquation)
+            { return new DanglingOperatorException(fullEquation, equationSection); }
+        }
+
+        public static class LeadingNonPrefixOperatorException extends DanglingOperatorException
+        {
+            public LeadingNonPrefixOperatorException(List<Token> fullEquation, List<Token> equationSection)
+            {
+                super(fullEquation, equationSection,
+                      "Equation contained a leading operator that could not be a prefix operator: "
+                      + Token.listToString(fullEquation)
+                      + "\nSpecifically, this portion: " + Token.listToString(equationSection));
+            }
+
+            public LeadingNonPrefixOperatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            { super(fullEquation, equationSection, msg); }
+
+            @Override
+            public LeadingNonPrefixOperatorException withFullEquation(List<Token> fullEquation)
+            { return new LeadingNonPrefixOperatorException(fullEquation, equationSection); }
+        }
+
+        public static class TrailingNonPostfixOperatorException extends DanglingOperatorException
+        {
+            public TrailingNonPostfixOperatorException(List<Token> fullEquation, List<Token> equationSection)
+            {
+                super(fullEquation, equationSection,
+                      "Equation contained a trailing operator that could not be a postfix operator: "
+                      + Token.listToString(fullEquation)
+                      + "\nSpecifically, this portion: " + Token.listToString(equationSection));
+            }
+
+            public TrailingNonPostfixOperatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            { super(fullEquation, equationSection, msg); }
+
+            @Override
+            public TrailingNonPostfixOperatorException withFullEquation(List<Token> fullEquation)
+            { return new TrailingNonPostfixOperatorException(fullEquation, equationSection); }
+        }
+        //endregion
+
         private static class OperatorPriorityGroup
         {
             final Map<Token, PrefixOperator> prefixOperators = new HashMap<>();
@@ -37,6 +132,7 @@ public class EquationEvaluator
             List<Token> tokensBeforePivot;
             List<Token> tokensAfterPivot;
         }
+        //endregion
 
         double DEFAULT_PRIORITY = 0;
         boolean DEFAULT_ASSOCIATIVITY = true; // true == left, false == right.
@@ -429,6 +525,16 @@ public class EquationEvaluator
 
         public Token(@NotNull String asText)
         { this.text = asText; }
+
+        public static String listToString(List<Token> tokenList)
+        {
+            if(tokenList == null)
+                throw new IllegalArgumentException("tokenList cannot be null.");
+
+            return tokenList.stream()
+                            .map(Token::toString)
+                            .collect(Collectors.joining(" "));
+        }
 
         @Override
         public String toString()
