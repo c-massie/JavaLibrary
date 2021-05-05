@@ -175,6 +175,8 @@ public class EquationEvaluator
         Map<String, ToDoubleFunction<double[]>> functions;
         Map<String, Double> variables;
 
+        Map<Double, OperatorPriorityGroup> operatorGroups = null;
+
         public Builder(@NotNull String equation)
         { this(equation, true); }
 
@@ -233,6 +235,8 @@ public class EquationEvaluator
 
         private void addOperator(Operator op)
         {
+            invalidateOperatorGroups();
+
             if(op instanceof PrefixOperator)
             {
                 PrefixOperator pop = (PrefixOperator)op;
@@ -342,31 +346,41 @@ public class EquationEvaluator
             return this;
         }
 
-        public EquationEvaluator build()
+        private void buildOperatorGroups()
         {
-            Map<Double, OperatorPriorityGroup> opGroups = new HashMap<>();
+            if(operatorGroups != null)
+                return;
+
+            operatorGroups = new HashMap<>();
 
             for(Map.Entry<Token, PrefixOperator> e : prefixOperators.entrySet())
             {
-                opGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
-                        .prefixOperators
-                        .put(e.getKey(), e.getValue());
+                operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
+                              .prefixOperators
+                              .put(e.getKey(), e.getValue());
             }
 
             for(Map.Entry<Token, PostfixOperator> e : postfixOperators.entrySet())
             {
-                opGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
-                        .postfixOperators
-                        .put(e.getKey(), e.getValue());
+                operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
+                              .postfixOperators
+                              .put(e.getKey(), e.getValue());
             }
 
             for(Map.Entry<List<Token>, InfixOperator> e : infixOperators.entrySet())
             {
-                opGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
-                        .infixOperators
-                        .add(e.getValue());
+                operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
+                              .infixOperators
+                              .add(e.getValue());
             }
+        }
 
+        private void invalidateOperatorGroups()
+        { operatorGroups = null; }
+
+        public EquationEvaluator build()
+        {
+            buildOperatorGroups();
             Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
             List<Token> equationTokens
                     = Collections.unmodifiableList(new ArrayList<>(tokeniser.tokenise(unparsedEquation)));
@@ -374,7 +388,7 @@ public class EquationEvaluator
             throw new UnsupportedOperationException("Not implemented yet");
         }
 
-        private EquationComponent tryParse(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
+        private EquationComponent tryParse(List<Token> toParse)
         {
             if(startsWithNonPrefixOperator(toParse))
                 throw new LeadingNonPrefixOperatorException(toParse, toParse);
@@ -383,12 +397,12 @@ public class EquationEvaluator
                 throw new TrailingNonPostfixOperatorException(toParse, toParse);
 
             if(isInBrackets(toParse))
-                return tryParse(toParse.subList(1, toParse.size() - 1), opGroups);
+                return tryParse(toParse.subList(1, toParse.size() - 1));
 
-            return nullCoalesce(() -> tryParseOperation(toParse, opGroups),
-                                () -> tryParseVariable(toParse, opGroups),
-                                () -> tryParseFunctionCall(toParse, opGroups),
-                                () -> tryParseNumber(toParse, opGroups),
+            return nullCoalesce(() -> tryParseOperation(toParse),
+                                () -> tryParseVariable(toParse),
+                                () -> tryParseFunctionCall(toParse),
+                                () -> tryParseNumber(toParse),
                                 () -> { throw new EquationParseException(toParse, toParse); });
         }
 
@@ -410,22 +424,22 @@ public class EquationEvaluator
                 && tokenList.get(tokenList.size() - 1).equals(Token.CLOSE_BRACKET);
         }
 
-        private Operation tryParseOperation(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
+        private Operation tryParseOperation(List<Token> toParse)
         {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
 
-        private FunctionCall tryParseFunctionCall(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
+        private FunctionCall tryParseFunctionCall(List<Token> toParse)
         {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
 
-        private VariableReference tryParseVariable(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
+        private VariableReference tryParseVariable(List<Token> toParse)
         {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
 
-        private LiteralNumber tryParseNumber(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
+        private LiteralNumber tryParseNumber(List<Token> toParse)
         {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
@@ -654,9 +668,7 @@ public class EquationEvaluator
         public List<Token> getTokens()
         { return tokens; }
 
-        public abstract EquationComponent tryParse(List<Token> toParse,
-                                                   Builder builder,
-                                                   Map<Double, Builder.OperatorPriorityGroup> opGroups);
+        public abstract EquationComponent tryParse(List<Token> toParse, Builder builder);
     }
 
     private static abstract class UnaryOperator extends Operator
@@ -674,14 +686,12 @@ public class EquationEvaluator
         { super(token, priority, action); }
 
         @Override
-        public EquationComponent tryParse(List<Token> toParse,
-                                          Builder builder,
-                                          Map<Double, Builder.OperatorPriorityGroup> opGroups)
+        public EquationComponent tryParse(List<Token> toParse, Builder builder)
         {
             if((toParse.size() < 2) || (!toParse.get(0).equals(getToken())))
                 return null;
 
-            return new Operation(builder.tryParse(toParse.subList(1, toParse.size()), opGroups), this.action);
+            return new Operation(builder.tryParse(toParse.subList(1, toParse.size())), this.action);
         }
     }
 
@@ -691,12 +701,12 @@ public class EquationEvaluator
         { super(token, priority, action); }
 
         @Override
-        public EquationComponent tryParse(List<Token> toParse, Builder builder, Map<Double, Builder.OperatorPriorityGroup> opGroups)
+        public EquationComponent tryParse(List<Token> toParse, Builder builder)
         {
             if((toParse.size() < 2) || (!toParse.get(toParse.size() - 1).equals(getToken())))
                 return null;
 
-            return new Operation(builder.tryParse(toParse.subList(0, toParse.size() - 1), opGroups), this.action);
+            return new Operation(builder.tryParse(toParse.subList(0, toParse.size() - 1)), this.action);
         }
     }
 
@@ -720,7 +730,7 @@ public class EquationEvaluator
         { return this.tokens.size() + 1; }
 
         @Override
-        public EquationComponent tryParse(List<Token> toParse, Builder builder, Map<Double, Builder.OperatorPriorityGroup> opGroups)
+        public EquationComponent tryParse(List<Token> toParse, Builder builder)
         {
             List<List<Token>> split = splitTokenList(toParse, builder);
 
@@ -730,7 +740,7 @@ public class EquationEvaluator
             List<EquationComponent> components = new ArrayList<>(split.size());
 
             for(List<Token> sublist : split)
-                components.add(builder.tryParse(toParse, opGroups));
+                components.add(builder.tryParse(sublist));
 
             return new Operation(components, action);
         }
