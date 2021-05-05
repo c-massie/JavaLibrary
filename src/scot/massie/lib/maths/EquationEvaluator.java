@@ -1,11 +1,15 @@
 package scot.massie.lib.maths;
 
 import com.sun.istack.internal.NotNull;
+import scot.massie.lib.utils.ControlFlowUtils;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static scot.massie.lib.utils.ControlFlowUtils.*;
 
 public class EquationEvaluator
 {
@@ -372,7 +376,58 @@ public class EquationEvaluator
 
         private EquationComponent tryParse(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
         {
-            throw new UnsupportedOperationException("Not implemented yet");
+            if(startsWithNonPrefixOperator(toParse))
+                throw new LeadingNonPrefixOperatorException(toParse, toParse);
+
+            if(endsWithNonPostfixOperator(toParse))
+                throw new TrailingNonPostfixOperatorException(toParse, toParse);
+
+            if(isInBrackets(toParse))
+                return tryParse(toParse.subList(1, toParse.size() - 1), opGroups);
+
+            return nullCoalesce(() -> tryParseOperation(toParse, opGroups),
+                                () -> tryParseVariable(toParse, opGroups),
+                                () -> tryParseFunctionCall(toParse, opGroups),
+                                () -> tryParseNumber(toParse, opGroups),
+                                () -> { throw new EquationParseException(toParse, toParse); });
+        }
+
+        private boolean startsWithNonPrefixOperator(List<Token> tokenList)
+        {
+            Token first = tokenList.get(0);
+            return operatorTokens.contains(first) && !prefixOperators.containsKey(first);
+        }
+
+        private boolean endsWithNonPostfixOperator(List<Token> tokenList)
+        {
+            Token last = tokenList.get(tokenList.size() - 1);
+            return operatorTokens.contains(last) && !postfixOperators.containsKey(last);
+        }
+
+        private boolean isInBrackets(List<Token> tokenList)
+        {
+            return tokenList.get(0)                   .equals(Token.OPEN_BRACKET)
+                && tokenList.get(tokenList.size() - 1).equals(Token.CLOSE_BRACKET);
+        }
+
+        private Operation tryParseOperation(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
+        {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        private FunctionCall tryParseFunctionCall(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
+        {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        private VariableReference tryParseVariable(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
+        {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        private LiteralNumber tryParseNumber(List<Token> toParse, Map<Double, OperatorPriorityGroup> opGroups)
+        {
+            throw new UnsupportedOperationException("Not implemented yet.");
         }
 
         // Tokens in a tokenised equation may only be infix operators where:
