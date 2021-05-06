@@ -35,6 +35,23 @@ public final class StringUtils
     { return s.replaceFirst("\\s+$", ""); }
 
     /**
+     * Gets the given string repeated the given number of times. That is, the given number of copies of the given string
+     * concatenated together.
+     * @param s The string to repeat.
+     * @param numberOfTimes The number of times to repeat the string.
+     * @return The given string repeated the given number of times.
+     */
+    public static String repeat(String s, int numberOfTimes)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = 0; i < numberOfTimes; i++)
+            sb.append(s);
+
+        return sb.toString();
+    }
+
+    /**
      * Gets the position of the terminator matching the opener at the given position.
      * @param s The string to look in.
      * @param opener The character to use as an opener.

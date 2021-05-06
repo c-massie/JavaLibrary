@@ -1,10 +1,8 @@
 package scot.massie.lib.maths;
 
 import com.sun.istack.internal.NotNull;
-import scot.massie.lib.utils.ControlFlowUtils;
 
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -233,6 +231,44 @@ public class EquationEvaluator
             return new HashMap<>();
         }
 
+        private static String joinTokens(List<Token> tokens, List<Integer> spacesBeforeTokens)
+        { return joinTokens(tokens, spacesBeforeTokens, true); }
+
+        private static String joinTokens(List<Token> tokens, List<Integer> spacesBeforeTokens, boolean trim)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            if(!trim)
+            {
+                int spaces = spacesBeforeTokens.get(0);
+
+                for(int i = 0; i < spaces; i++)
+                    sb.append(' ');
+            }
+
+            sb.append(tokens.get(0));
+
+            for(int i = 1; i < tokens.size(); i++)
+            {
+                int spaces = spacesBeforeTokens.get(i);
+
+                for(int j = 0; j < spaces; j++)
+                    sb.append(' ');
+
+                sb.append(tokens.get(i).toString());
+            }
+
+            if(!trim)
+            {
+                int spaces = spacesBeforeTokens.get(spacesBeforeTokens.size() - 1)
+
+                for(int i = 0; i < spaces; i++)
+                    sb.append(' ');
+            }
+
+            return sb.toString();
+        }
+
         private void addOperator(Operator op)
         {
             invalidateOperatorGroups();
@@ -393,7 +429,9 @@ public class EquationEvaluator
             throw new UnsupportedOperationException("Not implemented yet");
         }
 
-        private EquationComponent tryParse(List<Token> toParse, List<Integer> spacesBeforeTokens)
+        private EquationComponent tryParse(String equationAsString,
+                                           List<Token> toParse,
+                                           List<Integer> spacesBeforeTokens)
         {
             if(startsWithNonPrefixOperator(toParse))
                 throw new LeadingNonPrefixOperatorException(toParse, toParse);
@@ -402,13 +440,14 @@ public class EquationEvaluator
                 throw new TrailingNonPostfixOperatorException(toParse, toParse);
 
             if(isInBrackets(toParse))
-                return tryParse(toParse.subList(1, toParse.size() - 1),
+                return tryParse(equationAsString,
+                                toParse.subList(1, toParse.size() - 1),
                                 spacesBeforeTokens.subList(1, spacesBeforeTokens.size() - 1));
 
-            return nullCoalesce(() -> tryParseOperation(toParse, spacesBeforeTokens),
-                                () -> tryParseVariable(toParse, spacesBeforeTokens),
-                                () -> tryParseFunctionCall(toParse, spacesBeforeTokens),
-                                () -> tryParseNumber(toParse, spacesBeforeTokens),
+            return nullCoalesce(() -> tryParseOperation(equationAsString, toParse, spacesBeforeTokens),
+                                () -> tryParseVariable(equationAsString, toParse, spacesBeforeTokens),
+                                () -> tryParseFunctionCall(equationAsString, toParse, spacesBeforeTokens),
+                                () -> tryParseNumber(equationAsString, toParse, spacesBeforeTokens),
                                 () -> { throw new EquationParseException(toParse, toParse); });
         }
 
@@ -430,22 +469,30 @@ public class EquationEvaluator
                 && tokenList.get(tokenList.size() - 1).equals(Token.CLOSE_BRACKET);
         }
 
-        private Operation tryParseOperation(List<Token> toParse, List<Integer> spacesBeforeTokens)
+        private Operation tryParseOperation(String equationAsString,
+                                            List<Token> toParse,
+                                            List<Integer> spacesBeforeTokens)
         {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
 
-        private FunctionCall tryParseFunctionCall(List<Token> toParse, List<Integer> spacesBeforeTokens)
+        private FunctionCall tryParseFunctionCall(String equationAsString,
+                                                  List<Token> toParse,
+                                                  List<Integer> spacesBeforeTokens)
         {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
 
-        private VariableReference tryParseVariable(List<Token> toParse, List<Integer> spacesBeforeTokens)
+        private VariableReference tryParseVariable(String equationAsString,
+                                                   List<Token> toParse,
+                                                   List<Integer> spacesBeforeTokens)
         {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
 
-        private LiteralNumber tryParseNumber(List<Token> toParse, List<Integer> spacesBeforeTokens)
+        private LiteralNumber tryParseNumber(String equationAsString,
+                                             List<Token> toParse,
+                                             List<Integer> spacesBeforeTokens)
         {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
@@ -725,7 +772,8 @@ public class EquationEvaluator
         public List<Token> getTokens()
         { return tokens; }
 
-        public abstract EquationComponent tryParse(List<Token> toParse,
+        public abstract EquationComponent tryParse(String equationAsString,
+                                                   List<Token> toParse,
                                                    List<Integer> spacesBeforeTokens,
                                                    Builder builder);
     }
@@ -745,17 +793,24 @@ public class EquationEvaluator
         { super(token, priority, action); }
 
         @Override
-        public EquationComponent tryParse(List<Token> toParse,
+        public EquationComponent tryParse(String equationAsString,
+                                          List<Token> toParse,
                                           List<Integer> spacesBeforeTokens,
                                           Builder builder)
         {
             if((toParse.size() < 2) || (!toParse.get(0).equals(getToken())))
                 return null;
 
-            return new Operation(builder.tryParse(toParse.subList(1, toParse.size()),
-                                                  spacesBeforeTokens.subList(1, spacesBeforeTokens.size())),
-                                 this.action);
+            return new Operation(
+                    builder.tryParse(
+                            stringWithoutOperator(equationAsString, spacesBeforeTokens.get(1)),
+                            toParse.subList(1, toParse.size()),
+                            spacesBeforeTokens.subList(1, spacesBeforeTokens.size())),
+                    this.action);
         }
+
+        private String stringWithoutOperator(String s, int spacesAfterOperator)
+        { return s.substring(getToken().text.length() + spacesAfterOperator); }
     }
 
     private static class PostfixOperator extends UnaryOperator
@@ -764,17 +819,26 @@ public class EquationEvaluator
         { super(token, priority, action); }
 
         @Override
-        public EquationComponent tryParse(List<Token> toParse,
+        public EquationComponent tryParse(String equationAsString,
+                                          List<Token> toParse,
                                           List<Integer> spacesBeforeTokens,
                                           Builder builder)
         {
             if((toParse.size() < 2) || (!toParse.get(toParse.size() - 1).equals(getToken())))
                 return null;
 
-            return new Operation(builder.tryParse(toParse.subList(0, toParse.size() - 1),
-                                                  spacesBeforeTokens.subList(0, spacesBeforeTokens.size() - 1)),
-                                 this.action);
+            return new Operation(
+                    builder.tryParse(
+                            stringWithoutOperator(
+                                    equationAsString,
+                                    spacesBeforeTokens.get(spacesBeforeTokens.size() - 2)),
+                            toParse.subList(0, toParse.size() - 1),
+                            spacesBeforeTokens.subList(0, spacesBeforeTokens.size() - 1)),
+                    this.action);
         }
+
+        private String stringWithoutOperator(String s, int spacesBeforeOperator)
+        { return s.substring(0, s.length() - getToken().text.length() + spacesBeforeOperator); }
     }
 
     private static class InfixOperator extends Operator
@@ -797,7 +861,8 @@ public class EquationEvaluator
         { return this.tokens.size() + 1; }
 
         @Override
-        public EquationComponent tryParse(List<Token> toParse,
+        public EquationComponent tryParse(String equationAsString,
+                                          List<Token> toParse,
                                           List<Integer> spacesBeforeTokens,
                                           Builder builder)
         {
@@ -809,7 +874,11 @@ public class EquationEvaluator
             List<EquationComponent> components = new ArrayList<>(split.size());
 
             for(TokenAndSpacingListPair i : split)
-                components.add(builder.tryParse(i.tokenList, i.spacingList));
+            {
+                // TO DO: Implement.
+                throw new UnsupportedOperationException("Not implemented yet.");
+                // components.add(builder.tryParse("Not implemented", i.tokenList, i.spacingList));
+            }
 
             return new Operation(components, action);
         }
