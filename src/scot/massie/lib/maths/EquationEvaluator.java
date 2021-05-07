@@ -106,6 +106,63 @@ public class EquationEvaluator
             public TrailingNonPostfixOperatorException withFullEquation(List<Token> fullEquation)
             { return new TrailingNonPostfixOperatorException(fullEquation, equationSection); }
         }
+
+        public static class DanglingArgumentSeparatorException extends EquationParseException
+        {
+
+            public DanglingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection)
+            {
+                super(fullEquation, equationSection,
+                      "Equation contained an argument list with a dangling separator: "
+                      + Token.listToString(fullEquation)
+                      + "Specifically, this portion: " + Token.listToString(equationSection));
+            }
+
+            public DanglingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            { super(fullEquation, equationSection, msg); }
+
+            @Override
+            public DanglingArgumentSeparatorException withFullEquation(List<Token> fullEquation)
+            { return new DanglingArgumentSeparatorException(fullEquation, equationSection); }
+        }
+
+        public static class LeadingArgumentSeparatorException extends DanglingArgumentSeparatorException
+        {
+
+            public LeadingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection)
+            {
+                super(fullEquation, equationSection,
+                      "Equation contained an argument list with a leading separator: "
+                      + Token.listToString(fullEquation)
+                      + "Specifically, this portion: " + Token.listToString(equationSection));
+            }
+
+            public LeadingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            { super(fullEquation, equationSection, msg); }
+
+            @Override
+            public LeadingArgumentSeparatorException withFullEquation(List<Token> fullEquation)
+            { return new LeadingArgumentSeparatorException(fullEquation, equationSection); }
+        }
+
+        public static class TrailingArgumentSeparatorException extends DanglingArgumentSeparatorException
+        {
+
+            public TrailingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection)
+            {
+                super(fullEquation, equationSection,
+                      "Equation contained an argument list with a trailing separator: "
+                      + Token.listToString(fullEquation)
+                      + "Specifically, this portion: " + Token.listToString(equationSection));
+            }
+
+            public TrailingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            { super(fullEquation, equationSection, msg); }
+
+            @Override
+            public TrailingArgumentSeparatorException withFullEquation(List<Token> fullEquation)
+            { return new TrailingArgumentSeparatorException(fullEquation, equationSection); }
+        }
         //endregion
 
         private static class OperatorPriorityGroup
@@ -444,9 +501,9 @@ public class EquationEvaluator
                                 toParse.subList(1, toParse.size() - 1),
                                 spacesBeforeTokens.subList(1, spacesBeforeTokens.size() - 1));
 
-            return nullCoalesce(() -> tryParseOperation(equationAsString, toParse, spacesBeforeTokens),
-                                () -> tryParseVariable(equationAsString, toParse, spacesBeforeTokens),
+            return nullCoalesce(() -> tryParseVariable(equationAsString, toParse, spacesBeforeTokens),
                                 () -> tryParseFunctionCall(equationAsString, toParse, spacesBeforeTokens),
+                                () -> tryParseOperation(equationAsString, toParse, spacesBeforeTokens),
                                 () -> tryParseNumber(equationAsString, toParse, spacesBeforeTokens),
                                 () -> { throw new EquationParseException(toParse, toParse); });
         }
@@ -476,25 +533,133 @@ public class EquationEvaluator
             throw new UnsupportedOperationException("Not implemented yet.");
         }
 
-        private FunctionCall tryParseFunctionCall(String equationAsString,
-                                                  List<Token> toParse,
-                                                  List<Integer> spacesBeforeTokens)
-        {
-            throw new UnsupportedOperationException("Not implemented yet.");
-        }
-
         private VariableReference tryParseVariable(String equationAsString,
                                                    List<Token> toParse,
                                                    List<Integer> spacesBeforeTokens)
         {
+            Double variableValue = variables.get(equationAsString.trim());
+            return variableValue == null ? null : new VariableReference(variables, equationAsString);
+        }
+
+        private FunctionCall tryParseFunctionCall(String equationAsString,
+                                                  List<Token> toParse,
+                                                  List<Integer> spacesBeforeTokens)
+        {
+            if(toParse.size() < 3) // Needs at least 3 tokens: a name, "(", and ")".
+                return null;
+
+            if(!(toParse.get(toParse.size() - 1).equals(Token.CLOSE_BRACKET)))
+                return null;
+
+            int tokensProgressed = 1;
+            int charsProgressed = toParse.get(0).text.length();
+            int lastTokenIndexToCheck = toParse.size() - 2; // Last index is known to be ")"
+
+            while(tokensProgressed <= lastTokenIndexToCheck)
+            {
+                if(toParse.get(tokensProgressed).equals(Token.OPEN_BRACKET))
+                    return parseFunctionCall(equationAsString,
+                                             toParse,
+                                             spacesBeforeTokens,
+                                             charsProgressed + spacesBeforeTokens.get(tokensProgressed),
+                                             tokensProgressed);
+
+                charsProgressed += toParse.get(tokensProgressed).text.length()
+                                 + spacesBeforeTokens.get(tokensProgressed);
+                tokensProgressed++;
+            }
+
             throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        private FunctionCall parseFunctionCall(String equationAsString,
+                                               List<Token> tokens,
+                                               List<Integer> spacesBeforeTokens,
+                                               int charsBeforeBracket,
+                                               int tokensBeforeBracket)
+        {
+            String fname = equationAsString.substring(0, charsBeforeBracket).trim();
+
+            if(!functions.containsKey(fname))
+                return null;
+
+            int trailingSpaces = spacesBeforeTokens.get(spacesBeforeTokens.size() - 1);
+
+            String argumentListString = equationAsString.substring(
+                    charsBeforeBracket + Token.OPEN_BRACKET.text.length(),
+                    equationAsString.length() - Token.CLOSE_BRACKET.text.length() - trailingSpaces);
+
+            List<Token> argumentListTokens = tokens.subList(tokensBeforeBracket + 1, tokens.size() - 1);
+
+            // TO DO: Finish implementing.
+            throw new UnsupportedOperationException("Not yet implemented");
+        }
+
+        private List<EquationTokenInfo> splitArgumentList(List<Token> fullEquationTokens,
+                                                          String argListString,
+                                                          List<Token> argListTokens,
+                                                          List<Integer> spacesBeforeTokens)
+        {
+            if(argListTokens.get(0).equals(Token.ARGUMENT_SEPARATOR))
+                throw new LeadingArgumentSeparatorException(fullEquationTokens, fullEquationTokens);
+
+            if(argListTokens.get(argListTokens.size() - 1).equals(Token.ARGUMENT_SEPARATOR))
+                throw new TrailingArgumentSeparatorException(fullEquationTokens, fullEquationTokens);
+
+            List<EquationTokenInfo> sections = new ArrayList<>();
+            int charsTraversed = spacesBeforeTokens.get(0) + argListTokens.get(0).text.length();
+            int lastFoundSeparatorIndex = -1;
+            int nextArgumentStartsAtChar = 0;
+
+            for(int i = 1; i < argListTokens.size(); i++)
+            {
+                Token itoken = argListTokens.get(i);
+                charsTraversed += itoken.text.length();
+
+                if(itoken.equals(Token.ARGUMENT_SEPARATOR))
+                {
+                    List<Token> argumentTokens = argListTokens.subList(lastFoundSeparatorIndex + 1, i);
+
+                    List<Integer> argumentSpacesBeforeTokens = spacesBeforeTokens.subList(lastFoundSeparatorIndex + 1,
+                                                                                          i + 1);
+
+                    String argumentString = argListString.substring(nextArgumentStartsAtChar,
+                                                                    charsTraversed - itoken.text.length());
+
+                    sections.add(new EquationTokenInfo(argumentString, argumentTokens, argumentSpacesBeforeTokens));
+
+                    lastFoundSeparatorIndex = i;
+                    nextArgumentStartsAtChar = charsTraversed + itoken.text.length();
+                }
+            }
+
+            List<Token> lastArgumentTokens = argListTokens.subList(lastFoundSeparatorIndex + 1,
+                                                                   argListTokens.size());
+
+            List<Integer> lastArgumentSpacesBeforeTokens = spacesBeforeTokens.subList(lastFoundSeparatorIndex + 1,
+                                                                                      spacesBeforeTokens.size());
+
+            String lastArgumentString = argListString.substring(nextArgumentStartsAtChar);
+            sections.add(new EquationTokenInfo(lastArgumentString,
+                                               lastArgumentTokens,
+                                               lastArgumentSpacesBeforeTokens));
+
+            return sections;
         }
 
         private LiteralNumber tryParseNumber(String equationAsString,
                                              List<Token> toParse,
                                              List<Integer> spacesBeforeTokens)
         {
-            throw new UnsupportedOperationException("Not implemented yet.");
+            equationAsString = equationAsString.trim();
+
+            try
+            {
+                double literalNumberValue = Double.parseDouble(equationAsString);
+                return new LiteralNumber(literalNumberValue);
+            }
+            catch(NumberFormatException e)
+            { return null; }
         }
 
         // Tokens in a tokenised equation may only be infix operators where:
@@ -695,6 +860,7 @@ public class EquationEvaluator
     {
         public static final Token OPEN_BRACKET = new Token("(");
         public static final Token CLOSE_BRACKET = new Token(")");
+        public static final Token ARGUMENT_SEPARATOR = new Token(",");
 
         final String text;
 
