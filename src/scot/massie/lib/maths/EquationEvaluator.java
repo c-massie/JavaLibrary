@@ -475,13 +475,13 @@ public class EquationEvaluator
         {
             buildOperatorGroups();
             Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
-            EquationTokenInfo tokenAndSpacingLists = tokeniser.tokenise(unparsedEquation);
+            TokenList tokenAndSpacingLists = tokeniser.tokenise(unparsedEquation);
 
             List<Token> equationTokens
-                    = Collections.unmodifiableList(new ArrayList<>(tokenAndSpacingLists.tokenList));
+                    = Collections.unmodifiableList(new ArrayList<>(tokenAndSpacingLists.tokens));
 
             List<Integer> spacesBeforeTokens
-                    = Collections.unmodifiableList(new ArrayList<>(tokenAndSpacingLists.spacingList));
+                    = Collections.unmodifiableList(new ArrayList<>(tokenAndSpacingLists.spacings));
 
             throw new UnsupportedOperationException("Not implemented yet");
         }
@@ -595,10 +595,10 @@ public class EquationEvaluator
             throw new UnsupportedOperationException("Not yet implemented");
         }
 
-        private List<EquationTokenInfo> splitArgumentList(List<Token> fullEquationTokens,
-                                                          String argListString,
-                                                          List<Token> argListTokens,
-                                                          List<Integer> spacesBeforeTokens)
+        private List<TokenList> splitArgumentList(List<Token> fullEquationTokens,
+                                                  String argListString,
+                                                  List<Token> argListTokens,
+                                                  List<Integer> spacesBeforeTokens)
         {
             if(argListTokens.get(0).equals(Token.ARGUMENT_SEPARATOR))
                 throw new LeadingArgumentSeparatorException(fullEquationTokens, fullEquationTokens);
@@ -606,7 +606,7 @@ public class EquationEvaluator
             if(argListTokens.get(argListTokens.size() - 1).equals(Token.ARGUMENT_SEPARATOR))
                 throw new TrailingArgumentSeparatorException(fullEquationTokens, fullEquationTokens);
 
-            List<EquationTokenInfo> sections = new ArrayList<>();
+            List<TokenList> sections = new ArrayList<>();
             int charsTraversed = spacesBeforeTokens.get(0) + argListTokens.get(0).text.length();
             int lastFoundSeparatorIndex = -1;
             int nextArgumentStartsAtChar = 0;
@@ -626,7 +626,7 @@ public class EquationEvaluator
                     String argumentString = argListString.substring(nextArgumentStartsAtChar,
                                                                     charsTraversed - itoken.text.length());
 
-                    sections.add(new EquationTokenInfo(argumentString, argumentTokens, argumentSpacesBeforeTokens));
+                    sections.add(new TokenList(argumentString, argumentTokens, argumentSpacesBeforeTokens));
 
                     lastFoundSeparatorIndex = i;
                     nextArgumentStartsAtChar = charsTraversed + itoken.text.length();
@@ -640,9 +640,9 @@ public class EquationEvaluator
                                                                                       spacesBeforeTokens.size());
 
             String lastArgumentString = argListString.substring(nextArgumentStartsAtChar);
-            sections.add(new EquationTokenInfo(lastArgumentString,
-                                               lastArgumentTokens,
-                                               lastArgumentSpacesBeforeTokens));
+            sections.add(new TokenList(lastArgumentString,
+                                       lastArgumentTokens,
+                                       lastArgumentSpacesBeforeTokens));
 
             return sections;
         }
@@ -731,7 +731,7 @@ public class EquationEvaluator
         public Tokeniser(List<Token> tokens)
         { this.tokens = tokens; }
 
-        public EquationTokenInfo tokenise(String s)
+        public TokenList tokenise(String s)
         {
             LinkedList<Token> result = new LinkedList<>();
             LinkedList<Integer> spacesBeforeTokens = new LinkedList<>();
@@ -791,7 +791,7 @@ public class EquationEvaluator
             }
 
             tokeniseNumbers(result);
-            return new EquationTokenInfo(s, result, spacesBeforeTokens);
+            return new TokenList(s, result, spacesBeforeTokens);
         }
 
         /**
@@ -841,18 +841,18 @@ public class EquationEvaluator
         }
     }
 
-    private static class EquationTokenInfo
+    private static class TokenList
     {
-        public EquationTokenInfo(String equationAsString, List<Token> tokenList, List<Integer> spacingList)
+        public TokenList(String equationAsString, List<Token> tokens, List<Integer> spacingList)
         {
             this.equationAsString = equationAsString;
-            this.tokenList = tokenList;
-            this.spacingList = spacingList;
+            this.tokens = tokens;
+            this.spacings = spacingList;
         }
 
         public final String equationAsString;
-        public final List<Token> tokenList;
-        public final List<Integer> spacingList;
+        public final List<Token> tokens;
+        public final List<Integer> spacings;
     }
 
     //region Tokens
@@ -1034,23 +1034,23 @@ public class EquationEvaluator
                                           List<Integer> spacesBeforeTokens,
                                           Builder builder)
         {
-            List<EquationTokenInfo> split = splitTokenList(equationAsString, toParse, spacesBeforeTokens, builder);
+            List<TokenList> split = splitTokenList(equationAsString, toParse, spacesBeforeTokens, builder);
 
             if(split == null)
                 return null;
 
             List<EquationComponent> components = new ArrayList<>(split.size());
 
-            for(EquationTokenInfo i : split)
-                components.add(builder.tryParse(i.equationAsString, i.tokenList, i.spacingList));
+            for(TokenList i : split)
+                components.add(builder.tryParse(i.equationAsString, i.tokens, i.spacings));
 
             return new Operation(components, action);
         }
 
-        private List<EquationTokenInfo> splitTokenList(String equationAsString,
-                                                       List<Token> tokenList,
-                                                       List<Integer> spacesBeforeTokens,
-                                                       Builder builder)
+        private List<TokenList> splitTokenList(String equationAsString,
+                                               List<Token> tokenList,
+                                               List<Integer> spacesBeforeTokens,
+                                               Builder builder)
         {
             if(isLeftAssociative)
             {
@@ -1059,7 +1059,7 @@ public class EquationEvaluator
             }
             else
             {
-                List<EquationTokenInfo> result = new ArrayList<>(getOperandCount());
+                List<TokenList> result = new ArrayList<>(getOperandCount());
 
                 int tokenLookingForIndex = 0;
                 Token tokenLookingFor = this.tokens.get(tokenLookingForIndex);
@@ -1090,7 +1090,7 @@ public class EquationEvaluator
                             String substring = equationAsString.substring(startOfNextStringVersion,
                                                                           startOfNextStringVersion + charsInSubstring);
 
-                            result.add(new EquationTokenInfo(substring, tokenSublist, spacesBeforeTokensSublist));
+                            result.add(new TokenList(substring, tokenSublist, spacesBeforeTokensSublist));
                             startOfNextStringVersion = charsInSubstring + tokenLookingFor.text.length();
                             indexOfLastTokenFound = i;
 
@@ -1110,7 +1110,7 @@ public class EquationEvaluator
                 List<Integer> finalSpacingsSublist
                         = spacesBeforeTokens.subList(indexOfLastTokenFound + 1, spacesBeforeTokens.size());
 
-                result.add(new EquationTokenInfo(finalSubstring, finalTokenSublist, finalSpacingsSublist));
+                result.add(new TokenList(finalSubstring, finalTokenSublist, finalSpacingsSublist));
                 return result;
             }
         }
