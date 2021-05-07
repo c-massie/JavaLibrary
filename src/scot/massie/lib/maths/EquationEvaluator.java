@@ -260,7 +260,7 @@ public class EquationEvaluator
 
             if(!trim)
             {
-                int spaces = spacesBeforeTokens.get(spacesBeforeTokens.size() - 1)
+                int spaces = spacesBeforeTokens.get(spacesBeforeTokens.size() - 1);
 
                 for(int i = 0; i < spaces; i++)
                     sb.append(' ');
@@ -418,7 +418,7 @@ public class EquationEvaluator
         {
             buildOperatorGroups();
             Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
-            TokenAndSpacingListPair tokenAndSpacingLists = tokeniser.tokenise(unparsedEquation);
+            EquationTokenInfo tokenAndSpacingLists = tokeniser.tokenise(unparsedEquation);
 
             List<Token> equationTokens
                     = Collections.unmodifiableList(new ArrayList<>(tokenAndSpacingLists.tokenList));
@@ -566,7 +566,7 @@ public class EquationEvaluator
         public Tokeniser(List<Token> tokens)
         { this.tokens = tokens; }
 
-        public TokenAndSpacingListPair tokenise(String s)
+        public EquationTokenInfo tokenise(String s)
         {
             LinkedList<Token> result = new LinkedList<>();
             LinkedList<Integer> spacesBeforeTokens = new LinkedList<>();
@@ -626,7 +626,7 @@ public class EquationEvaluator
             }
 
             tokeniseNumbers(result);
-            return new TokenAndSpacingListPair(result, spacesBeforeTokens);
+            return new EquationTokenInfo(s, result, spacesBeforeTokens);
         }
 
         /**
@@ -676,14 +676,16 @@ public class EquationEvaluator
         }
     }
 
-    private static class TokenAndSpacingListPair
+    private static class EquationTokenInfo
     {
-        public TokenAndSpacingListPair(List<Token> tokenList, List<Integer> spacingList)
+        public EquationTokenInfo(String equationAsString, List<Token> tokenList, List<Integer> spacingList)
         {
+            this.equationAsString = equationAsString;
             this.tokenList = tokenList;
             this.spacingList = spacingList;
         }
 
+        public final String equationAsString;
         public final List<Token> tokenList;
         public final List<Integer> spacingList;
     }
@@ -866,26 +868,23 @@ public class EquationEvaluator
                                           List<Integer> spacesBeforeTokens,
                                           Builder builder)
         {
-            List<TokenAndSpacingListPair> split = splitTokenList(toParse, spacesBeforeTokens, builder);
+            List<EquationTokenInfo> split = splitTokenList(equationAsString, toParse, spacesBeforeTokens, builder);
 
             if(split == null)
                 return null;
 
             List<EquationComponent> components = new ArrayList<>(split.size());
 
-            for(TokenAndSpacingListPair i : split)
-            {
-                // TO DO: Implement.
-                throw new UnsupportedOperationException("Not implemented yet.");
-                // components.add(builder.tryParse("Not implemented", i.tokenList, i.spacingList));
-            }
+            for(EquationTokenInfo i : split)
+                components.add(builder.tryParse(i.equationAsString, i.tokenList, i.spacingList));
 
             return new Operation(components, action);
         }
 
-        private List<TokenAndSpacingListPair> splitTokenList(List<Token> tokenList,
-                                                             List<Integer> spacesBeforeTokens,
-                                                             Builder builder)
+        private List<EquationTokenInfo> splitTokenList(String equationAsString,
+                                                       List<Token> tokenList,
+                                                       List<Integer> spacesBeforeTokens,
+                                                       Builder builder)
         {
             if(isLeftAssociative)
             {
@@ -894,14 +893,13 @@ public class EquationEvaluator
             }
             else
             {
-                List<TokenAndSpacingListPair> result2 = new ArrayList<>(getOperandCount());
+                List<EquationTokenInfo> result = new ArrayList<>(getOperandCount());
 
                 int tokenLookingForIndex = 0;
                 Token tokenLookingFor = this.tokens.get(tokenLookingForIndex);
                 int indexOfLastTokenFound = -1;
+                int startOfNextStringVersion = 0;
                 int bracketDepth = 0;
-
-                LinkedList<Token> current;
 
                 for(int i = 0; i < tokenList.size(); i++)
                 {
@@ -918,11 +916,16 @@ public class EquationEvaluator
                     {
                         if(itoken.equals(tokenLookingFor) && builder.canBeInfixOperatorToken(tokenList, i))
                         {
-                            result2.add(
-                                    new TokenAndSpacingListPair(
-                                            tokenList.subList(indexOfLastTokenFound + 1, i),
-                                            spacesBeforeTokens.subList(indexOfLastTokenFound + 1, i + 1)));
+                            List<Token> tokenSublist = tokenList.subList(indexOfLastTokenFound + 1, i);
+                            List<Integer> spacesBeforeTokensSublist
+                                    = spacesBeforeTokens.subList(indexOfLastTokenFound + 1, i + 1);
 
+                            int charsInSubstring = countCharsInTokenList(tokenSublist, spacesBeforeTokensSublist);
+                            String substring = equationAsString.substring(startOfNextStringVersion,
+                                                                          startOfNextStringVersion + charsInSubstring);
+
+                            result.add(new EquationTokenInfo(substring, tokenSublist, spacesBeforeTokensSublist));
+                            startOfNextStringVersion = charsInSubstring + tokenLookingFor.text.length();
                             indexOfLastTokenFound = i;
 
                             if(++tokenLookingForIndex == this.tokens.size())
@@ -936,14 +939,25 @@ public class EquationEvaluator
                 if(tokenLookingForIndex < this.tokens.size())
                     return null;
 
-                //result.add(tokenList.subList(indexOfLastTokenFound + 1, tokenList.size()));
-                result2.add(
-                        new TokenAndSpacingListPair(
-                                tokenList.subList(indexOfLastTokenFound + 1, tokenList.size()),
-                                spacesBeforeTokens.subList(indexOfLastTokenFound + 1, spacesBeforeTokens.size())));
+                String finalSubstring = equationAsString.substring(startOfNextStringVersion);
+                List<Token> finalTokenSublist = tokenList.subList(indexOfLastTokenFound + 1, tokenList.size());
+                List<Integer> finalSpacingsSublist
+                        = spacesBeforeTokens.subList(indexOfLastTokenFound + 1, spacesBeforeTokens.size());
 
-                return result2;
+                result.add(new EquationTokenInfo(finalSubstring, finalTokenSublist, finalSpacingsSublist));
+                return result;
             }
+        }
+
+        private static int countCharsInTokenList(List<Token> tokenList, List<Integer> spacesBeforeTokens)
+        {
+            int count = 0;
+
+            for(int i = 0; i < tokenList.size(); i++)
+                count += spacesBeforeTokens.get(i) + tokenList.get(i).text.length();
+
+            count += spacesBeforeTokens.get(spacesBeforeTokens.size() - 1);
+            return count;
         }
     }
 
