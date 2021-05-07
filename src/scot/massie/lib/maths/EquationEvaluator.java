@@ -853,6 +853,99 @@ public class EquationEvaluator
         public final String equationAsString;
         public final List<Token> tokens;
         public final List<Integer> spacings;
+
+        public int size()
+        { return tokens.size(); }
+
+        public Token get(int index)
+        { return tokens.get(index); }
+
+        public Token first()
+        { return tokens.get(0); }
+
+        public Token last()
+        { return tokens.get(tokens.size() - 1); }
+
+        public TokenList withoutFirst(int howMany)
+        {
+            List<Token> newTokens = tokens.subList(howMany, tokens.size());
+            List<Integer> newSpacings = spacings.subList(howMany, spacings.size());
+            int charsToDrop = 0;
+
+            for(int i = 0; i < howMany; i++)
+                charsToDrop += tokens.get(i).text.length() + spacings.get(i);
+
+            String newString = equationAsString.substring(charsToDrop);
+            return new TokenList(newString, newTokens, newSpacings);
+        }
+
+        public TokenList withoutFirst()
+        {
+            List<Token> newTokens = tokens.subList(1, tokens.size());
+            List<Integer> newSpacings = spacings.subList(1, spacings.size());
+            int charsToDrop = tokens.get(0).text.length() + spacings.get(0);
+            String newString = equationAsString.substring(charsToDrop);
+            return new TokenList(newString, newTokens, newSpacings);
+        }
+
+        public TokenList withoutLast(int howMany)
+        {
+            List<Token> newTokens = tokens.subList(0, tokens.size() - howMany);
+            List<Integer> newSpacings = spacings.subList(0, spacings.size() - howMany);
+            int charsToDrop = 0;
+
+            for(int i = tokens.size() - 1; i >= tokens.size() - howMany; i--)
+                charsToDrop += tokens.get(i).text.length() + spacings.get(i + 1);
+
+            String newString = equationAsString.substring(0, equationAsString.length() - charsToDrop);
+            return new TokenList(newString, newTokens, newSpacings);
+        }
+
+        public TokenList withoutLast()
+        {
+            List<Token> newTokens = tokens.subList(0, tokens.size() - 1);
+            List<Integer> newSpacings = spacings.subList(0, spacings.size() - 1);
+            int charsToDrop = tokens.get(tokens.size() - 1).text.length() + spacings.get(spacings.size() - 1);
+            String newString = equationAsString.substring(0, equationAsString.length() - charsToDrop);
+            return new TokenList(newString, newTokens, newSpacings);
+        }
+
+        public TokenList sublist(int fromInclusive, int toExclusive)
+        {
+            List<Token> newTokens = tokens.subList(fromInclusive, toExclusive);
+            List<Integer> newSpacings = spacings.subList(fromInclusive, toExclusive + 1);
+
+            int charsToDropFromStart = 0;
+            int charsToDropFromEnd = 0;
+
+            for(int i = 0; i < fromInclusive; i++)
+                charsToDropFromStart += spacings.get(i) + tokens.get(i).text.length();
+
+            for(int i = tokens.size() - 1; i >= toExclusive; i--)
+                charsToDropFromEnd += spacings.get(i + 1) + tokens.get(i).text.length();
+
+            String newString = equationAsString.substring(charsToDropFromStart,
+                                                          equationAsString.length() - charsToDropFromEnd);
+
+            return new TokenList(newString, newTokens, newSpacings);
+        }
+
+        public List<TokenList> splitBy(Token t)
+        {
+            List<TokenList> sublists = new ArrayList<>();
+            int lastMatch = -1;
+
+            for(int i = 0; i < tokens.size(); i++)
+            {
+                if(tokens.get(i).equals(t))
+                {
+                    sublists.add(sublist(lastMatch + 1, i));
+                    lastMatch = i;
+                }
+            }
+
+            return sublists;
+        }
     }
 
     //region Tokens
