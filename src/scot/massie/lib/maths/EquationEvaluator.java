@@ -206,6 +206,7 @@ public class EquationEvaluator
         {
             possibleTokens.add(Token.OPEN_BRACKET);
             possibleTokens.add(Token.CLOSE_BRACKET);
+            possibleTokens.add(Token.ARGUMENT_SEPARATOR);
         }
 
         /**
@@ -218,6 +219,7 @@ public class EquationEvaluator
         {
             possibleTokensInOrder.add(Token.OPEN_BRACKET);
             possibleTokensInOrder.add(Token.CLOSE_BRACKET);
+            possibleTokensInOrder.add(Token.ARGUMENT_SEPARATOR);
         }
 
         Set<Token> operatorTokens = new HashSet<>();
@@ -475,187 +477,89 @@ public class EquationEvaluator
         {
             buildOperatorGroups();
             Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
-            TokenList tokenAndSpacingLists = tokeniser.tokenise(unparsedEquation);
-
-            List<Token> equationTokens
-                    = Collections.unmodifiableList(new ArrayList<>(tokenAndSpacingLists.tokens));
-
-            List<Integer> spacesBeforeTokens
-                    = Collections.unmodifiableList(new ArrayList<>(tokenAndSpacingLists.spacings));
+            TokenList tokenisation = tokeniser.tokenise(unparsedEquation).unmodifiable();
+            EquationComponent topLevelComponent = tryParse(tokenisation);
 
             throw new UnsupportedOperationException("Not implemented yet");
         }
 
-        private EquationComponent tryParse(String equationAsString,
-                                           List<Token> toParse,
-                                           List<Integer> spacesBeforeTokens)
+        private EquationComponent tryParse(TokenList tokenisation)
         {
-            if(startsWithNonPrefixOperator(toParse))
-                throw new LeadingNonPrefixOperatorException(toParse, toParse);
+            if(startsWithNonPrefixOperator(tokenisation))
+                throw new LeadingNonPrefixOperatorException(tokenisation.tokens, tokenisation.tokens);
 
-            if(endsWithNonPostfixOperator(toParse))
-                throw new TrailingNonPostfixOperatorException(toParse, toParse);
+            if(endsWithNonPostfixOperator(tokenisation))
+                throw new TrailingNonPostfixOperatorException(tokenisation.tokens, tokenisation.tokens);
 
-            if(isInBrackets(toParse))
-                return tryParse(equationAsString,
-                                toParse.subList(1, toParse.size() - 1),
-                                spacesBeforeTokens.subList(1, spacesBeforeTokens.size() - 1));
+            if(tokenisation.isInBrackets())
+                return tryParse(tokenisation.withoutFirstAndLast());
 
-            return nullCoalesce(() -> tryParseVariable(equationAsString, toParse, spacesBeforeTokens),
-                                () -> tryParseFunctionCall(equationAsString, toParse, spacesBeforeTokens),
-                                () -> tryParseOperation(equationAsString, toParse, spacesBeforeTokens),
-                                () -> tryParseNumber(equationAsString, toParse, spacesBeforeTokens),
-                                () -> { throw new EquationParseException(toParse, toParse); });
+            return nullCoalesce(() -> tryParseVariable(tokenisation),
+                                () -> tryParseFunctionCall(tokenisation),
+                                () -> tryParseOperation(tokenisation),
+                                () -> tryParseNumber(tokenisation),
+                                () -> { throw new EquationParseException(tokenisation.tokens, tokenisation.tokens); });
         }
 
-        private boolean startsWithNonPrefixOperator(List<Token> tokenList)
+        private boolean startsWithNonPrefixOperator(TokenList tokenList)
         {
-            Token first = tokenList.get(0);
+            Token first = tokenList.first();
             return operatorTokens.contains(first) && !prefixOperators.containsKey(first);
         }
 
-        private boolean endsWithNonPostfixOperator(List<Token> tokenList)
+        private boolean endsWithNonPostfixOperator(TokenList tokenList)
         {
-            Token last = tokenList.get(tokenList.size() - 1);
+            Token last = tokenList.last();
             return operatorTokens.contains(last) && !postfixOperators.containsKey(last);
         }
 
-        private boolean isInBrackets(List<Token> tokenList)
-        {
-            return tokenList.get(0)                   .equals(Token.OPEN_BRACKET)
-                && tokenList.get(tokenList.size() - 1).equals(Token.CLOSE_BRACKET);
-        }
-
-        private Operation tryParseOperation(String equationAsString,
-                                            List<Token> toParse,
-                                            List<Integer> spacesBeforeTokens)
+        private Operation tryParseOperation(TokenList tokenList)
         {
             throw new UnsupportedOperationException("Not implemented yet.");
         }
 
-        private VariableReference tryParseVariable(String equationAsString,
-                                                   List<Token> toParse,
-                                                   List<Integer> spacesBeforeTokens)
+        private VariableReference tryParseVariable(TokenList tokenList)
         {
-            Double variableValue = variables.get(equationAsString.trim());
-            return variableValue == null ? null : new VariableReference(variables, equationAsString);
+            Double variableValue = variables.get(tokenList.equationAsString.trim());
+            return variableValue == null ? null : new VariableReference(variables, tokenList.equationAsString);
         }
 
-        private FunctionCall tryParseFunctionCall(String equationAsString,
-                                                  List<Token> toParse,
-                                                  List<Integer> spacesBeforeTokens)
+        private FunctionCall tryParseFunctionCall(TokenList tokenList)
         {
-            if(toParse.size() < 3) // Needs at least 3 tokens: a name, "(", and ")".
+            if(tokenList.size() < 3) // Needs at least 3 tokens: a name, "(", and ")".
                 return null;
 
-            if(!(toParse.get(toParse.size() - 1).equals(Token.CLOSE_BRACKET)))
+            if(!tokenList.last().equals(Token.CLOSE_BRACKET))
                 return null;
 
-            int tokensProgressed = 1;
-            int charsProgressed = toParse.get(0).text.length();
-            int lastTokenIndexToCheck = toParse.size() - 2; // Last index is known to be ")"
+            int lastIndexToCheck = tokenList.size() - 2;
+            String functionName = null;
+            TokenList argListTokenList = null;
 
-            while(tokensProgressed <= lastTokenIndexToCheck)
+            for(int i = 1; i <= lastIndexToCheck; i++)
             {
-                if(toParse.get(tokensProgressed).equals(Token.OPEN_BRACKET))
-                    return parseFunctionCall(equationAsString,
-                                             toParse,
-                                             spacesBeforeTokens,
-                                             charsProgressed + spacesBeforeTokens.get(tokensProgressed),
-                                             tokensProgressed);
-
-                charsProgressed += toParse.get(tokensProgressed).text.length()
-                                 + spacesBeforeTokens.get(tokensProgressed);
-                tokensProgressed++;
-            }
-
-            throw new UnsupportedOperationException("Not implemented yet.");
-        }
-
-        private FunctionCall parseFunctionCall(String equationAsString,
-                                               List<Token> tokens,
-                                               List<Integer> spacesBeforeTokens,
-                                               int charsBeforeBracket,
-                                               int tokensBeforeBracket)
-        {
-            String fname = equationAsString.substring(0, charsBeforeBracket).trim();
-
-            if(!functions.containsKey(fname))
-                return null;
-
-            int trailingSpaces = spacesBeforeTokens.get(spacesBeforeTokens.size() - 1);
-
-            String argumentListString = equationAsString.substring(
-                    charsBeforeBracket + Token.OPEN_BRACKET.text.length(),
-                    equationAsString.length() - Token.CLOSE_BRACKET.text.length() - trailingSpaces);
-
-            List<Token> argumentListTokens = tokens.subList(tokensBeforeBracket + 1, tokens.size() - 1);
-
-            // TO DO: Finish implementing.
-            throw new UnsupportedOperationException("Not yet implemented");
-        }
-
-        private List<TokenList> splitArgumentList(List<Token> fullEquationTokens,
-                                                  String argListString,
-                                                  List<Token> argListTokens,
-                                                  List<Integer> spacesBeforeTokens)
-        {
-            if(argListTokens.get(0).equals(Token.ARGUMENT_SEPARATOR))
-                throw new LeadingArgumentSeparatorException(fullEquationTokens, fullEquationTokens);
-
-            if(argListTokens.get(argListTokens.size() - 1).equals(Token.ARGUMENT_SEPARATOR))
-                throw new TrailingArgumentSeparatorException(fullEquationTokens, fullEquationTokens);
-
-            List<TokenList> sections = new ArrayList<>();
-            int charsTraversed = spacesBeforeTokens.get(0) + argListTokens.get(0).text.length();
-            int lastFoundSeparatorIndex = -1;
-            int nextArgumentStartsAtChar = 0;
-
-            for(int i = 1; i < argListTokens.size(); i++)
-            {
-                Token itoken = argListTokens.get(i);
-                charsTraversed += itoken.text.length();
-
-                if(itoken.equals(Token.ARGUMENT_SEPARATOR))
+                if(tokenList.get(i).equals(Token.OPEN_BRACKET))
                 {
-                    List<Token> argumentTokens = argListTokens.subList(lastFoundSeparatorIndex + 1, i);
-
-                    List<Integer> argumentSpacesBeforeTokens = spacesBeforeTokens.subList(lastFoundSeparatorIndex + 1,
-                                                                                          i + 1);
-
-                    String argumentString = argListString.substring(nextArgumentStartsAtChar,
-                                                                    charsTraversed - itoken.text.length());
-
-                    sections.add(new TokenList(argumentString, argumentTokens, argumentSpacesBeforeTokens));
-
-                    lastFoundSeparatorIndex = i;
-                    nextArgumentStartsAtChar = charsTraversed + itoken.text.length();
+                    functionName = tokenList.sublist(0, i).equationAsString.trim();
+                    argListTokenList = tokenList.sublist(i + 1, tokenList.size() - 1);
+                    break;
                 }
             }
 
-            List<Token> lastArgumentTokens = argListTokens.subList(lastFoundSeparatorIndex + 1,
-                                                                   argListTokens.size());
+            List<TokenList> argTokenLists = argListTokenList.splitBy(Token.ARGUMENT_SEPARATOR);
+            EquationComponent[] arguments = new EquationComponent[argTokenLists.size()];
 
-            List<Integer> lastArgumentSpacesBeforeTokens = spacesBeforeTokens.subList(lastFoundSeparatorIndex + 1,
-                                                                                      spacesBeforeTokens.size());
+            for(int i = 0; i < argTokenLists.size(); i++)
+                arguments[i] = tryParse(argTokenLists.get(i));
 
-            String lastArgumentString = argListString.substring(nextArgumentStartsAtChar);
-            sections.add(new TokenList(lastArgumentString,
-                                       lastArgumentTokens,
-                                       lastArgumentSpacesBeforeTokens));
-
-            return sections;
+            return new FunctionCall(functions, functionName, arguments);
         }
 
-        private LiteralNumber tryParseNumber(String equationAsString,
-                                             List<Token> toParse,
-                                             List<Integer> spacesBeforeTokens)
+        private LiteralNumber tryParseNumber(TokenList tokenList)
         {
-            equationAsString = equationAsString.trim();
-
             try
             {
-                double literalNumberValue = Double.parseDouble(equationAsString);
+                double literalNumberValue = Double.parseDouble(tokenList.equationAsString.trim());
                 return new LiteralNumber(literalNumberValue);
             }
             catch(NumberFormatException e)
@@ -843,6 +747,10 @@ public class EquationEvaluator
 
     private static class TokenList
     {
+        public final String equationAsString;
+        public final List<Token> tokens;
+        public final List<Integer> spacings;
+
         public TokenList(String equationAsString, List<Token> tokens, List<Integer> spacingList)
         {
             this.equationAsString = equationAsString;
@@ -850,12 +758,35 @@ public class EquationEvaluator
             this.spacings = spacingList;
         }
 
-        public final String equationAsString;
-        public final List<Token> tokens;
-        public final List<Integer> spacings;
-
         public int size()
         { return tokens.size(); }
+
+        public boolean isInBrackets()
+        {
+            if(!tokens.get(0).equals(Token.OPEN_BRACKET))
+                return false;
+
+            if(!tokens.get(tokens.size() - 1).equals(Token.CLOSE_BRACKET))
+                return false;
+
+            int maxToCheck = tokens.size() - 2;
+            int bracketDepth = 1;
+
+            for(int i = 1; i <= maxToCheck; i++)
+            {
+                Token itoken = tokens.get(i);
+
+                if(itoken.equals(Token.OPEN_BRACKET))
+                    bracketDepth++;
+                else if(itoken.equals(Token.CLOSE_BRACKET))
+                {
+                    if(--bracketDepth == 0)
+                        return false;
+                }
+            }
+
+            return true;
+        }
 
         public Token get(int index)
         { return tokens.get(index); }
@@ -865,6 +796,19 @@ public class EquationEvaluator
 
         public Token last()
         { return tokens.get(tokens.size() - 1); }
+
+        public TokenList unmodifiable()
+        {
+            List<Token> newTokens = Collections.unmodifiableList(tokens);
+            List<Integer> newSpacings = Collections.unmodifiableList(spacings);
+            return new TokenList(equationAsString, newTokens, newSpacings);
+        }
+
+        public boolean startsWith(Token t)
+        { return tokens.get(0).equals(t); }
+
+        public boolean endsWith(Token t)
+        { return tokens.get(tokens.size() - 1).equals(t); }
 
         public TokenList withoutFirst(int howMany)
         {
@@ -910,6 +854,18 @@ public class EquationEvaluator
             return new TokenList(newString, newTokens, newSpacings);
         }
 
+        public TokenList withoutFirstAndLast()
+        {
+            List<Token> newTokens = tokens.subList(1, tokens.size() - 1);
+            List<Integer> newSpacings = spacings.subList(1, spacings.size() - 1);
+            int charsToDropFromStart = tokens.get(0).text.length() + spacings.get(0);
+            int charsToDropFromEnd = tokens.get(tokens.size() - 1).text.length() + spacings.get(spacings.size() - 1);
+            String newString = equationAsString.substring(charsToDropFromStart,
+                                                          equationAsString.length() - charsToDropFromEnd);
+
+            return new TokenList(newString, newTokens, newSpacings);
+        }
+
         public TokenList sublist(int fromInclusive, int toExclusive)
         {
             List<Token> newTokens = tokens.subList(fromInclusive, toExclusive);
@@ -934,10 +890,20 @@ public class EquationEvaluator
         {
             List<TokenList> sublists = new ArrayList<>();
             int lastMatch = -1;
+            int bracketDepth = 0;
 
             for(int i = 0; i < tokens.size(); i++)
             {
-                if(tokens.get(i).equals(t))
+                Token itoken = tokens.get(i);
+
+                if(itoken.equals(Token.OPEN_BRACKET))
+                    bracketDepth++;
+                else if(itoken.equals(Token.CLOSE_BRACKET))
+                {
+                    if(--bracketDepth < 0)
+                        return null;
+                }
+                else if(bracketDepth == 0 && itoken.equals(t))
                 {
                     sublists.add(sublist(lastMatch + 1, i));
                     lastMatch = i;
@@ -945,6 +911,55 @@ public class EquationEvaluator
             }
 
             return sublists;
+        }
+
+        public List<TokenList> splitbySequence(List<Token> sequence)
+        {
+            List<TokenList> result = new ArrayList<>();
+            int sequenceIndex = 0;
+            int tokenIndex = 0;
+            int previousSplitIndex = -1;
+            int bracketDepth = 0;
+
+            while(sequenceIndex < sequence.size() && tokenIndex < tokens.size())
+            {
+                Token tokenToSplitOn = sequence.get(sequenceIndex);
+                boolean found = false;
+
+                while(tokenIndex < tokens.size())
+                {
+                    Token t = tokens.get(tokenIndex);
+
+                    if(t.equals(Token.OPEN_BRACKET))
+                        bracketDepth++;
+                    else if(t.equals(Token.CLOSE_BRACKET))
+                    {
+                        if(--bracketDepth < 0)
+                            return null;
+                    }
+                    else if(bracketDepth == 0 && t.equals(tokenToSplitOn))
+                    {
+                        result.add(sublist(previousSplitIndex + 1, tokenIndex));
+                        previousSplitIndex = tokenIndex;
+                        tokenIndex++;
+                        found = true;
+                        break;
+                    }
+
+                    tokenIndex++;
+                }
+
+                if(!found)
+                    break;
+
+                sequenceIndex++;
+            }
+
+            if(sequenceIndex < sequence.size()) // Not all tokens in sequence were found.
+                return null;
+
+            result.add(sublist(previousSplitIndex + 1, size()));
+            return result;
         }
     }
 
@@ -1033,10 +1048,7 @@ public class EquationEvaluator
         public List<Token> getTokens()
         { return tokens; }
 
-        public abstract EquationComponent tryParse(String equationAsString,
-                                                   List<Token> toParse,
-                                                   List<Integer> spacesBeforeTokens,
-                                                   Builder builder);
+        public abstract EquationComponent tryParse(TokenList tokenList, Builder builder);
     }
 
     private static abstract class UnaryOperator extends Operator
@@ -1054,24 +1066,13 @@ public class EquationEvaluator
         { super(token, priority, action); }
 
         @Override
-        public EquationComponent tryParse(String equationAsString,
-                                          List<Token> toParse,
-                                          List<Integer> spacesBeforeTokens,
-                                          Builder builder)
+        public EquationComponent tryParse(TokenList tokenList, Builder builder)
         {
-            if((toParse.size() < 2) || (!toParse.get(0).equals(getToken())))
+            if(tokenList.size() < 2 || !tokenList.first().equals(getToken()))
                 return null;
 
-            return new Operation(
-                    builder.tryParse(
-                            stringWithoutOperator(equationAsString, spacesBeforeTokens.get(1)),
-                            toParse.subList(1, toParse.size()),
-                            spacesBeforeTokens.subList(1, spacesBeforeTokens.size())),
-                    this.action);
+            return new Operation(builder.tryParse(tokenList.withoutFirst()), this.action);
         }
-
-        private String stringWithoutOperator(String s, int spacesAfterOperator)
-        { return s.substring(getToken().text.length() + spacesAfterOperator); }
     }
 
     private static class PostfixOperator extends UnaryOperator
@@ -1080,26 +1081,13 @@ public class EquationEvaluator
         { super(token, priority, action); }
 
         @Override
-        public EquationComponent tryParse(String equationAsString,
-                                          List<Token> toParse,
-                                          List<Integer> spacesBeforeTokens,
-                                          Builder builder)
+        public EquationComponent tryParse(TokenList tokenList, Builder builder)
         {
-            if((toParse.size() < 2) || (!toParse.get(toParse.size() - 1).equals(getToken())))
+            if(tokenList.size() < 2 || !tokenList.last().equals(getToken()))
                 return null;
 
-            return new Operation(
-                    builder.tryParse(
-                            stringWithoutOperator(
-                                    equationAsString,
-                                    spacesBeforeTokens.get(spacesBeforeTokens.size() - 2)),
-                            toParse.subList(0, toParse.size() - 1),
-                            spacesBeforeTokens.subList(0, spacesBeforeTokens.size() - 1)),
-                    this.action);
+            return new Operation(builder.tryParse(tokenList.withoutLast()), this.action);
         }
-
-        private String stringWithoutOperator(String s, int spacesBeforeOperator)
-        { return s.substring(0, s.length() - getToken().text.length() + spacesBeforeOperator); }
     }
 
     private static class InfixOperator extends Operator
@@ -1122,12 +1110,9 @@ public class EquationEvaluator
         { return this.tokens.size() + 1; }
 
         @Override
-        public EquationComponent tryParse(String equationAsString,
-                                          List<Token> toParse,
-                                          List<Integer> spacesBeforeTokens,
-                                          Builder builder)
+        public EquationComponent tryParse(TokenList tokenList, Builder builder)
         {
-            List<TokenList> split = splitTokenList(equationAsString, toParse, spacesBeforeTokens, builder);
+            List<TokenList> split = tokenList.splitbySequence(this.tokens);
 
             if(split == null)
                 return null;
@@ -1135,88 +1120,9 @@ public class EquationEvaluator
             List<EquationComponent> components = new ArrayList<>(split.size());
 
             for(TokenList i : split)
-                components.add(builder.tryParse(i.equationAsString, i.tokens, i.spacings));
+                components.add(builder.tryParse(i));
 
             return new Operation(components, action);
-        }
-
-        private List<TokenList> splitTokenList(String equationAsString,
-                                               List<Token> tokenList,
-                                               List<Integer> spacesBeforeTokens,
-                                               Builder builder)
-        {
-            if(isLeftAssociative)
-            {
-                // TO DO: Implement
-                throw new UnsupportedOperationException("Not implemented yet.");
-            }
-            else
-            {
-                List<TokenList> result = new ArrayList<>(getOperandCount());
-
-                int tokenLookingForIndex = 0;
-                Token tokenLookingFor = this.tokens.get(tokenLookingForIndex);
-                int indexOfLastTokenFound = -1;
-                int startOfNextStringVersion = 0;
-                int bracketDepth = 0;
-
-                for(int i = 0; i < tokenList.size(); i++)
-                {
-                    Token itoken = tokenList.get(i);
-
-                    if(itoken.equals(Token.OPEN_BRACKET))
-                        bracketDepth++;
-                    else if(itoken.equals(Token.CLOSE_BRACKET))
-                    {
-                        if(--bracketDepth < 0)
-                            return null;
-                    }
-                    else if(bracketDepth == 0)
-                    {
-                        if(itoken.equals(tokenLookingFor) && builder.canBeInfixOperatorToken(tokenList, i))
-                        {
-                            List<Token> tokenSublist = tokenList.subList(indexOfLastTokenFound + 1, i);
-                            List<Integer> spacesBeforeTokensSublist
-                                    = spacesBeforeTokens.subList(indexOfLastTokenFound + 1, i + 1);
-
-                            int charsInSubstring = countCharsInTokenList(tokenSublist, spacesBeforeTokensSublist);
-                            String substring = equationAsString.substring(startOfNextStringVersion,
-                                                                          startOfNextStringVersion + charsInSubstring);
-
-                            result.add(new TokenList(substring, tokenSublist, spacesBeforeTokensSublist));
-                            startOfNextStringVersion = charsInSubstring + tokenLookingFor.text.length();
-                            indexOfLastTokenFound = i;
-
-                            if(++tokenLookingForIndex == this.tokens.size())
-                                break;
-
-                            tokenLookingFor = this.tokens.get(tokenLookingForIndex);
-                        }
-                    }
-                }
-
-                if(tokenLookingForIndex < this.tokens.size())
-                    return null;
-
-                String finalSubstring = equationAsString.substring(startOfNextStringVersion);
-                List<Token> finalTokenSublist = tokenList.subList(indexOfLastTokenFound + 1, tokenList.size());
-                List<Integer> finalSpacingsSublist
-                        = spacesBeforeTokens.subList(indexOfLastTokenFound + 1, spacesBeforeTokens.size());
-
-                result.add(new TokenList(finalSubstring, finalTokenSublist, finalSpacingsSublist));
-                return result;
-            }
-        }
-
-        private static int countCharsInTokenList(List<Token> tokenList, List<Integer> spacesBeforeTokens)
-        {
-            int count = 0;
-
-            for(int i = 0; i < tokenList.size(); i++)
-                count += spacesBeforeTokens.get(i) + tokenList.get(i).text.length();
-
-            count += spacesBeforeTokens.get(spacesBeforeTokens.size() - 1);
-            return count;
         }
     }
 
