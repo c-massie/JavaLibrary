@@ -20,150 +20,169 @@ public class EquationEvaluator
         //region exceptions
         public static class EquationParseException extends RuntimeException
         {
-            public EquationParseException(List<Token> fullEquation, List<Token> equationSection)
+            EquationParseException(TokenList fullEquation, TokenList equationSection)
             {
-                super("Equation was not parsable as an equation: " + Token.listToString(fullEquation)
-                      + "\nSpecifically, this portion: " + Token.listToString(equationSection));
+                super("Equation was not parsable as an equation: " + fullEquation.equationAsString
+                      + "\nSpecifically, this portion: " + equationSection.equationAsString);
 
                 this.fullEquation = fullEquation;
                 this.equationSection = equationSection;
             }
 
-            public EquationParseException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            EquationParseException(TokenList fullEquation, TokenList equationSection, String msg)
             {
                 super(msg);
                 this.fullEquation = fullEquation;
                 this.equationSection = equationSection;
             }
 
-            final List<Token> equationSection;
-            final List<Token> fullEquation;
+            final TokenList equationSection;
+            final TokenList fullEquation;
 
-            public List<Token> getEquationSection()
-            { return equationSection; }
+            public String getEquationSection()
+            { return equationSection.equationAsString.trim(); }
 
-            public String getEquationSectionAsString()
-            { return Token.listToString(equationSection); }
+            public String getFullEquation()
+            { return fullEquation.equationAsString.trim(); }
 
-            public List<Token> getFullEquation()
-            { return fullEquation; }
-
-            public String getFullEquationAsString()
-            { return Token.listToString(equationSection); }
-
-            public EquationParseException withFullEquation(List<Token> fullEquation)
+            public EquationParseException withFullEquation(TokenList fullEquation)
             { return new EquationParseException(fullEquation, equationSection); }
         }
 
         public static class DanglingOperatorException extends EquationParseException
         {
-            public DanglingOperatorException(List<Token> fullEquation, List<Token> equationSection)
+            public DanglingOperatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
                       "Equation contained a dangling operator that could not be a prefix nor postfix operator: "
-                        + Token.listToString(fullEquation)
-                        + "\nSpecifically, this portion: " + Token.listToString(equationSection));
+                        + fullEquation.equationAsString
+                        + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
-            public DanglingOperatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            public DanglingOperatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
             @Override
-            public DanglingOperatorException withFullEquation(List<Token> fullEquation)
+            public DanglingOperatorException withFullEquation(TokenList fullEquation)
             { return new DanglingOperatorException(fullEquation, equationSection); }
         }
 
         public static class LeadingNonPrefixOperatorException extends DanglingOperatorException
         {
-            public LeadingNonPrefixOperatorException(List<Token> fullEquation, List<Token> equationSection)
+            public LeadingNonPrefixOperatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
                       "Equation contained a leading operator that could not be a prefix operator: "
-                      + Token.listToString(fullEquation)
-                      + "\nSpecifically, this portion: " + Token.listToString(equationSection));
+                      + fullEquation.equationAsString
+                      + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
-            public LeadingNonPrefixOperatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            public LeadingNonPrefixOperatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
             @Override
-            public LeadingNonPrefixOperatorException withFullEquation(List<Token> fullEquation)
+            public LeadingNonPrefixOperatorException withFullEquation(TokenList fullEquation)
             { return new LeadingNonPrefixOperatorException(fullEquation, equationSection); }
         }
 
         public static class TrailingNonPostfixOperatorException extends DanglingOperatorException
         {
-            public TrailingNonPostfixOperatorException(List<Token> fullEquation, List<Token> equationSection)
+            public TrailingNonPostfixOperatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
                       "Equation contained a trailing operator that could not be a postfix operator: "
-                      + Token.listToString(fullEquation)
-                      + "\nSpecifically, this portion: " + Token.listToString(equationSection));
+                      + fullEquation.equationAsString
+                      + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
-            public TrailingNonPostfixOperatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            public TrailingNonPostfixOperatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
             @Override
-            public TrailingNonPostfixOperatorException withFullEquation(List<Token> fullEquation)
+            public TrailingNonPostfixOperatorException withFullEquation(TokenList fullEquation)
             { return new TrailingNonPostfixOperatorException(fullEquation, equationSection); }
         }
 
         public static class DanglingArgumentSeparatorException extends EquationParseException
         {
-
-            public DanglingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection)
+            public DanglingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
                       "Equation contained an argument list with a dangling separator: "
-                      + Token.listToString(fullEquation)
-                      + "Specifically, this portion: " + Token.listToString(equationSection));
+                      + fullEquation.equationAsString
+                      + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
-            public DanglingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            public DanglingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
             @Override
-            public DanglingArgumentSeparatorException withFullEquation(List<Token> fullEquation)
+            public DanglingArgumentSeparatorException withFullEquation(TokenList fullEquation)
             { return new DanglingArgumentSeparatorException(fullEquation, equationSection); }
         }
 
         public static class LeadingArgumentSeparatorException extends DanglingArgumentSeparatorException
         {
-
-            public LeadingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection)
+            public LeadingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
                       "Equation contained an argument list with a leading separator: "
-                      + Token.listToString(fullEquation)
-                      + "Specifically, this portion: " + Token.listToString(equationSection));
+                      + fullEquation.equationAsString
+                      + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
-            public LeadingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            public LeadingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
             @Override
-            public LeadingArgumentSeparatorException withFullEquation(List<Token> fullEquation)
+            public LeadingArgumentSeparatorException withFullEquation(TokenList fullEquation)
             { return new LeadingArgumentSeparatorException(fullEquation, equationSection); }
         }
 
         public static class TrailingArgumentSeparatorException extends DanglingArgumentSeparatorException
         {
 
-            public TrailingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection)
+            public TrailingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
                       "Equation contained an argument list with a trailing separator: "
-                      + Token.listToString(fullEquation)
-                      + "Specifically, this portion: " + Token.listToString(equationSection));
+                      + fullEquation.equationAsString
+                      + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
-            public TrailingArgumentSeparatorException(List<Token> fullEquation, List<Token> equationSection, String msg)
+            public TrailingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
             @Override
-            public TrailingArgumentSeparatorException withFullEquation(List<Token> fullEquation)
+            public TrailingArgumentSeparatorException withFullEquation(TokenList fullEquation)
             { return new TrailingArgumentSeparatorException(fullEquation, equationSection); }
+        }
+
+        public static class BracketMismatchException extends EquationParseException
+        {
+            final int openBracketCount;
+            final int closeBracketCount;
+
+            public BracketMismatchException(TokenList equation, int openBracketCount, int closeBracketCount)
+            {
+                super(equation, equation,
+                      "Equation contained " + (openBracketCount > closeBracketCount ? "more" : "less")
+                      + "open brackets than close brackets: " + equation.equationAsString
+                      + "\nOpen brackets: " + openBracketCount + ", close brackets: " + closeBracketCount);
+
+                this.openBracketCount = openBracketCount;
+                this.closeBracketCount = closeBracketCount;
+            }
+
+            public int getOpenBracketCount()
+            { return openBracketCount; }
+
+            public int getCloseBracketCount()
+            { return closeBracketCount; }
+
+            @Override
+            public BracketMismatchException withFullEquation(TokenList fullEquation)
+            { return new BracketMismatchException(fullEquation, openBracketCount, closeBracketCount); }
         }
         //endregion
 
@@ -460,6 +479,7 @@ public class EquationEvaluator
             buildOperatorGroups();
             Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
             TokenList tokenisation = tokeniser.tokenise(unparsedEquation).unmodifiable();
+            verifyTokenisationBrackets(tokenisation);
             EquationComponent topLevelComponent = tryParse(tokenisation);
             EquationEvaluator result = new EquationEvaluator(topLevelComponent, variables, functions);
             variables = new HashMap<>();
@@ -467,13 +487,28 @@ public class EquationEvaluator
             return result;
         }
 
+        private void verifyTokenisationBrackets(TokenList tokenisation)
+        {
+            int openBracketCount = 0;
+            int closeBracketCount = 0;
+
+            for(Token t : tokenisation.tokens)
+                if(t.equals(Token.OPEN_BRACKET))
+                    openBracketCount++;
+                else if(t.equals(Token.CLOSE_BRACKET))
+                    closeBracketCount++;
+
+            if(openBracketCount != closeBracketCount)
+                throw new BracketMismatchException(tokenisation, openBracketCount, closeBracketCount);
+        }
+
         private EquationComponent tryParse(TokenList tokenisation)
         {
             if(startsWithNonPrefixOperator(tokenisation))
-                throw new LeadingNonPrefixOperatorException(tokenisation.tokens, tokenisation.tokens);
+                throw new LeadingNonPrefixOperatorException(tokenisation, tokenisation);
 
             if(endsWithNonPostfixOperator(tokenisation))
-                throw new TrailingNonPostfixOperatorException(tokenisation.tokens, tokenisation.tokens);
+                throw new TrailingNonPostfixOperatorException(tokenisation, tokenisation);
 
             if(tokenisation.isInBrackets())
                 return tryParse(tokenisation.withoutFirstAndLast());
@@ -482,7 +517,7 @@ public class EquationEvaluator
                                 () -> tryParseFunctionCall(tokenisation),
                                 () -> tryParseOperation(tokenisation),
                                 () -> tryParseNumber(tokenisation),
-                                () -> { throw new EquationParseException(tokenisation.tokens, tokenisation.tokens); });
+                                () -> { throw new EquationParseException(tokenisation, tokenisation); });
         }
 
         private boolean startsWithNonPrefixOperator(TokenList tokenList)
@@ -649,6 +684,15 @@ public class EquationEvaluator
                     break;
                 }
             }
+
+            if(argListTokenList == null)
+                return null;
+
+            if(argListTokenList.startsWith(Token.ARGUMENT_SEPARATOR))
+                throw new LeadingArgumentSeparatorException(tokenList, tokenList);
+
+            if(argListTokenList.endsWith(Token.ARGUMENT_SEPARATOR))
+                throw new TrailingArgumentSeparatorException(tokenList, tokenList);
 
             List<TokenList> argTokenLists = argListTokenList.splitBy(Token.ARGUMENT_SEPARATOR);
             EquationComponent[] arguments = new EquationComponent[argTokenLists.size()];
