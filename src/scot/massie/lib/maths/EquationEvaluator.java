@@ -1,6 +1,8 @@
 package scot.massie.lib.maths;
 
 import com.sun.istack.internal.NotNull;
+import scot.massie.lib.collections.tree.RecursiveTree;
+import scot.massie.lib.collections.tree.Tree;
 
 import java.util.*;
 import java.util.function.ToDoubleFunction;
@@ -169,7 +171,10 @@ public class EquationEvaluator
         {
             final Map<Token, PrefixOperator> prefixOperators = new HashMap<>();
             final Map<Token, PostfixOperator> postfixOperators = new HashMap<>();
-            final HashSet<InfixOperator> infixOperators = new HashSet<>();
+//            final HashSet<InfixOperator> leftAssociativeInfixOperators = new HashSet<>();
+//            final HashSet<InfixOperator> rightAssociativeInfixOperators = new HashSet<>();
+            final Tree<Token, InfixOperator> leftAssociativeInfixOperators = new RecursiveTree<>();
+            final Tree<Token, InfixOperator> rightAssociativeInfixOperators = new RecursiveTree<>();
         }
 
         private static class OperatorTokenRun
@@ -233,6 +238,7 @@ public class EquationEvaluator
         Map<String, Double> variables;
 
         Map<Double, OperatorPriorityGroup> operatorGroups = null;
+        List<OperatorPriorityGroup> operatorGroupsInOrder = null;
 
         public Builder(@NotNull String equation)
         { this(equation, true); }
@@ -464,14 +470,28 @@ public class EquationEvaluator
 
             for(Map.Entry<List<Token>, InfixOperator> e : infixOperators.entrySet())
             {
-                operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
-                              .infixOperators
-                              .add(e.getValue());
+                if(e.getValue().isLeftAssociative)
+                    operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
+                                  .leftAssociativeInfixOperators
+                                  .setAt(e.getValue(), e.getValue().tokens);
+                else
+                    operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
+                                  .rightAssociativeInfixOperators
+                                  .setAt(e.getValue(), e.getValue().tokens);
             }
+
+            operatorGroupsInOrder = operatorGroups.entrySet()
+                                                  .stream()
+                                                  .sorted(Map.Entry.comparingByKey())
+                                                  .map(Map.Entry::getValue)
+                                                  .collect(Collectors.toList());
         }
 
         private void invalidateOperatorGroups()
-        { operatorGroups = null; }
+        {
+            operatorGroups = null;
+            operatorGroupsInOrder = null;
+        }
 
         public EquationEvaluator build()
         {
@@ -515,6 +535,118 @@ public class EquationEvaluator
 
         private Operation tryParseOperation(TokenList tokenList)
         {
+            /*
+
+            Notes:
+             - Where left- and right-associative operators share the same priority, right associative operators are
+               tested first. (and therefore left associative operators are more "sticky")
+             - The order of infix operators of the same associativity and priority, is determined by the order in which
+               their tokens appear, from left-to-right for right-associative operators and vice versa for
+               left-associative.
+             */
+
+            for(OperatorPriorityGroup opGroup : operatorGroupsInOrder)
+            {
+                Operation o = tryParseOperation(tokenList, opGroup);
+
+                if(o != null)
+                    return o;
+            }
+
+            return null;
+        }
+
+        private Operation tryParseOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
+        {
+            return nullCoalesce(() -> tryParseInfixOperation_rightAssociative(tokenList, opGroup),
+                                () -> tryParseInfixOperation_leftAssociative(tokenList, opGroup),
+                                () -> tryParsePrefixOperation(tokenList, opGroup),
+                                () -> tryParsePostfixOperation(tokenList, opGroup),
+                                () -> null);
+        }
+
+        private Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
+                                                                  OperatorPriorityGroup opGroup)
+        {
+            return tryParseInfixOperation_rightAssociative(tokenList,
+                                                           opGroup.rightAssociativeInfixOperators,
+                                                           -1,
+                                                           Collections.emptyList());
+        }
+
+        private Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
+                                                                  Tree<Token, InfixOperator> ops,
+                                                                  int currentlyUpTo,
+                                                                  List<Integer> indicesOfOperatorTokens)
+        {
+            if(ops.isEmpty())
+                return null;
+
+            if(ops.hasRootItem())
+                return ops.getRootItem().tryParseFromSplits(tokenList, indicesOfOperatorTokens, this);
+
+            int bracketDepth = 0;
+
+            for(int i = currentlyUpTo + 1; i < tokenList.size(); i++)
+            {
+                Token itoken = tokenList.get(i);
+
+                if(itoken.equals(Token.OPEN_BRACKET))
+                    bracketDepth++;
+                else if(itoken.equals(Token.CLOSE_BRACKET))
+                {
+                    if(--bracketDepth < 0)
+                        return null;
+                }
+                else
+                {
+                    if(!infixOperatorTokens.contains(itoken))
+                        continue;
+
+                    if(!canBeInfixOperatorToken(tokenList.tokens, i))
+                        continue;
+
+                    if(ops.hasItemsAtOrUnder(itoken))
+                        continue;
+
+                    List<Integer> newIndices = new ArrayList<>(indicesOfOperatorTokens);
+                    newIndices.add(i);
+                    Operation o
+                            = tryParseInfixOperation_rightAssociative(tokenList, ops.getBranch(itoken), i, newIndices);
+
+                    if(o != null)
+                        return o;
+                }
+            }
+
+            return null;
+        }
+
+        private Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
+                                                                  OperatorPriorityGroup opGroup)
+        {
+            // TO DO: Implement.
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        private Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
+                                                                 Tree<Token, InfixOperator> ops,
+                                                                 int currentlyUpTo,
+                                                                 List<Integer> indicesOfOperatorTokens)
+        {
+            // TO DO: Implement.
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        private Operation tryParsePrefixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
+        {
+            // TO DO: Implement.
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
+        private Operation tryParsePostfixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
+        {
+            // TO DO: Implement.
             throw new UnsupportedOperationException("Not implemented yet.");
         }
 
@@ -961,6 +1093,21 @@ public class EquationEvaluator
             result.add(sublist(previousSplitIndex + 1, size()));
             return result;
         }
+
+        public List<TokenList> splitAtPoints(List<Integer> points)
+        {
+            List<TokenList> result = new ArrayList<>();
+            int previousPoint = -1;
+
+            for(int point : points)
+            {
+                result.add(sublist(previousPoint + 1, point));
+                previousPoint = point;
+            }
+
+            result.add(sublist(previousPoint + 1, size()));
+            return result;
+        }
     }
 
     //region Tokens
@@ -1110,17 +1257,21 @@ public class EquationEvaluator
         { return this.tokens.size() + 1; }
 
         @Override
-        public EquationComponent tryParse(TokenList tokenList, Builder builder)
+        public Operation tryParse(TokenList tokenList, Builder builder)
         {
             List<TokenList> split = tokenList.splitbySequence(this.tokens);
+            return split == null ? null : compileFromOperandTokenLists(split, builder);
+        }
 
-            if(split == null)
-                return null;
+        public Operation tryParseFromSplits(TokenList tokenList, List<Integer> splitPoints, Builder builder)
+        { return compileFromOperandTokenLists(tokenList.splitAtPoints(splitPoints), builder); }
 
-            List<EquationComponent> components = new ArrayList<>(split.size());
+        private Operation compileFromOperandTokenLists(List<TokenList> tokenLists, Builder builder)
+        {
+            List<EquationComponent> components = new ArrayList<>(tokenLists.size());
 
-            for(TokenList i : split)
-                components.add(builder.tryParse(i));
+            for(TokenList tl : tokenLists)
+                components.add(builder.tryParse(tl));
 
             return new Operation(components, action);
         }
