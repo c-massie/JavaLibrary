@@ -296,44 +296,6 @@ public class EquationEvaluator
             return new HashMap<>();
         }
 
-        private static String joinTokens(List<Token> tokens, List<Integer> spacesBeforeTokens)
-        { return joinTokens(tokens, spacesBeforeTokens, true); }
-
-        private static String joinTokens(List<Token> tokens, List<Integer> spacesBeforeTokens, boolean trim)
-        {
-            StringBuilder sb = new StringBuilder();
-
-            if(!trim)
-            {
-                int spaces = spacesBeforeTokens.get(0);
-
-                for(int i = 0; i < spaces; i++)
-                    sb.append(' ');
-            }
-
-            sb.append(tokens.get(0));
-
-            for(int i = 1; i < tokens.size(); i++)
-            {
-                int spaces = spacesBeforeTokens.get(i);
-
-                for(int j = 0; j < spaces; j++)
-                    sb.append(' ');
-
-                sb.append(tokens.get(i).toString());
-            }
-
-            if(!trim)
-            {
-                int spaces = spacesBeforeTokens.get(spacesBeforeTokens.size() - 1);
-
-                for(int i = 0; i < spaces; i++)
-                    sb.append(' ');
-            }
-
-            return sb.toString();
-        }
-
         private void addOperator(Operator op)
         {
             invalidateOperatorGroups();
@@ -499,8 +461,10 @@ public class EquationEvaluator
             Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
             TokenList tokenisation = tokeniser.tokenise(unparsedEquation).unmodifiable();
             EquationComponent topLevelComponent = tryParse(tokenisation);
-
-            throw new UnsupportedOperationException("Not implemented yet");
+            EquationEvaluator result = new EquationEvaluator(topLevelComponent, variables, functions);
+            variables = new HashMap<>();
+            functions = new HashMap<>();
+            return result;
         }
 
         private EquationComponent tryParse(TokenList tokenisation)
@@ -1456,16 +1420,41 @@ public class EquationEvaluator
 
     //region variables
     final EquationComponent topLevelComponent;
+    final Map<String, Double> variableValues;
+    final Map<String, ToDoubleFunction<double[]>> functions;
     //endregion
 
     //region initialisation
-    private EquationEvaluator(EquationComponent topLevelComponent)
+    private EquationEvaluator(EquationComponent topLevelComponent,
+                              Map<String, Double> variableValues,
+                              Map<String, ToDoubleFunction<double[]>> functions)
     {
         this.topLevelComponent = topLevelComponent;
+        this.variableValues = variableValues;
+        this.functions = functions;
     }
     //endregion
 
     //region methods
+    public double evaluate()
+    { return topLevelComponent.evaluate(); }
 
+    public boolean setVariable(String variableName, double newValue)
+    {
+        if(!variableValues.containsKey(variableName))
+            return false;
+
+        variableValues.put(variableName, newValue);
+        return true;
+    }
+
+    public boolean redefineFunction(String functionName, ToDoubleFunction<double[]> function)
+    {
+        if(!functions.containsKey(functionName))
+            return false;
+
+        functions.put(functionName, function);
+        return true;
+    }
     //endregion
 }
