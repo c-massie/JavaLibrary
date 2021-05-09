@@ -160,29 +160,35 @@ public class EquationEvaluator
 
         public static class BracketMismatchException extends EquationParseException
         {
-            final int openBracketCount;
-            final int closeBracketCount;
+            public BracketMismatchException(TokenList equation)
+            { super(equation, equation, "Equation contained a bracket mismatch: " + equation.equationAsString); }
 
-            public BracketMismatchException(TokenList equation, int openBracketCount, int closeBracketCount)
+            public BracketMismatchException(TokenList equation, String msg)
+            { super(equation, equation, msg); }
+        }
+
+        public static class UnexpectedCloseBracketException extends BracketMismatchException
+        {
+            public UnexpectedCloseBracketException(TokenList equation)
             {
-                super(equation, equation,
-                      "Equation contained " + (openBracketCount > closeBracketCount ? "more" : "less")
-                      + "open brackets than close brackets: " + equation.equationAsString
-                      + "\nOpen brackets: " + openBracketCount + ", close brackets: " + closeBracketCount);
-
-                this.openBracketCount = openBracketCount;
-                this.closeBracketCount = closeBracketCount;
+                super(equation, "Equation contained a close bracket that didn't correlate to a matching open bracket: "
+                                + equation.equationAsString);
             }
 
-            public int getOpenBracketCount()
-            { return openBracketCount; }
+            public UnexpectedCloseBracketException(TokenList equation, String msg)
+            { super(equation, msg); }
+        }
 
-            public int getCloseBracketCount()
-            { return closeBracketCount; }
+        public static class UnmatchedOpenBracketException extends BracketMismatchException
+        {
+            public UnmatchedOpenBracketException(TokenList equation)
+            {
+                super(equation, "Equation contained an open bracket that didn't correlate to a matching close bracket: "
+                                + equation.equationAsString);
+            }
 
-            @Override
-            public BracketMismatchException withFullEquation(TokenList fullEquation)
-            { return new BracketMismatchException(fullEquation, openBracketCount, closeBracketCount); }
+            public UnmatchedOpenBracketException(TokenList equation, String msg)
+            { super(equation, msg); }
         }
         //endregion
 
@@ -489,17 +495,21 @@ public class EquationEvaluator
 
         private void verifyTokenisationBrackets(TokenList tokenisation)
         {
-            int openBracketCount = 0;
-            int closeBracketCount = 0;
+            int bracketDepth = 0;
 
             for(Token t : tokenisation.tokens)
+            {
                 if(t.equals(Token.OPEN_BRACKET))
-                    openBracketCount++;
+                    bracketDepth++;
                 else if(t.equals(Token.CLOSE_BRACKET))
-                    closeBracketCount++;
+                {
+                    if(--bracketDepth < 0)
+                        throw new UnexpectedCloseBracketException(tokenisation);
+                }
+            }
 
-            if(openBracketCount != closeBracketCount)
-                throw new BracketMismatchException(tokenisation, openBracketCount, closeBracketCount);
+            if(bracketDepth > 0)
+                throw new UnmatchedOpenBracketException(tokenisation);
         }
 
         private EquationComponent tryParse(TokenList tokenisation)
@@ -593,10 +603,7 @@ public class EquationEvaluator
                 if(itoken.equals(Token.OPEN_BRACKET))
                     bracketDepth++;
                 else if(itoken.equals(Token.CLOSE_BRACKET))
-                {
-                    if(--bracketDepth < 0)
-                        return null;
-                }
+                    bracketDepth--;
                 else
                 {
                     if(!infixOperatorTokens.contains(itoken))
@@ -1047,10 +1054,7 @@ public class EquationEvaluator
                 if(itoken.equals(Token.OPEN_BRACKET))
                     bracketDepth++;
                 else if(itoken.equals(Token.CLOSE_BRACKET))
-                {
-                    if(--bracketDepth < 0)
-                        return null;
-                }
+                    bracketDepth--;
                 else if(bracketDepth == 0 && itoken.equals(t))
                 {
                     sublists.add(sublist(lastMatch + 1, i));
@@ -1076,10 +1080,7 @@ public class EquationEvaluator
                 if(itoken.equals(Token.OPEN_BRACKET))
                     bracketDepth++;
                 else if(itoken.equals(Token.CLOSE_BRACKET))
-                {
-                    if(--bracketDepth < 0)
-                        return null;
-                }
+                    bracketDepth--;
                 else if(bracketDepth == 0 && itoken.equals(sequenceToken))
                 {
                     result.add(sublist(previousSplitIndex + 1, i));
@@ -1116,10 +1117,7 @@ public class EquationEvaluator
                 if(itoken.equals(Token.CLOSE_BRACKET))
                     bracketDepth++;
                 else if(itoken.equals(Token.OPEN_BRACKET))
-                {
-                    if(--bracketDepth < 0)
-                        return null;
-                }
+                    bracketDepth--;
                 else if(bracketDepth == 0 && itoken.equals(sequenceToken))
                 {
                     result.add(sublist(i + 1, previousSplitIndex));
