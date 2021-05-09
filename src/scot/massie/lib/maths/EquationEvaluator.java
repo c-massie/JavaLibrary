@@ -640,14 +640,22 @@ public class EquationEvaluator
 
         private Operation tryParsePrefixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
         {
-            // TO DO: Implement.
-            throw new UnsupportedOperationException("Not implemented yet.");
+            PrefixOperator op = opGroup.prefixOperators.get(tokenList.first());
+
+            if(op == null)
+                return null;
+
+            return op.tryParse(tokenList, this);
         }
 
         private Operation tryParsePostfixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
         {
-            // TO DO: Implement.
-            throw new UnsupportedOperationException("Not implemented yet.");
+            PostfixOperator op = opGroup.postfixOperators.get(tokenList.last());
+
+            if(op == null)
+                return null;
+
+            return op.tryParse(tokenList, this);
         }
 
         private VariableReference tryParseVariable(TokenList tokenList)
@@ -1195,7 +1203,7 @@ public class EquationEvaluator
         public List<Token> getTokens()
         { return tokens; }
 
-        public abstract EquationComponent tryParse(TokenList tokenList, Builder builder);
+        public abstract Operation tryParse(TokenList tokenList, Builder builder);
     }
 
     private static abstract class UnaryOperator extends Operator
@@ -1213,7 +1221,7 @@ public class EquationEvaluator
         { super(token, priority, action); }
 
         @Override
-        public EquationComponent tryParse(TokenList tokenList, Builder builder)
+        public Operation tryParse(TokenList tokenList, Builder builder)
         {
             if(tokenList.size() < 2 || !tokenList.first().equals(getToken()))
                 return null;
@@ -1228,7 +1236,7 @@ public class EquationEvaluator
         { super(token, priority, action); }
 
         @Override
-        public EquationComponent tryParse(TokenList tokenList, Builder builder)
+        public Operation tryParse(TokenList tokenList, Builder builder)
         {
             if(tokenList.size() < 2 || !tokenList.last().equals(getToken()))
                 return null;
