@@ -1017,52 +1017,83 @@ public class EquationEvaluator
             return sublists;
         }
 
-        public List<TokenList> splitbySequence(List<Token> sequence)
+        public List<TokenList> splitBySequence(List<Token> sequence)
         {
             List<TokenList> result = new ArrayList<>();
             int sequenceIndex = 0;
-            int tokenIndex = 0;
+            Token sequenceToken = sequence.get(sequenceIndex);
             int previousSplitIndex = -1;
             int bracketDepth = 0;
 
-            while(sequenceIndex < sequence.size() && tokenIndex < tokens.size())
+            for(int i = 0; i < tokens.size(); i++)
             {
-                Token tokenToSplitOn = sequence.get(sequenceIndex);
-                boolean found = false;
+                Token itoken = tokens.get(i);
 
-                while(tokenIndex < tokens.size())
+                if(itoken.equals(Token.OPEN_BRACKET))
+                    bracketDepth++;
+                else if(itoken.equals(Token.CLOSE_BRACKET))
                 {
-                    Token t = tokens.get(tokenIndex);
-
-                    if(t.equals(Token.OPEN_BRACKET))
-                        bracketDepth++;
-                    else if(t.equals(Token.CLOSE_BRACKET))
-                    {
-                        if(--bracketDepth < 0)
-                            return null;
-                    }
-                    else if(bracketDepth == 0 && t.equals(tokenToSplitOn))
-                    {
-                        result.add(sublist(previousSplitIndex + 1, tokenIndex));
-                        previousSplitIndex = tokenIndex;
-                        tokenIndex++;
-                        found = true;
-                        break;
-                    }
-
-                    tokenIndex++;
+                    if(--bracketDepth < 0)
+                        return null;
                 }
+                else if(bracketDepth == 0 && itoken.equals(sequenceToken))
+                {
+                    result.add(sublist(previousSplitIndex + 1, i));
+                    previousSplitIndex = i;
 
-                if(!found)
-                    break;
+                    sequenceIndex++;
 
-                sequenceIndex++;
+                    if(sequenceIndex == sequence.size())
+                        break;
+
+                    sequenceToken = sequence.get(sequenceIndex);
+                }
             }
 
             if(sequenceIndex < sequence.size()) // Not all tokens in sequence were found.
                 return null;
 
             result.add(sublist(previousSplitIndex + 1, size()));
+            return result;
+        }
+
+        public List<TokenList> splitBySequenceInReverse(List<Token> sequence)
+        {
+            List<TokenList> result = new ArrayList<>();
+            int sequenceIndex = sequence.size() - 1;
+            Token sequenceToken = sequence.get(sequenceIndex);
+            int previousSplitIndex = tokens.size();
+            int bracketDepth = 0;
+
+            for(int i = tokens.size() - 1; i >= 0; i--)
+            {
+                Token itoken = tokens.get(i);
+
+                if(itoken.equals(Token.CLOSE_BRACKET))
+                    bracketDepth++;
+                else if(itoken.equals(Token.OPEN_BRACKET))
+                {
+                    if(--bracketDepth < 0)
+                        return null;
+                }
+                else if(bracketDepth == 0 && itoken.equals(sequenceToken))
+                {
+                    result.add(sublist(i + 1, previousSplitIndex));
+                    previousSplitIndex = i;
+
+                    sequenceIndex--;
+
+                    if(sequenceIndex == -1)
+                        break;
+
+                    sequenceToken = sequence.get(sequenceIndex);
+                }
+            }
+
+            if(sequenceIndex >= 0) // Not all tokens in sequence were found.
+                return null;
+
+            result.add(sublist(0, previousSplitIndex));
             return result;
         }
 
@@ -1231,7 +1262,9 @@ public class EquationEvaluator
         @Override
         public Operation tryParse(TokenList tokenList, Builder builder)
         {
-            List<TokenList> split = tokenList.splitbySequence(this.tokens);
+            List<TokenList> split = isLeftAssociative ? tokenList.splitBySequenceInReverse(this.tokens)
+                                                      : tokenList.splitBySequence(this.tokens);
+
             return split == null ? null : compileFromOperandTokenLists(split, builder);
         }
 
