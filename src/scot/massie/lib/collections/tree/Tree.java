@@ -354,6 +354,17 @@ public interface Tree<TNode, TLeaf>
             return new TreePath<>(nodes.subList(numberOfElementsToDrop, nodes.size()));
         }
 
+        /**
+         * Gets a version of this tree path with the nodes in reverse order.
+         * @return A new tree path with the same elements as this one, but in reverse order.
+         */
+        public TreePath<TNode> reversed()
+        {
+            List<TNode> reversedNodes = new ArrayList<>(nodes);
+            Collections.reverse(reversedNodes);
+            return new TreePath<>(reversedNodes);
+        }
+
         @Override
         public int hashCode()
         { return nodes.hashCode(); }
@@ -2058,6 +2069,29 @@ public interface Tree<TNode, TLeaf>
      *         starting with the first element of its path and continuing from there.
      */
     List<TLeaf> toList(Comparator<TNode> comparator);
+
+    /**
+     * Gets a new tree with the same items with keys reversed.
+     * @return <p>A new tree with the same items, with the keys reversed. (as "a" at ["b", "c", "d"] becomes
+     *         "a" at ["d", "c", "b"])</p>
+     */
+    default Tree<TNode, TLeaf> withReversedKeys()
+    {
+        Tree<TNode, TLeaf> tree;
+
+        try
+        { tree = this.getClass().newInstance(); }
+        catch(InstantiationException | IllegalAccessException e)
+        {
+            throw new UnsupportedOperationException("The tree given's class must implement a public new() constructor,"
+                                                    + "or override .withReversedKeys(), for this method to work.", e);
+        }
+
+        for(Tree.Entry<TNode, TLeaf> e : getEntries())
+            tree.setAt(e.item, e.path.reversed());
+
+        return tree;
+    }
     //endregion
 
     //region statistics

@@ -604,17 +604,11 @@ public class EquationEvaluator
                     bracketDepth++;
                 else if(itoken.equals(Token.CLOSE_BRACKET))
                     bracketDepth--;
-                else
+                else if(bracketDepth == 0
+                     && infixOperatorTokens.contains(itoken)
+                     && canBeInfixOperatorToken(tokenList.tokens, i)
+                     && ops.hasItemsAtOrUnder(itoken))
                 {
-                    if(!infixOperatorTokens.contains(itoken))
-                        continue;
-
-                    if(!canBeInfixOperatorToken(tokenList.tokens, i))
-                        continue;
-
-                    if(ops.hasItemsAtOrUnder(itoken))
-                        continue;
-
                     List<Integer> newIndices = new ArrayList<>(indicesOfOperatorTokens);
                     newIndices.add(i);
                     Operation o
@@ -631,17 +625,49 @@ public class EquationEvaluator
         private Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
                                                                   OperatorPriorityGroup opGroup)
         {
-            // TO DO: Implement.
-            throw new UnsupportedOperationException("Not implemented yet.");
+            return tryParseInfixOperation_leftAssociative(tokenList,
+                                                          opGroup.leftAssociativeInfixOperators.withReversedKeys(),
+                                                          tokenList.size(),
+                                                          Collections.emptyList());
         }
 
         private Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
                                                                  Tree<Token, InfixOperator> ops,
-                                                                 int currentlyUpTo,
+                                                                 int currentlyDownTo,
                                                                  List<Integer> indicesOfOperatorTokens)
         {
-            // TO DO: Implement.
-            throw new UnsupportedOperationException("Not implemented yet.");
+            if(ops.isEmpty())
+                return null;
+
+            if(ops.hasRootItem())
+                return ops.getRootItem().tryParseFromSplits(tokenList, indicesOfOperatorTokens, this);
+
+            int bracketDepth = 0;
+
+            for(int i = currentlyDownTo - 1; i >= 0; i--)
+            {
+                Token itoken = tokenList.get(i);
+
+                if(itoken.equals(Token.CLOSE_BRACKET))
+                    bracketDepth++;
+                else if(itoken.equals(Token.OPEN_BRACKET))
+                    bracketDepth--;
+                else if(bracketDepth == 0
+                     && infixOperatorTokens.contains(itoken)
+                     && canBeInfixOperatorToken(tokenList.tokens, i)
+                     && ops.hasItemsAtOrUnder(itoken))
+                {
+                    List<Integer> newIndices = new ArrayList<>(indicesOfOperatorTokens);
+                    newIndices.add(i);
+                    Operation o
+                            = tryParseInfixOperation_leftAssociative(tokenList, ops.getBranch(itoken), i, newIndices);
+
+                    if(o != null)
+                        return o;
+                }
+            }
+
+            return null;
         }
 
         private Operation tryParsePrefixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
@@ -1141,6 +1167,8 @@ public class EquationEvaluator
 
         public List<TokenList> splitAtPoints(List<Integer> points)
         {
+            points = new ArrayList<>(points);
+            points.sort(Comparator.naturalOrder());
             List<TokenList> result = new ArrayList<>();
             int previousPoint = -1;
 
