@@ -20,6 +20,9 @@ public class EquationEvaluator
         //region exceptions
         public static class EquationParseException extends RuntimeException
         {
+            final TokenList equationSection;
+            final TokenList fullEquation;
+
             EquationParseException(TokenList fullEquation, TokenList equationSection)
             {
                 super("Equation was not parsable as an equation: " + fullEquation.equationAsString
@@ -35,9 +38,6 @@ public class EquationEvaluator
                 this.fullEquation = fullEquation;
                 this.equationSection = equationSection;
             }
-
-            final TokenList equationSection;
-            final TokenList fullEquation;
 
             public String getEquationSection()
             { return equationSection.equationAsString.trim(); }
@@ -196,14 +196,19 @@ public class EquationEvaluator
         {
             final Map<Token, PrefixOperator> prefixOperators = new HashMap<>();
             final Map<Token, PostfixOperator> postfixOperators = new HashMap<>();
-//            final HashSet<InfixOperator> leftAssociativeInfixOperators = new HashSet<>();
-//            final HashSet<InfixOperator> rightAssociativeInfixOperators = new HashSet<>();
             final Tree<Token, InfixOperator> leftAssociativeInfixOperators = new RecursiveTree<>();
             final Tree<Token, InfixOperator> rightAssociativeInfixOperators = new RecursiveTree<>();
         }
 
         private static class OperatorTokenRun
         {
+            int startIndexInSource;
+            int endIndexInSource;
+            int indexOfPivotInRun;
+            List<Token> tokens;
+            List<Token> tokensBeforePivot;
+            List<Token> tokensAfterPivot;
+
             public OperatorTokenRun(List<Token> source, int runStartIndex, int runEndIndex, int pivotIndexInSource)
             {
                 this.startIndexInSource = runStartIndex;
@@ -213,13 +218,6 @@ public class EquationEvaluator
                 this.tokensBeforePivot = source.subList(runStartIndex, pivotIndexInSource);
                 this.tokensAfterPivot = source.subList(pivotIndexInSource + 1, runEndIndex);
             }
-
-            int startIndexInSource;
-            int endIndexInSource;
-            int indexOfPivotInRun;
-            List<Token> tokens;
-            List<Token> tokensBeforePivot;
-            List<Token> tokensAfterPivot;
         }
         //endregion
 
@@ -278,12 +276,12 @@ public class EquationEvaluator
                  includeDefaults ? getDefaultVariables()        : new HashMap<>());
         }
 
-        private Builder(String equation,
-                        Map<List<Token>, InfixOperator> infixOperators,
-                        Map<Token, PrefixOperator> prefixOperators,
-                        Map<Token, PostfixOperator> postfixOperators,
-                        Map<String, ToDoubleFunction<double[]>> functions,
-                        Map<String, Double> variables)
+        Builder(String equation,
+                Map<List<Token>, InfixOperator> infixOperators,
+                Map<Token, PrefixOperator> prefixOperators,
+                Map<Token, PostfixOperator> postfixOperators,
+                Map<String, ToDoubleFunction<double[]>> functions,
+                Map<String, Double> variables)
         {
             if(equation == null)
                 throw new NullPointerException("Equations cannot be null strings.");
@@ -296,32 +294,32 @@ public class EquationEvaluator
             this.variables = variables;
         }
 
-        private static Map<List<Token>, InfixOperator> getDefaultInfixOperators()
+        static Map<List<Token>, InfixOperator> getDefaultInfixOperators()
         {
             return new HashMap<>();
         }
 
-        private static Map<Token, PrefixOperator> getDefaultPrefixOperators()
+        static Map<Token, PrefixOperator> getDefaultPrefixOperators()
         {
             return new HashMap<>();
         }
 
-        private static Map<Token, PostfixOperator> getDefaultPostfixOperators()
+        static Map<Token, PostfixOperator> getDefaultPostfixOperators()
         {
             return new HashMap<>();
         }
 
-        private static Map<String, ToDoubleFunction<double[]>> getDefaultFunctions()
+        static Map<String, ToDoubleFunction<double[]>> getDefaultFunctions()
         {
             return new HashMap<>();
         }
 
-        private static Map<String, Double> getDefaultVariables()
+        static Map<String, Double> getDefaultVariables()
         {
             return new HashMap<>();
         }
 
-        private void addOperator(Operator op)
+        void addOperator(Operator op)
         {
             invalidateOperatorGroups();
 
@@ -351,7 +349,7 @@ public class EquationEvaluator
             { throw new UnsupportedOperationException("Unrecognised operator type: " + op.getClass().getName()); }
         }
 
-        private void addOperatorToken(Token token)
+        void addOperatorToken(Token token)
         {
             if(possibleTokens.add(token))
             {
@@ -360,7 +358,7 @@ public class EquationEvaluator
             }
         }
 
-        private void addOperatorTokens(List<Token> tokens)
+        void addOperatorTokens(List<Token> tokens)
         {
             for(Token token : tokens)
                 if(possibleTokens.add(token))
@@ -434,7 +432,7 @@ public class EquationEvaluator
             return this;
         }
 
-        private void buildOperatorGroups()
+        void buildOperatorGroups()
         {
             if(operatorGroups != null)
                 return;
@@ -474,7 +472,7 @@ public class EquationEvaluator
                                                   .collect(Collectors.toList());
         }
 
-        private void invalidateOperatorGroups()
+        void invalidateOperatorGroups()
         {
             operatorGroups = null;
             operatorGroupsInOrder = null;
@@ -493,7 +491,7 @@ public class EquationEvaluator
             return result;
         }
 
-        private void verifyTokenisationBrackets(TokenList tokenisation)
+        void verifyTokenisationBrackets(TokenList tokenisation)
         {
             int bracketDepth = 0;
 
@@ -512,7 +510,7 @@ public class EquationEvaluator
                 throw new UnmatchedOpenBracketException(tokenisation);
         }
 
-        private EquationComponent tryParse(TokenList tokenisation)
+        EquationComponent tryParse(TokenList tokenisation)
         {
             if(startsWithNonPrefixOperator(tokenisation))
                 throw new LeadingNonPrefixOperatorException(tokenisation, tokenisation);
@@ -530,19 +528,19 @@ public class EquationEvaluator
                                 () -> { throw new EquationParseException(tokenisation, tokenisation); });
         }
 
-        private boolean startsWithNonPrefixOperator(TokenList tokenList)
+        boolean startsWithNonPrefixOperator(TokenList tokenList)
         {
             Token first = tokenList.first();
             return operatorTokens.contains(first) && !prefixOperators.containsKey(first);
         }
 
-        private boolean endsWithNonPostfixOperator(TokenList tokenList)
+        boolean endsWithNonPostfixOperator(TokenList tokenList)
         {
             Token last = tokenList.last();
             return operatorTokens.contains(last) && !postfixOperators.containsKey(last);
         }
 
-        private Operation tryParseOperation(TokenList tokenList)
+        Operation tryParseOperation(TokenList tokenList)
         {
             /*
 
@@ -565,7 +563,7 @@ public class EquationEvaluator
             return null;
         }
 
-        private Operation tryParseOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
+        Operation tryParseOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
         {
             return nullCoalesce(() -> tryParseInfixOperation_rightAssociative(tokenList, opGroup),
                                 () -> tryParseInfixOperation_leftAssociative(tokenList, opGroup),
@@ -574,7 +572,7 @@ public class EquationEvaluator
                                 () -> null);
         }
 
-        private Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
+        Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
                                                                   OperatorPriorityGroup opGroup)
         {
             return tryParseInfixOperation_rightAssociative(tokenList,
@@ -583,7 +581,7 @@ public class EquationEvaluator
                                                            Collections.emptyList());
         }
 
-        private Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
+        Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
                                                                   Tree<Token, InfixOperator> ops,
                                                                   int currentlyUpTo,
                                                                   List<Integer> indicesOfOperatorTokens)
@@ -622,7 +620,7 @@ public class EquationEvaluator
             return null;
         }
 
-        private Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
+        Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
                                                                   OperatorPriorityGroup opGroup)
         {
             return tryParseInfixOperation_leftAssociative(tokenList,
@@ -631,7 +629,7 @@ public class EquationEvaluator
                                                           Collections.emptyList());
         }
 
-        private Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
+        Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
                                                                  Tree<Token, InfixOperator> ops,
                                                                  int currentlyDownTo,
                                                                  List<Integer> indicesOfOperatorTokens)
@@ -670,7 +668,7 @@ public class EquationEvaluator
             return null;
         }
 
-        private Operation tryParsePrefixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
+        Operation tryParsePrefixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
         {
             PrefixOperator op = opGroup.prefixOperators.get(tokenList.first());
 
@@ -680,7 +678,7 @@ public class EquationEvaluator
             return op.tryParse(tokenList, this);
         }
 
-        private Operation tryParsePostfixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
+        Operation tryParsePostfixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
         {
             PostfixOperator op = opGroup.postfixOperators.get(tokenList.last());
 
@@ -690,13 +688,13 @@ public class EquationEvaluator
             return op.tryParse(tokenList, this);
         }
 
-        private VariableReference tryParseVariable(TokenList tokenList)
+        VariableReference tryParseVariable(TokenList tokenList)
         {
             Double variableValue = variables.get(tokenList.equationAsString.trim());
             return variableValue == null ? null : new VariableReference(variables, tokenList.equationAsString);
         }
 
-        private FunctionCall tryParseFunctionCall(TokenList tokenList)
+        FunctionCall tryParseFunctionCall(TokenList tokenList)
         {
             if(tokenList.size() < 3) // Needs at least 3 tokens: a name, "(", and ")".
                 return null;
@@ -736,7 +734,7 @@ public class EquationEvaluator
             return new FunctionCall(functions, functionName, arguments);
         }
 
-        private LiteralNumber tryParseNumber(TokenList tokenList)
+        LiteralNumber tryParseNumber(TokenList tokenList)
         {
             try
             {
@@ -751,7 +749,7 @@ public class EquationEvaluator
         //  - There are tokens before and after the run.
         //  - All tokens in the run of operator tokens it's in before it may be postfix operators
         //  - All tokens in the run of operator tokens it's in after it may be prefix operators
-        private boolean canBeInfixOperatorToken(List<Token> tokens, int tokenIndex)
+        boolean canBeInfixOperatorToken(List<Token> tokens, int tokenIndex)
         {
             if(tokenIndex == 0 || tokenIndex == tokens.size() - 1)
                 return false;
@@ -773,7 +771,7 @@ public class EquationEvaluator
         }
 
         // idk, I'm bad at naming things.
-        private OperatorTokenRun getOpRun(List<Token> tokens, int indexToGetOpRunThatContainsIt)
+        OperatorTokenRun getOpRun(List<Token> tokens, int indexToGetOpRunThatContainsIt)
         {
             int min = -1, max = -1;
 
@@ -884,7 +882,7 @@ public class EquationEvaluator
          * with {@link NumberToken number tokens}.
          * @param tokens The list of tokens to parse the numbers in.
          */
-        private void tokeniseNumbers(LinkedList<Token> tokens)
+        void tokeniseNumbers(LinkedList<Token> tokens)
         {
             ListIterator<Token> tokenIterator = tokens.listIterator();
 
@@ -907,7 +905,7 @@ public class EquationEvaluator
             }
         }
 
-        private static int countSpacesAtStart(String s)
+        static int countSpacesAtStart(String s)
         {
             for(int i = 0; i < s.length(); i++)
                 if(s.charAt(i) != ' ')
@@ -916,7 +914,7 @@ public class EquationEvaluator
             return s.length();
         }
 
-        private static int countSpacesAtEnd(String s)
+        static int countSpacesAtEnd(String s)
         {
             for(int i = 0, r = s.length() - 1; r >= 0; i++, r--)
                 if(s.charAt(r) != ' ')
@@ -1235,13 +1233,13 @@ public class EquationEvaluator
 
     private static class NumberToken extends Token
     {
+        final double value;
+
         public NumberToken(String asText, double asNumber)
         {
             super(asText);
             this.value = asNumber;
         }
-
-        final double value;
 
         public double getValue()
         { return value; }
@@ -1249,7 +1247,7 @@ public class EquationEvaluator
     //endregion
 
     //region operators
-    private static abstract class Operator
+    static abstract class Operator
     {
         final List<Token> tokens;
         final double priority;
@@ -1271,7 +1269,7 @@ public class EquationEvaluator
         public abstract Operation tryParse(TokenList tokenList, Builder builder);
     }
 
-    private static abstract class UnaryOperator extends Operator
+    static abstract class UnaryOperator extends Operator
     {
         public UnaryOperator(Token token, double priority, UnaryOperatorAction action)
         { super(Arrays.asList(token), priority, operands -> action.performOperation(operands[0])); }
@@ -1280,7 +1278,7 @@ public class EquationEvaluator
         { return this.tokens.get(0); }
     }
 
-    private static class PrefixOperator extends UnaryOperator
+    static class PrefixOperator extends UnaryOperator
     {
         public PrefixOperator(Token token, double priority, UnaryOperatorAction action)
         { super(token, priority, action); }
@@ -1295,7 +1293,7 @@ public class EquationEvaluator
         }
     }
 
-    private static class PostfixOperator extends UnaryOperator
+    static class PostfixOperator extends UnaryOperator
     {
         public PostfixOperator(Token token, double priority, UnaryOperatorAction action)
         { super(token, priority, action); }
@@ -1310,7 +1308,7 @@ public class EquationEvaluator
         }
     }
 
-    private static class InfixOperator extends Operator
+    static class InfixOperator extends Operator
     {
         final boolean isLeftAssociative;
 
@@ -1341,7 +1339,7 @@ public class EquationEvaluator
         public Operation tryParseFromSplits(TokenList tokenList, List<Integer> splitPoints, Builder builder)
         { return compileFromOperandTokenLists(tokenList.splitAtPoints(splitPoints), builder); }
 
-        private Operation compileFromOperandTokenLists(List<TokenList> tokenLists, Builder builder)
+        Operation compileFromOperandTokenLists(List<TokenList> tokenLists, Builder builder)
         {
             List<EquationComponent> components = new ArrayList<>(tokenLists.size());
 
@@ -1352,7 +1350,7 @@ public class EquationEvaluator
         }
     }
 
-    private static class BinaryOperator extends InfixOperator
+    static class BinaryOperator extends InfixOperator
     {
         public BinaryOperator(Token token, boolean isLeftAssociative, double priority, BinaryOperatorAction action)
         {
@@ -1366,7 +1364,7 @@ public class EquationEvaluator
         { return this.tokens.get(0); }
     }
 
-    private static class TernaryOperator extends InfixOperator
+    static class TernaryOperator extends InfixOperator
     {
         public TernaryOperator(Token a,
                                Token b,
@@ -1389,13 +1387,14 @@ public class EquationEvaluator
     //endregion
 
     //region equation components
-    private static abstract class EquationComponent
-    {
-        public abstract double evaluate();
-    }
+    static abstract class EquationComponent
+    { public abstract double evaluate(); }
 
-    private static class Operation extends EquationComponent
+    static class Operation extends EquationComponent
     {
+        List<EquationComponent> components;
+        OperatorAction action;
+
         public Operation(EquationComponent component, OperatorAction action)
         { this(Arrays.asList(component), action); }
 
@@ -1411,9 +1410,6 @@ public class EquationEvaluator
             this.action = action;
         }
 
-        List<EquationComponent> components;
-        OperatorAction action;
-
         @Override
         public double evaluate()
         {
@@ -1426,8 +1422,12 @@ public class EquationEvaluator
         }
     }
 
-    private static class FunctionCall extends EquationComponent
+    static class FunctionCall extends EquationComponent
     {
+        String functionName;
+        EquationComponent[] arguments;
+        Map<String, ToDoubleFunction<double[]>> functionMap;
+
         public FunctionCall(Map<String, ToDoubleFunction<double[]>> functionMap,
                             String functionName,
                             EquationComponent... arguments)
@@ -1436,10 +1436,6 @@ public class EquationEvaluator
             this.functionName = functionName;
             this.arguments = arguments;
         }
-
-        String functionName;
-        EquationComponent[] arguments;
-        Map<String, ToDoubleFunction<double[]>> functionMap;
 
         @Override
         public double evaluate()
@@ -1458,16 +1454,16 @@ public class EquationEvaluator
         }
     }
 
-    private static class VariableReference extends EquationComponent
+    static class VariableReference extends EquationComponent
     {
+        Map<String, Double> variableValues;
+        String name;
+
         public VariableReference(Map<String, Double> variableValues, String name)
         {
             this.variableValues = variableValues;
             this.name = name;
         }
-
-        Map<String, Double> variableValues;
-        String name;
 
         @Override
         public double evaluate()
@@ -1481,12 +1477,12 @@ public class EquationEvaluator
         }
     }
 
-    private static class LiteralNumber extends EquationComponent
+    static class LiteralNumber extends EquationComponent
     {
+        double value;
+
         public LiteralNumber(double value)
         { this.value = value; }
-
-        double value;
 
         @Override
         public double evaluate()
@@ -1497,27 +1493,19 @@ public class EquationEvaluator
     //region actions
     @FunctionalInterface
     public interface OperatorAction
-    {
-        double performOperation(double... operands);
-    }
+    { double performOperation(double... operands); }
 
     @FunctionalInterface
     public interface UnaryOperatorAction
-    {
-        double performOperation(double operand);
-    }
+    { double performOperation(double operand); }
 
     @FunctionalInterface
     public interface BinaryOperatorAction
-    {
-        double performOperation(double a, double b);
-    }
+    { double performOperation(double a, double b); }
 
     @FunctionalInterface
     public interface TernaryOperatorAction
-    {
-        double performOperation(double a, double b, double c);
-    }
+    { double performOperation(double a, double b, double c); }
     //endregion
     //endregion
 
@@ -1528,9 +1516,9 @@ public class EquationEvaluator
     //endregion
 
     //region initialisation
-    private EquationEvaluator(EquationComponent topLevelComponent,
-                              Map<String, Double> variableValues,
-                              Map<String, ToDoubleFunction<double[]>> functions)
+    EquationEvaluator(EquationComponent topLevelComponent,
+                      Map<String, Double> variableValues,
+                      Map<String, ToDoubleFunction<double[]>> functions)
     {
         this.topLevelComponent = topLevelComponent;
         this.variableValues = variableValues;
