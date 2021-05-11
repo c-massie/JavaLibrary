@@ -165,6 +165,10 @@ public class EquationEvaluator
 
             public BracketMismatchException(TokenList equation, String msg)
             { super(equation, equation, msg); }
+
+            @Override
+            public BracketMismatchException withFullEquation(TokenList fullEquation)
+            { return new BracketMismatchException(fullEquation); }
         }
 
         public static class UnexpectedCloseBracketException extends BracketMismatchException
@@ -177,6 +181,10 @@ public class EquationEvaluator
 
             public UnexpectedCloseBracketException(TokenList equation, String msg)
             { super(equation, msg); }
+
+            @Override
+            public UnexpectedCloseBracketException withFullEquation(TokenList fullEquation)
+            { return new UnexpectedCloseBracketException(fullEquation); }
         }
 
         public static class UnmatchedOpenBracketException extends BracketMismatchException
@@ -189,6 +197,10 @@ public class EquationEvaluator
 
             public UnmatchedOpenBracketException(TokenList equation, String msg)
             { super(equation, msg); }
+
+            @Override
+            public UnmatchedOpenBracketException withFullEquation(TokenList fullEquation)
+            { return new UnmatchedOpenBracketException(fullEquation); }
         }
         //endregion
 
@@ -484,7 +496,13 @@ public class EquationEvaluator
             Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
             TokenList tokenisation = tokeniser.tokenise(unparsedEquation).unmodifiable();
             verifyTokenisationBrackets(tokenisation);
-            EquationComponent topLevelComponent = tryParse(tokenisation);
+            EquationComponent topLevelComponent;
+
+            try
+            { topLevelComponent = tryParse(tokenisation); }
+            catch(EquationParseException e)
+            { throw e.withFullEquation(tokenisation); }
+
             EquationEvaluator result = new EquationEvaluator(topLevelComponent, variables, functions);
             variables = new HashMap<>();
             functions = new HashMap<>();
