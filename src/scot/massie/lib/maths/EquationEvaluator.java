@@ -1261,6 +1261,23 @@ public class EquationEvaluator
 
         public double getValue()
         { return value; }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if(this == o)
+                return true;
+
+            if(o == null || getClass() != o.getClass())
+                return false;
+
+            NumberToken other = (NumberToken)o;
+            return text.equals(other.text) && Double.compare(other.value, value) == 0;
+        }
+
+        @Override
+        public int hashCode()
+        { return Objects.hash(super.hashCode(), value); }
     }
     //endregion
 
