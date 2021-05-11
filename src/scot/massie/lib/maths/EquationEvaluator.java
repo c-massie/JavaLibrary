@@ -4,9 +4,19 @@ import com.sun.istack.internal.NotNull;
 import scot.massie.lib.collections.tree.RecursiveTree;
 import scot.massie.lib.collections.tree.Tree;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.ToDoubleFunction;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static scot.massie.lib.utils.ControlFlowUtils.*;
@@ -204,7 +214,7 @@ public class EquationEvaluator
         }
         //endregion
 
-        private static class OperatorPriorityGroup
+        static class OperatorPriorityGroup
         {
             final Map<Token, PrefixOperator> prefixOperators = new HashMap<>();
             final Map<Token, PostfixOperator> postfixOperators = new HashMap<>();
@@ -212,7 +222,7 @@ public class EquationEvaluator
             final Tree<Token, InfixOperator> rightAssociativeInfixOperators = new RecursiveTree<>();
         }
 
-        private static class OperatorTokenRun
+        static class OperatorTokenRun
         {
             int startIndexInSource;
             int endIndexInSource;
@@ -825,7 +835,7 @@ public class EquationEvaluator
         }
     }
 
-    private static class Tokeniser
+    static class Tokeniser
     {
         List<Token> tokens;
 
@@ -834,60 +844,44 @@ public class EquationEvaluator
 
         public TokenList tokenise(String s)
         {
+            String sTrimmed = s.trim();
+
+            if(sTrimmed.isEmpty())
+                return new TokenList(s, Collections.emptyList(), Collections.singletonList(s.length()));
+
             LinkedList<Token> result = new LinkedList<>();
             LinkedList<Integer> spacesBeforeTokens = new LinkedList<>();
 
-            // spacesBeforeTokens should always have result.size() + 1 elements. Every element is the number of spaces
-            // before the token at the same index in result, except for the last element, which is the number of spaces
-            // at the end.
-
-            result.add(new UntokenisedString(s.trim()));
             spacesBeforeTokens.add(countSpacesAtStart(s));
+            result.add(new UntokenisedString(sTrimmed));
             spacesBeforeTokens.add(countSpacesAtEnd(s));
 
-            for(int tokenIndex = tokens.size() - 1; tokenIndex >= 0; tokenIndex--)
+            for(Token tokenToSplitOn : tokens)
             {
-                Token possibleToken = tokens.get(tokenIndex);
-                String possibleTokenTextEscaped = Pattern.quote(possibleToken.toString());
-
                 ListIterator<Token> resultIterator = result.listIterator();
-                ListIterator<Integer> spacesIterator = spacesBeforeTokens.listIterator();
+                ListIterator<Integer> spacingsIterator = spacesBeforeTokens.listIterator();
 
                 while(resultIterator.hasNext())
                 {
-                    Token resultToken = resultIterator.next();
-                    int spacesBefore = spacesIterator.next();
+                    Token tokenToSplit = resultIterator.next();
+                    spacingsIterator.next();
 
-                    if(!(resultToken instanceof UntokenisedString))
+                    if(!(tokenToSplit instanceof UntokenisedString))
                         continue;
 
-                    String rtString = resultToken.toString();
-                    String[] rtSplit = rtString.split(possibleTokenTextEscaped);
+                    TokenList tokenSplit = tokeniseStringWithSingleToken(tokenToSplit.text, tokenToSplitOn);
 
-                    if(rtSplit.length > 1)
-                    {
-                        resultIterator.remove();
-                        int rtSplitLastIndex = rtSplit.length - 1;
+                    resultIterator.remove();
 
+                    for(Token subtoken : tokenSplit.tokens)
+                        resultIterator.add(subtoken);
 
-                        resultIterator.add(new UntokenisedString(rtSplit[0].trim()));
-                        resultIterator.add(possibleToken);
-                        // No spaces at start, original string should already have been accounted for and trimmed.
-                        spacesIterator.add(countSpacesAtEnd(rtSplit[0]));
+                    // First and last spacing should be ignored; should be 0 on both counts, as the spaces have
+                    // already been accounted for and are in spacesBeforeTokens.
+                    int lastSpacingIndexToAdd = tokenSplit.spacings.size() - 2;
 
-                        for(int i = 1; i < rtSplitLastIndex; i++)
-                        {
-                            String isplit = rtSplit[i];
-                            resultIterator.add(new UntokenisedString(isplit.trim()));
-                            resultIterator.add(possibleToken);
-                            spacesIterator.add(countSpacesAtStart(isplit));
-                            spacesIterator.add(countSpacesAtEnd(isplit));
-                        }
-
-                        resultIterator.add(new UntokenisedString(rtSplit[rtSplitLastIndex].trim()));
-                        spacesIterator.add(countSpacesAtStart(rtSplit[rtSplitLastIndex]));
-                        // No spaces at end, original string should already have been accounted for and trimmed.
-                    }
+                    for(int i = 1; i <= lastSpacingIndexToAdd; i++)
+                        spacingsIterator.add(tokenSplit.spacings.get(i));
                 }
             }
 
@@ -895,12 +889,56 @@ public class EquationEvaluator
             return new TokenList(s, result, spacesBeforeTokens);
         }
 
+        static TokenList tokeniseStringWithSingleToken(String tokenText, Token tokenToSplitBy)
+        {
+            String textToSplitBy = tokenToSplitBy.text;
+            LinkedList<Token> resultTokens = new LinkedList<>();
+            LinkedList<Integer> resultSpacings = new LinkedList<>();
+
+            int indexOfSplitter = tokenText.indexOf(textToSplitBy);
+            int indexOfNextPortion = 0;
+
+            while(indexOfSplitter != -1)
+            {
+                String nonSplitterPortion = tokenText.substring(indexOfNextPortion, indexOfSplitter);
+                String nonSplitterPortionTrimmed = nonSplitterPortion.trim();
+
+                if(nonSplitterPortionTrimmed.isEmpty())
+                    resultSpacings.add(nonSplitterPortion.length());
+                else
+                {
+                    resultSpacings.add(countSpacesAtStart(nonSplitterPortion));
+                    resultTokens.add(new UntokenisedString(nonSplitterPortionTrimmed));
+                    resultSpacings.add(countSpacesAtEnd(nonSplitterPortion));
+                }
+
+                resultTokens.add(tokenToSplitBy);
+
+                indexOfNextPortion = indexOfSplitter + textToSplitBy.length();
+                indexOfSplitter = tokenText.indexOf(textToSplitBy, indexOfNextPortion);
+            }
+
+            String finalNonSplitterPortion = tokenText.substring(indexOfNextPortion);
+            String finalNonSplitterPortionTrimmed = finalNonSplitterPortion.trim();
+
+            if(finalNonSplitterPortionTrimmed.isEmpty())
+                resultSpacings.add(finalNonSplitterPortion.length());
+            else
+            {
+                resultSpacings.add(countSpacesAtStart(finalNonSplitterPortion));
+                resultTokens.add(new UntokenisedString(finalNonSplitterPortionTrimmed));
+                resultSpacings.add(countSpacesAtEnd(finalNonSplitterPortion));
+            }
+
+            return new TokenList(tokenText, resultTokens, resultSpacings);
+        }
+
         /**
          * Replaces all {@link UntokenisedString untokenised strings} in a list of tokens that are parseable as numbers
          * with {@link NumberToken number tokens}.
          * @param tokens The list of tokens to parse the numbers in.
          */
-        void tokeniseNumbers(LinkedList<Token> tokens)
+        static void tokeniseNumbers(LinkedList<Token> tokens)
         {
             ListIterator<Token> tokenIterator = tokens.listIterator();
 
@@ -923,7 +961,7 @@ public class EquationEvaluator
             }
         }
 
-        static int countSpacesAtStart(String s)
+        static int countSpacesAtStart(@NotNull String s)
         {
             for(int i = 0; i < s.length(); i++)
                 if(s.charAt(i) != ' ')
@@ -932,7 +970,7 @@ public class EquationEvaluator
             return s.length();
         }
 
-        static int countSpacesAtEnd(String s)
+        static int countSpacesAtEnd(@NotNull String s)
         {
             for(int i = 0, r = s.length() - 1; r >= 0; i++, r--)
                 if(s.charAt(r) != ' ')
@@ -942,7 +980,7 @@ public class EquationEvaluator
         }
     }
 
-    private static class TokenList
+    static class TokenList
     {
         public final String equationAsString;
         public final List<Token> tokens;
@@ -1200,7 +1238,7 @@ public class EquationEvaluator
     }
 
     //region Tokens
-    private static class Token
+    static class Token
     {
         public static final Token OPEN_BRACKET = new Token("(");
         public static final Token CLOSE_BRACKET = new Token(")");
@@ -1210,16 +1248,6 @@ public class EquationEvaluator
 
         public Token(@NotNull String asText)
         { this.text = asText; }
-
-        public static String listToString(List<Token> tokenList)
-        {
-            if(tokenList == null)
-                throw new IllegalArgumentException("tokenList cannot be null.");
-
-            return tokenList.stream()
-                            .map(Token::toString)
-                            .collect(Collectors.joining(" "));
-        }
 
         @Override
         public String toString()
@@ -1243,13 +1271,13 @@ public class EquationEvaluator
         { return text.hashCode(); }
     }
 
-    private static class UntokenisedString extends Token
+    static class UntokenisedString extends Token
     {
         public UntokenisedString(String s)
         { super(s); }
     }
 
-    private static class NumberToken extends Token
+    static class NumberToken extends Token
     {
         final double value;
 
