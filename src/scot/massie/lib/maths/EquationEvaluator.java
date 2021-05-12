@@ -738,8 +738,8 @@ public class EquationEvaluator
             {
                 if(tokenList.get(i).equals(Token.OPEN_BRACKET))
                 {
-                    functionName = tokenList.sublist(0, i).equationAsString.trim();
-                    argListTokenList = tokenList.sublist(i + 1, tokenList.size() - 1);
+                    functionName = tokenList.subList(0, i).equationAsString.trim();
+                    argListTokenList = tokenList.subList(i + 1, tokenList.size() - 1);
                     break;
                 }
             }
@@ -998,6 +998,8 @@ public class EquationEvaluator
 
         public boolean isInBrackets()
         {
+            // Assumes that this TokenList doesn't have any bracket mismatches.
+
             if(!tokens.get(0).equals(Token.OPEN_BRACKET))
                 return false;
 
@@ -1047,6 +1049,12 @@ public class EquationEvaluator
 
         public TokenList withoutFirst(int howMany)
         {
+            if(howMany < 0)
+                throw new IllegalArgumentException("howMany < 0");
+
+            if(size() < howMany)
+                return new TokenList("", Collections.emptyList(), Collections.singletonList(0));
+
             List<Token> newTokens = tokens.subList(howMany, tokens.size());
             List<Integer> newSpacings = spacings.subList(howMany, spacings.size());
             int charsToDrop = 0;
@@ -1060,6 +1068,9 @@ public class EquationEvaluator
 
         public TokenList withoutFirst()
         {
+            if(size() == 0)
+                return new TokenList("", Collections.emptyList(), Collections.singletonList(0));
+
             List<Token> newTokens = tokens.subList(1, tokens.size());
             List<Integer> newSpacings = spacings.subList(1, spacings.size());
             int charsToDrop = tokens.get(0).text.length() + spacings.get(0);
@@ -1069,6 +1080,12 @@ public class EquationEvaluator
 
         public TokenList withoutLast(int howMany)
         {
+            if(howMany < 0)
+                throw new IllegalArgumentException("howMany < 0");
+
+            if(size() < howMany)
+                return new TokenList("", Collections.emptyList(), Collections.singletonList(0));
+
             List<Token> newTokens = tokens.subList(0, tokens.size() - howMany);
             List<Integer> newSpacings = spacings.subList(0, spacings.size() - howMany);
             int charsToDrop = 0;
@@ -1082,6 +1099,9 @@ public class EquationEvaluator
 
         public TokenList withoutLast()
         {
+            if(size() == 0)
+                return new TokenList("", Collections.emptyList(), Collections.singletonList(0));
+
             List<Token> newTokens = tokens.subList(0, tokens.size() - 1);
             List<Integer> newSpacings = spacings.subList(0, spacings.size() - 1);
             int charsToDrop = tokens.get(tokens.size() - 1).text.length() + spacings.get(spacings.size() - 1);
@@ -1091,6 +1111,9 @@ public class EquationEvaluator
 
         public TokenList withoutFirstAndLast()
         {
+            if(size() <= 1)
+                return new TokenList("", Collections.emptyList(), Collections.singletonList(0));
+
             List<Token> newTokens = tokens.subList(1, tokens.size() - 1);
             List<Integer> newSpacings = spacings.subList(1, spacings.size() - 1);
             int charsToDropFromStart = tokens.get(0).text.length() + spacings.get(0);
@@ -1101,8 +1124,18 @@ public class EquationEvaluator
             return new TokenList(newString, newTokens, newSpacings);
         }
 
-        public TokenList sublist(int fromInclusive, int toExclusive)
+        public TokenList subList(int fromInclusive, int toExclusive)
         {
+            if(fromInclusive < 0)
+                throw new IllegalArgumentException("fromInclusive < 0");
+
+            if(toExclusive > size())
+                throw new IllegalArgumentException("toExclusive > size");
+
+            if(fromInclusive > toExclusive)
+                throw new IllegalArgumentException("fromInclusive > toExclusive");
+
+
             List<Token> newTokens = tokens.subList(fromInclusive, toExclusive);
             List<Integer> newSpacings = spacings.subList(fromInclusive, toExclusive + 1);
 
@@ -1137,11 +1170,12 @@ public class EquationEvaluator
                     bracketDepth--;
                 else if(bracketDepth == 0 && itoken.equals(t))
                 {
-                    sublists.add(sublist(lastMatch + 1, i));
+                    sublists.add(subList(lastMatch + 1, i));
                     lastMatch = i;
                 }
             }
 
+            sublists.add(subList(lastMatch + 1, size()));
             return sublists;
         }
 
@@ -1163,7 +1197,7 @@ public class EquationEvaluator
                     bracketDepth--;
                 else if(bracketDepth == 0 && itoken.equals(sequenceToken))
                 {
-                    result.add(sublist(previousSplitIndex + 1, i));
+                    result.add(subList(previousSplitIndex + 1, i));
                     previousSplitIndex = i;
 
                     sequenceIndex++;
@@ -1178,7 +1212,7 @@ public class EquationEvaluator
             if(sequenceIndex < sequence.size()) // Not all tokens in sequence were found.
                 return null;
 
-            result.add(sublist(previousSplitIndex + 1, size()));
+            result.add(subList(previousSplitIndex + 1, size()));
             return result;
         }
 
@@ -1200,7 +1234,7 @@ public class EquationEvaluator
                     bracketDepth--;
                 else if(bracketDepth == 0 && itoken.equals(sequenceToken))
                 {
-                    result.add(sublist(i + 1, previousSplitIndex));
+                    result.add(subList(i + 1, previousSplitIndex));
                     previousSplitIndex = i;
 
                     sequenceIndex--;
@@ -1215,24 +1249,25 @@ public class EquationEvaluator
             if(sequenceIndex >= 0) // Not all tokens in sequence were found.
                 return null;
 
-            result.add(sublist(0, previousSplitIndex));
+            result.add(subList(0, previousSplitIndex));
+            Collections.reverse(result);
             return result;
         }
 
         public List<TokenList> splitAtPoints(List<Integer> points)
         {
-            points = new ArrayList<>(points);
+            points = new ArrayList<>(new HashSet<>(points));
             points.sort(Comparator.naturalOrder());
             List<TokenList> result = new ArrayList<>();
             int previousPoint = -1;
 
             for(int point : points)
             {
-                result.add(sublist(previousPoint + 1, point));
+                result.add(subList(previousPoint + 1, point));
                 previousPoint = point;
             }
 
-            result.add(sublist(previousPoint + 1, size()));
+            result.add(subList(previousPoint + 1, size()));
             return result;
         }
     }
