@@ -160,37 +160,31 @@ public class EquationEvaluator_TokenListTest
 
     @Test
     void isInBrackets_inBrackets()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertTrue(newTokenList(Token.OPEN_BRACKET, "a", "b", "c", Token.CLOSE_BRACKET).isInBrackets()); }
 
     @Test
     void isInBrackets_containsButNotInBrackets()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertFalse(newTokenList("a", Token.OPEN_BRACKET, "b", Token.CLOSE_BRACKET, "c").isInBrackets()); }
 
     @Test
     void isInBrackets_startsWithButNotInBrackets()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertFalse(newTokenList(Token.OPEN_BRACKET, "a", "b", Token.CLOSE_BRACKET, "c").isInBrackets()); }
 
     @Test
     void isInBrackets_endsWithButNotInBrackets()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertFalse(newTokenList("a", Token.OPEN_BRACKET, "b", "c", Token.CLOSE_BRACKET).isInBrackets()); }
 
     @Test
     void isInBrackets_startsAndEndsWithButNotInBrackets()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertFalse(newTokenList(Token.OPEN_BRACKET,
+                                 "a",
+                                 Token.CLOSE_BRACKET,
+                                 "b",
+                                 Token.OPEN_BRACKET,
+                                 "c",
+                                 Token.CLOSE_BRACKET)
+                    .isInBrackets());
     }
     //endregion
 
