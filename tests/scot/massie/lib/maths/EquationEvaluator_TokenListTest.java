@@ -7,6 +7,7 @@ import scot.massie.lib.maths.EquationEvaluator.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -864,50 +865,75 @@ public class EquationEvaluator_TokenListTest
     @Test
     void splitAtPoints_bothEmpty()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<TokenList> tls = newTokenList().splitAtPoints(Collections.emptyList());
+
+        assertEquals(1, tls.size());
+        assertTokenList(tls.get(0), " ", new Object[] {}, new int[] { 1 });
     }
 
     @Test
     void splitAtPoints_noPoints()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<TokenList> tls = newTokenList("a", "b", "c").splitAtPoints(Collections.emptyList());
+
+        assertEquals(1, tls.size());
+        assertTokenList(tls.get(0), " a  b   c     ", new Object[] { "a", "b", "c" }, new int[] { 1, 2, 3, 5 });
     }
 
     @Test
     void splitAtPoints_contains()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<TokenList> tls = newTokenList("a", "b", "c", "d", "e").splitAtPoints(Arrays.asList(1, 3));
+
+        assertEquals(3, tls.size());
+        assertTokenList(tls.get(0), " a  ", new Object[] { "a" }, new int[] { 1, 2 });
+        assertTokenList(tls.get(1), "   c     ", new Object[] { "c" }, new int[] { 3, 5 });
+        assertTokenList(tls.get(2), "        e             ", new Object[] { "e" }, new int[] { 8, 13 });
     }
 
     @Test
     void splitAtPoints_outOfBounds()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        TokenList tl = newTokenList("a", "b", "c", "d", "e");
+
+        assertThrows(IndexOutOfBoundsException.class, () -> tl.splitAtPoints(Arrays.asList(-2, 3)));
+        assertThrows(IndexOutOfBoundsException.class, () -> tl.splitAtPoints(Arrays.asList(1, 7)));
+        assertThrows(IndexOutOfBoundsException.class, () -> tl.splitAtPoints(Arrays.asList(-2, 7)));
     }
 
     @Test
     void splitAtPoints_atBounds()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<TokenList> tls = newTokenList("a", "b", "c", "d", "e").splitAtPoints(Arrays.asList(-1, 5));
+
+        assertEquals(1, tls.size());
+
+        assertTokenList(tls.get(0),
+                        " a  b   c     d        e             ",
+                        new Object[] { "a", "b", "c", "d", "e" },
+                        new int[] { 1, 2, 3, 5, 8, 13 });
     }
 
     @Test
     void splitAtPoints_containsButPointsNotOrdered()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<TokenList> tls = newTokenList("a", "b", "c", "d", "e").splitAtPoints(Arrays.asList(3, 1));
+
+        assertEquals(3, tls.size());
+        assertTokenList(tls.get(0), " a  ", new Object[] { "a" }, new int[] { 1, 2 });
+        assertTokenList(tls.get(1), "   c     ", new Object[] { "c" }, new int[] { 3, 5 });
+        assertTokenList(tls.get(2), "        e             ", new Object[] { "e" }, new int[] { 8, 13 });
     }
 
     @Test
     void splitAtPoints_containsButPointsDuplicated()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<TokenList> tls = newTokenList("a", "b", "c", "d", "e").splitAtPoints(Arrays.asList(1, 1, 3));
+
+        assertEquals(3, tls.size());
+        assertTokenList(tls.get(0), " a  ", new Object[] { "a" }, new int[] { 1, 2 });
+        assertTokenList(tls.get(1), "   c     ", new Object[] { "c" }, new int[] { 3, 5 });
+        assertTokenList(tls.get(2), "        e             ", new Object[] { "e" }, new int[] { 8, 13 });
     }
     //endregion
 }

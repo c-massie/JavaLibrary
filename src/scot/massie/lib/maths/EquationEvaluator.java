@@ -1256,8 +1256,26 @@ public class EquationEvaluator
 
         public List<TokenList> splitAtPoints(List<Integer> points)
         {
-            points = new ArrayList<>(new HashSet<>(points));
+            if(points.isEmpty())
+                return Collections.singletonList(this);
+
+            HashSet<Integer> pointsSet = new HashSet<>(points);
+            pointsSet.remove(-1);
+            pointsSet.remove(size());
+            points = new ArrayList<>(pointsSet);
             points.sort(Comparator.naturalOrder());
+
+            if(points.isEmpty())
+                return Collections.singletonList(this);
+
+            if(points.get(0) < 0)
+                throw new IndexOutOfBoundsException("Lowest point in points < -1. Points must be between (inclusive) "
+                                                    + "-1 and size");
+
+            if(points.get(points.size() - 1) > size())
+                throw new IndexOutOfBoundsException("Highest point in points > size. Points must be between "
+                                                    + "(inclusive) -1 and size");
+
             List<TokenList> result = new ArrayList<>();
             int previousPoint = -1;
 
