@@ -346,29 +346,35 @@ public class EquationEvaluator
             invalidateOperatorGroups();
 
             if(op instanceof PrefixOperator)
-            {
-                PrefixOperator pop = (PrefixOperator)op;
-                Token popToken = pop.getToken();
-                prefixOperators.put(popToken, pop);
-                addOperatorToken(popToken);
-            }
+                addOperator((PrefixOperator)op);
             else if(op instanceof PostfixOperator)
-            {
-                PostfixOperator pop = (PostfixOperator)op;
-                Token popToken = pop.getToken();
-                postfixOperators.put(popToken, pop);
-                addOperatorToken(popToken);
-            }
+                addOperator((PostfixOperator)op);
             else if(op instanceof InfixOperator)
-            {
-                InfixOperator iop = (InfixOperator)op;
-                List<Token> iopTokens = iop.getTokens();
-                infixOperators.put(iopTokens, iop);
-                addOperatorTokens(iopTokens);
-                infixOperatorTokens.addAll(iopTokens);
-            }
+                addOperator((InfixOperator)op);
             else
-            { throw new UnsupportedOperationException("Unrecognised operator type: " + op.getClass().getName()); }
+                throw new UnsupportedOperationException("Unrecognised operator type: " + op.getClass().getName());
+        }
+
+        void addOperator(PrefixOperator op)
+        {
+            Token popToken = op.getToken();
+            prefixOperators.put(popToken, op);
+            addOperatorToken(popToken);
+        }
+
+        void addOperator(PostfixOperator op)
+        {
+            Token popToken = op.getToken();
+            postfixOperators.put(popToken, op);
+            addOperatorToken(popToken);
+        }
+
+        void addOperator(InfixOperator op)
+        {
+            List<Token> iopTokens = op.getTokens();
+            infixOperators.put(iopTokens, op);
+            addOperatorTokens(iopTokens);
+            infixOperatorTokens.addAll(iopTokens);
         }
 
         void addOperatorToken(Token token)
@@ -421,36 +427,74 @@ public class EquationEvaluator
         }
 
         public Builder withOperator(String token, BinaryOperatorAction action)
+        { return withOperator(token, DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action); }
+
+        public Builder withOperator(String token, double priority, BinaryOperatorAction action)
+        { return withOperator(token, DEFAULT_ASSOCIATIVITY, priority, action); }
+
+        public Builder withOperator(String token, boolean isLeftAssociative, BinaryOperatorAction action)
+        { return withOperator(token, isLeftAssociative, DEFAULT_PRIORITY, action); }
+
+        public Builder withOperator(String token,
+                                    boolean isLeftAssociative,
+                                    double priority,
+                                    BinaryOperatorAction action)
         {
-            addOperator(new BinaryOperator(new Token(token), DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action));
+            addOperator(new BinaryOperator(new Token(token), isLeftAssociative, priority, action));
             return this;
         }
 
         public Builder withOperator(String token1, String token2, TernaryOperatorAction action)
+        { return withOperator(token1, token2, DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action); }
+
+        public Builder withOperator(String token1, String token2, double priority, TernaryOperatorAction action)
+        { return withOperator(token1, token2, DEFAULT_ASSOCIATIVITY, priority, action); }
+
+        public Builder withOperator(String token1, String token2, boolean isLeftAssociative, TernaryOperatorAction action)
+        { return withOperator(token1, token2, isLeftAssociative, DEFAULT_PRIORITY, action); }
+
+        public Builder withOperator(String token1,
+                                    String token2,
+                                    boolean isLeftAssociative,
+                                    double priority,
+                                    TernaryOperatorAction action)
         {
-            addOperator(new TernaryOperator(new Token(token1), new Token(token2), DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action));
+            addOperator(new TernaryOperator(new Token(token1), new Token(token2), isLeftAssociative, priority, action));
             return this;
         }
 
         public Builder withOperator(String[] tokens, OperatorAction action)
-        {
-            List<Token> ts = new ArrayList<>(tokens.length);
+        { return withOperator(Arrays.asList(tokens), action); }
 
-            for(String i : tokens)
-                ts.add(new Token(i));
+        public Builder withOperator(String[] tokens, boolean isLeftAssociative, OperatorAction action)
+        { return withOperator(Arrays.asList(tokens), isLeftAssociative, action); }
 
-            addOperator(new InfixOperator(ts, DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action));
-            return this;
-        }
+        public Builder withOperator(String[] tokens, double priority, OperatorAction action)
+        { return withOperator(Arrays.asList(tokens), priority, action); }
+
+        public Builder withOperator(String[] tokens, boolean isLeftAssociative, double priority, OperatorAction action)
+        { return withOperator(Arrays.asList(tokens), isLeftAssociative, priority, action); }
 
         public Builder withOperator(List<String> tokens, OperatorAction action)
+        { return withOperator(tokens, DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action); }
+
+        public Builder withOperator(List<String> tokens, boolean isLeftAssociative, OperatorAction action)
+        { return withOperator(tokens, isLeftAssociative, DEFAULT_PRIORITY, action); }
+
+        public Builder withOperator(List<String> tokens, double priority, OperatorAction action)
+        { return withOperator(tokens, DEFAULT_ASSOCIATIVITY, priority, action); }
+
+        public Builder withOperator(List<String> tokens,
+                                    boolean isLeftAssociative,
+                                    double priority,
+                                    OperatorAction action)
         {
             List<Token> ts = new ArrayList<>(tokens.size());
 
             for(String i : tokens)
                 ts.add(new Token(i));
 
-            addOperator(new InfixOperator(ts, DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action));
+            addOperator(new InfixOperator(ts, isLeftAssociative, priority, action));
             return this;
         }
 
@@ -601,7 +645,7 @@ public class EquationEvaluator
         }
 
         Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
-                                                                  OperatorPriorityGroup opGroup)
+                                                          OperatorPriorityGroup opGroup)
         {
             return tryParseInfixOperation_rightAssociative(tokenList,
                                                            opGroup.rightAssociativeInfixOperators,
@@ -610,9 +654,9 @@ public class EquationEvaluator
         }
 
         Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
-                                                                  Tree<Token, InfixOperator> ops,
-                                                                  int currentlyUpTo,
-                                                                  List<Integer> indicesOfOperatorTokens)
+                                                          Tree<Token, InfixOperator> ops,
+                                                          int currentlyUpTo,
+                                                          List<Integer> indicesOfOperatorTokens)
         {
             if(ops.isEmpty())
                 return null;
@@ -649,7 +693,7 @@ public class EquationEvaluator
         }
 
         Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
-                                                                  OperatorPriorityGroup opGroup)
+                                                         OperatorPriorityGroup opGroup)
         {
             return tryParseInfixOperation_leftAssociative(tokenList,
                                                           opGroup.leftAssociativeInfixOperators.withReversedKeys(),
@@ -658,9 +702,9 @@ public class EquationEvaluator
         }
 
         Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
-                                                                 Tree<Token, InfixOperator> ops,
-                                                                 int currentlyDownTo,
-                                                                 List<Integer> indicesOfOperatorTokens)
+                                                         Tree<Token, InfixOperator> ops,
+                                                         int currentlyDownTo,
+                                                         List<Integer> indicesOfOperatorTokens)
         {
             if(ops.isEmpty())
                 return null;
