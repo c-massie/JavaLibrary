@@ -557,10 +557,7 @@ public class EquationEvaluator
             catch(EquationParseException e)
             { throw e.withFullEquation(tokenisation); }
 
-            EquationEvaluator result = new EquationEvaluator(topLevelComponent, variables, functions);
-            variables = new HashMap<>();
-            functions = new HashMap<>();
-            return result;
+            return new EquationEvaluator(topLevelComponent, variables, functions);
         }
 
         void verifyTokenisationBrackets(TokenList tokenisation)
