@@ -16,6 +16,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.DoubleSupplier;
+import java.util.function.ToDoubleBiFunction;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
@@ -24,6 +26,57 @@ import static scot.massie.lib.utils.ControlFlowUtils.*;
 public class EquationEvaluator
 {
     //region inner classes
+    //region exceptions
+    /**
+     * Thrown when a function requires more arguments than were assigned to it.
+     */
+    public static final class MissingFunctionArgumentsException extends RuntimeException
+    {
+        /**
+         * Creates a new MissingFunctionArgumentsException.
+         * @param functionName The name of the function missing arguments.
+         * @param numberOfArgsRequired The number of arguments provided.
+         * @param numberOfArgsProvided The number of arguments required.
+         */
+        public MissingFunctionArgumentsException(String functionName,
+                                                 int numberOfArgsRequired,
+                                                 int numberOfArgsProvided)
+        {
+            super("The function \"" + functionName + "\" requires at least " + numberOfArgsRequired + " arguments, but"
+                  + " only " + numberOfArgsProvided + " were provided.");
+
+            this.functionName = functionName;
+            this.numberOfArgsRequired = numberOfArgsRequired;
+            this.numberOfArgsProvided = numberOfArgsProvided;
+        }
+
+        final String functionName;
+        final int numberOfArgsRequired;
+        final int numberOfArgsProvided;
+
+        /**
+         * Gets the name of the function requiring more arguments.
+         * @return The name of the function.
+         */
+        public String getFunctionName()
+        { return functionName; }
+
+        /**
+         * Gets the number of arguments required by the function.
+         * @return The number of arguments required.
+         */
+        public int getNumberOfArgsRequired()
+        { return numberOfArgsRequired; }
+
+        /**
+         * Gets the number of arguments passed into the function.
+         * @return The number of arguments passed.
+         */
+        public int getNumberOfArgsProvided()
+        { return numberOfArgsProvided; }
+    }
+    //endregion
+
     public static final class Builder
     {
         //region inner classes
@@ -243,8 +296,10 @@ public class EquationEvaluator
         }
         //endregion
 
-        double DEFAULT_PRIORITY = 0;
-        boolean DEFAULT_ASSOCIATIVITY = true; // true == left, false == right.
+        static final double DEFAULT_PRIORITY = 0;
+        static final boolean DEFAULT_ASSOCIATIVITY = true; // true == left, false == right.
+
+        static final double PHI = (1 + Math.sqrt(5)) / 2;
 
         String unparsedEquation;
 
@@ -276,69 +331,130 @@ public class EquationEvaluator
 
         Set<Token> infixOperatorTokens = new HashSet<>();
 
-        Map<List<Token>, InfixOperator> infixOperators;
-        Map<Token, PrefixOperator> prefixOperators;
-        Map<Token, PostfixOperator> postfixOperators;
-        Map<String, ToDoubleFunction<double[]>> functions;
-        Map<String, Double> variables;
+        Map<List<Token>, InfixOperator>         infixOperators      = new HashMap<>();
+        Map<Token, PrefixOperator>              prefixOperators     = new HashMap<>();
+        Map<Token, PostfixOperator>             postfixOperators    = new HashMap<>();
+        Map<String, ToDoubleFunction<double[]>> functions           = new HashMap<>();
+        Map<String, Double>                     variables           = new HashMap<>();
 
-        Map<Double, OperatorPriorityGroup> operatorGroups = null;
-        List<OperatorPriorityGroup> operatorGroupsInOrder = null;
+        Map<Double, OperatorPriorityGroup> operatorGroups        = null;
+        List<OperatorPriorityGroup>        operatorGroupsInOrder = null;
 
         public Builder(@NotNull String equation)
         { this(equation, true); }
 
         public Builder(@NotNull String equation, boolean includeDefaults)
         {
-            this(equation,
-                 includeDefaults ? getDefaultInfixOperators()   : new HashMap<>(),
-                 includeDefaults ? getDefaultPrefixOperators()  : new HashMap<>(),
-                 includeDefaults ? getDefaultPostfixOperators() : new HashMap<>(),
-                 includeDefaults ? getDefaultFunctions()        : new HashMap<>(),
-                 includeDefaults ? getDefaultVariables()        : new HashMap<>());
-        }
-
-        Builder(String equation,
-                Map<List<Token>, InfixOperator> infixOperators,
-                Map<Token, PrefixOperator> prefixOperators,
-                Map<Token, PostfixOperator> postfixOperators,
-                Map<String, ToDoubleFunction<double[]>> functions,
-                Map<String, Double> variables)
-        {
             if(equation == null)
                 throw new NullPointerException("Equations cannot be null strings.");
 
+            if(equation.trim().isEmpty())
+                throw new IllegalArgumentException("Equations cannot be empty strings.");
+
             this.unparsedEquation = equation;
-            this.infixOperators = infixOperators;
-            this.prefixOperators = prefixOperators;
-            this.postfixOperators = postfixOperators;
-            this.functions = functions;
-            this.variables = variables;
+
+            if(includeDefaults)
+            {
+                addDefaultOperators();
+                addDefaultFunctions();
+                addDefaultVariables();
+            }
         }
 
-        static Map<List<Token>, InfixOperator> getDefaultInfixOperators()
+        void addDefaultOperators()
         {
-            return new HashMap<>();
+            withOperator        ("?", ":",   -100, (a, b, c) -> a >= 0.5 ? b : c);
+            withOperator        ("-",        100,  (l, r)    -> l - r);
+            withOperator        ("+",        100,  (l, r)    -> l + r);
+            withOperator        ("/",        200,  (l, r)    -> l / r);
+            withOperator        ("÷",        200,  (l, r)    -> l / r);
+            withOperator        ("*",        200,  (l, r)    -> l * r);
+            withOperator        ("×",        200,  (l, r)    -> l * r);
+            withOperator        ("%",        300,  (l, r)    -> l % r);
+            withPrefixOperator  ("-",        500,  x         -> -x);
+            withPrefixOperator  ("+",        500,  x         -> +x);
+            withOperator        ("√",        600,  (l, r)    -> Math.pow(r, 1.0 / l));
+            withPrefixOperator  ("√",        700,  x         -> Math.sqrt(x));
+            withOperator        ("^", false, 800,  (l, r)    -> Math.pow(l, r));
+            withPostfixOperator ("%",        900,  x         -> x / 100);
         }
 
-        static Map<Token, PrefixOperator> getDefaultPrefixOperators()
+        void addDefaultFunctions()
         {
-            return new HashMap<>();
+            withMonoFunction("cos",      Math::cos);
+            withMonoFunction("sin",      Math::sin);
+            withMonoFunction("tan",      Math::tan);
+            withMonoFunction("sqrt",     Math::sqrt);
+            withMonoFunction("cbrt",     Math::sqrt);
+            withMonoFunction("log",      Math::log);
+            withMonoFunction("log10",    Math::log10);
+
+            withMonoFunction("fib", n ->
+            {
+                double result = (Math.pow(PHI, n) - (Math.pow(-PHI, -n))) / (Math.sqrt(5));
+                return n % 1 == 0 ? Math.round(result) : result;
+            });
+
+            withMonoFunction("floor",    Math::floor);
+            withMonoFunction("ceiling",  Math::ceil);
+            withMonoFunction("ceil",     Math::ceil);
+            withMonoFunction("truncate", Double::intValue);
+            withMonoFunction("trunc",    Double::intValue);
+            withMonoFunction("round",    Math::round);
+
+            withFunction("min", 1, args ->
+            {
+                double min = args[0];
+
+                for(int i = 1; i < args.length; i++)
+                    if(args[i] < min)
+                        min = args[i];
+
+                return min;
+            });
+
+            withFunction("max", 1, args ->
+            {
+                double max = args[0];
+
+                for(int i = 1; i < args.length; i++)
+                    if(args[i] > max)
+                        max = args[i];
+
+                return max;
+            });
+
+            withFunction("avg", 1, args ->
+            {
+                double avg = args[0];
+
+                for(int i = 1; i < args.length; i++)
+                    avg += (args[i] - avg) / (i + 1);
+
+                return avg;
+            });
+
+            withFunction("median", 1, args ->
+            {
+                Arrays.sort(args);
+
+                if(args.length % 2 == 0)
+                    return (args[args.length / 2] + args[args.length / 2 - 1]) / 2;
+                else
+                    return args[args.length / 2];
+            });
         }
 
-        static Map<Token, PostfixOperator> getDefaultPostfixOperators()
+        void addDefaultVariables()
         {
-            return new HashMap<>();
-        }
-
-        static Map<String, ToDoubleFunction<double[]>> getDefaultFunctions()
-        {
-            return new HashMap<>();
-        }
-
-        static Map<String, Double> getDefaultVariables()
-        {
-            return new HashMap<>();
+            withVariable("π", Math.PI);
+            withVariable("pi", Math.PI);
+            withVariable("e", Math.E);
+            withVariable("ϕ", PHI);
+            withVariable("φ", PHI);
+            withVariable("phi", PHI);
+            withVariable("∞", Double.POSITIVE_INFINITY);
+            withVariable("inf", Double.POSITIVE_INFINITY);
         }
 
         void addOperator(Operator op)
@@ -414,15 +530,57 @@ public class EquationEvaluator
             return this;
         }
 
-        public Builder withPrefixOperator(String token, UnaryOperatorAction action)
+        public Builder withFunction(String name, DoubleSupplier f)
+        { return withFunction(name, value -> f.getAsDouble()); }
+
+        public Builder withFunction(String name, int requiredArgCount, ToDoubleFunction<double[]> f)
         {
-            addOperator(new PrefixOperator(new Token(token), DEFAULT_PRIORITY, action));
+            return withFunction(name, args ->
+            {
+                if(args.length < requiredArgCount)
+                    throw new MissingFunctionArgumentsException(name, requiredArgCount, args.length);
+
+                return f.applyAsDouble(args);
+            });
+        }
+
+        public Builder withMonoFunction(String name, ToDoubleFunction<Double> f)
+        {
+            return withFunction(name, args ->
+            {
+                if(args.length < 1)
+                    throw new MissingFunctionArgumentsException(name, 1, args.length);
+
+                return f.applyAsDouble(args[0]);
+            });
+        }
+
+        public Builder withBiFunction(String name, ToDoubleBiFunction<Double, Double> f)
+        {
+            return withFunction(name, args ->
+            {
+                if(args.length < 2)
+                    throw new MissingFunctionArgumentsException(name, 2, args.length);
+
+                return f.applyAsDouble(args[0], args[1]);
+            });
+        }
+
+        public Builder withPrefixOperator(String token, UnaryOperatorAction action)
+        { return withPrefixOperator(token, DEFAULT_PRIORITY, action); }
+
+        public Builder withPrefixOperator(String token, double priority, UnaryOperatorAction action)
+        {
+            addOperator(new PrefixOperator(new Token(token), priority, action));
             return this;
         }
 
         public Builder withPostfixOperator(String token, UnaryOperatorAction action)
+        { return withPostfixOperator(token, DEFAULT_PRIORITY, action); }
+
+        public Builder withPostfixOperator(String token, double priority, UnaryOperatorAction action)
         {
-            addOperator(new PostfixOperator(new Token(token), DEFAULT_PRIORITY, action));
+            addOperator(new PostfixOperator(new Token(token), priority, action));
             return this;
         }
 
