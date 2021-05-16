@@ -2,6 +2,11 @@ package scot.massie.lib.maths;
 
 import org.junit.jupiter.api.Test;
 
+import scot.massie.lib.maths.EquationEvaluator.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class EquationEvaluator_BuilderTest
@@ -112,4 +117,547 @@ public class EquationEvaluator_BuilderTest
             - Is a postfix operation
 
      */
+
+    StringBuilder appendSpaces(StringBuilder sb, int numberOfSpaces)
+    {
+        for(int i = 0; i < numberOfSpaces; i++)
+            sb.append(' ');
+
+        return sb;
+    }
+
+    String getSpaces(int numberOfSpaces)
+    { return appendSpaces(new StringBuilder(), numberOfSpaces).toString(); }
+
+    Token asToken(Object o)
+    {
+        if(o instanceof Token)
+            return (Token)o;
+        else if(o instanceof Number)
+            return new NumberToken(o.toString(), ((Number)o).doubleValue());
+        else if(o instanceof String)
+            return new UntokenisedString((String)o);
+        else
+            throw new UnsupportedOperationException("A token was of type: " + o.getClass().getName());
+    }
+
+    List<Token> asListOfTokens(Object... tokens)
+    {
+        List<Token> result = new ArrayList<>(tokens.length);
+
+        for(Object o : tokens)
+            result.add(asToken(o));
+
+        return result;
+    }
+
+    TokenList newTokenList(Object... tokens)
+    {
+        StringBuilder sb = new StringBuilder();
+        List<Token> tokenList = asListOfTokens(tokens);
+        List<Integer> spacings = new ArrayList<>(tokens.length + 1);
+
+        for(int a = 1, b = 2, i = 0; i <= tokens.length; i++, b += a, a = b - a)
+            spacings.add(a);
+
+        for(int i = 0; i < tokenList.size(); i++)
+            appendSpaces(sb, spacings.get(i)).append(tokenList.get(i).text);
+
+        appendSpaces(sb, spacings.get(spacings.size() - 1));
+        return new TokenList(sb.toString(), tokenList, spacings);
+    }
+
+    //region verifyTokenisationBrackets
+
+    @Test
+    void verifyTokenisationBrackets_noBrackets()
+    { assertDoesNotThrow(() -> new Builder("2+2").verifyTokenisationBrackets(newTokenList("a", "b", "c"))); }
+
+    @Test
+    void verifyTokenisationBrackets_brackets()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void verifyTokenisationBrackets_nestedBrackets()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void verifyTokenisationBrackets_consecutiveBrackets()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void verifyTokenisationBrackets_singleOpenBracket()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void verifyTokenisationBrackets_singleCloseBracket()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void verifyTokenisationBrackets_bracketsWithExtraOpen()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void verifyTokenisationBrackets_bracketsWithExtraClose()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void verifyTokenisationBrackets_unmatchedCloseFollowedByUnmatchedOpen()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+    
+    //region startsWithNonPrefixOperator
+    @Test
+    void startsWithNonPrefixOperator_startsWithPrefixOperator()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void startsWithNonPrefixOperator_startsWithInfixOperator()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void startsWithNonPrefixOperator_startsWithNonOperator()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region endsWithNonPostfixOperator
+    @Test
+    void endsWithNonPostfixOperator_endsWithPostfixOperator()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void endsWithNonPostfixOperator_endsWithInfixOperator()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void endsWithNonPostfixOperator_endsWithNonOperator()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region getOpRun
+    @Test
+    void getOpRun_tokenRunIn()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void getOpRun_tokenRunAtStart()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void getOpRun_tokenRunAtEnd()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void getOpRun_tokenRunIsEntire()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void getOpRun_tokenRunIsOneToken()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void getOpRun_tokenRunIsOneTokenAtStart()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void getOpRun_tokenRunIsOneTokenAtEnd()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void getOpRun_tokenRunIsOneTokenThatIsEntire()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region canBeInfixOperatorToken
+
+    @Test
+    void canBeInfixOperatorToken_singleToken()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void canBeInfixOperatorToken_followedByPrefix()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void canBeInfixOperatorToken_followingPostfix()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void canBeInfixOperatorToken_runAtStart()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void canBeInfixOperatorToken_runAtEnd()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void canBeInfixOperatorToken_runIsEntire()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void canBeInfixOperatorToken_followedByNonPrefixOperatorTokens()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void canBeInfixOperatorToken_followsNonPostfixOperatorTokens()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region buildOperatorGroups
+    @Test
+    void buildOperatorGroups_noOperators()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void buildOperatorGroups_oneOperator()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void buildOperatorGroups_twoOperators_differentPriorities()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void buildOperatorGroups_twoOperators_samePriorityDifferentAssociativity()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void buildOperatorGroups_twoOperators_samePrioritySameAssociativity()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region tryParseVariable
+    @Test
+    void tryParseVariable_notAVariable()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseVariable_isAVariable()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseVariable_isAVariableWithSpaces()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseVariable_isAVariableWithTokenCharacters()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region tryParseFunctionCall
+    @Test
+    void tryParseFunctionCall_notAFunctionCall()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseFunctionCall_functionCallWithNoArgs()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseFunctionCall_functionCallWithSpaceWithNoArgs()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseFunctionCall_functionCallWithOpTokensWithArgs()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseFunctionCall_functionCallWithOneArgument()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseFunctionCall_functionCallWithThreeArgs()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsFunctionCall()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsInBrackets()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region tryParseNumber
+    @Test
+    void tryParseNumber_notANumber()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseNumber_isANumber()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseNumber_isNumberMadeUpOfMultipleTokens()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region tryParseInfixOperation_rightAssociative
+    @Test
+    void tryParseInfixOperation_rightAssociative_notAnInfixOperation()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_rightAssociative_notAnInfixOperationButHasFirstFewTokensOfIt()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_rightAssociative_notAnInfixOperationBecauseOneOfTheTokensCantBe()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_rightAssociative_notAnInfixOperationBecauseOneOfTheTokensIsInBrackets()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_rightAssociative_isAnInfixOperation()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_rightAssociative_isAnInfixOperationFollowedBySameOne()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region tryParseInfixOperation_leftAssociative
+    @Test
+    void tryParseInfixOperation_leftAssociative_notAnInfixOperation()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_leftAssociative_notAnInfixOperationButHasLastFewTokensOfIt()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_leftAssociative_notAnInfixOperationBecauseOneOfTheTokensCantBe()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_leftAssociative_notAnInfixOperationBecauseOneOfTheTokensIsInBrackets()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_leftAssociative_isAnInfixOperation()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParseInfixOperation_leftAssociative_isAnInfixOperationFollowedBySameOne()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+    
+    //region tryParsePrefixOperation
+    @Test
+    void tryParsePrefixOperation_notAPrefixOperation()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParsePrefixOperation_isAPrefixOperation()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
+
+    //region tryParsePostfixOperation
+    @Test
+    void tryParsePostfixOperation_notAPostfixOperation()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+
+    @Test
+    void tryParsePostfixOperation_isAPostfixOperation()
+    {
+        // TO DO: Write.
+        System.out.println("Test not yet written.");
+    }
+    //endregion
 }
