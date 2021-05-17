@@ -2,6 +2,7 @@ package scot.massie.lib.maths;
 
 import org.junit.jupiter.api.Test;
 
+import org.junit.jupiter.api.function.Executable;
 import scot.massie.lib.maths.EquationEvaluator.*;
 
 import java.util.ArrayList;
@@ -167,170 +168,216 @@ public class EquationEvaluator_BuilderTest
         return new TokenList(sb.toString(), tokenList, spacings);
     }
 
-    //region verifyTokenisationBrackets
+    void assertOpRun(Builder.OperatorTokenRun opRun, List<Token> tokens, int lowerBound, int at, int upperBound)
+    {
+        assertEquals(tokens.subList(lowerBound, upperBound + 1), opRun.tokens);
+        assertEquals(lowerBound, opRun.startIndexInSource);
+        assertEquals(upperBound, opRun.endIndexInSource);
+        assertEquals(at - opRun.startIndexInSource, opRun.indexOfPivotInRun);
+        assertEquals(tokens.subList(lowerBound, at), opRun.tokensBeforePivot);
+        assertEquals(tokens.subList(at + 1, upperBound + 1), opRun.tokensAfterPivot);
+    }
 
+    //region verifyTokenisationBrackets
     @Test
     void verifyTokenisationBrackets_noBrackets()
-    { assertDoesNotThrow(() -> new Builder("2+2").verifyTokenisationBrackets(newTokenList("a", "b", "c"))); }
+    {
+        assertDoesNotThrow(() ->
+        {
+            TokenList tl = newTokenList("a", "b", "c");
+            new Builder("2+2").verifyTokenisationBrackets(tl);
+        });
+    }
 
     @Test
     void verifyTokenisationBrackets_brackets()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertDoesNotThrow(() ->
+        {
+            TokenList tl = newTokenList("a", Token.OPEN_BRACKET, "b", Token.CLOSE_BRACKET, "c");
+            new Builder("2+2").verifyTokenisationBrackets(tl);
+        });
     }
 
     @Test
     void verifyTokenisationBrackets_nestedBrackets()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertDoesNotThrow(() ->
+        {
+            TokenList tl = newTokenList("a",
+                                        Token.OPEN_BRACKET,
+                                        "b",
+                                        Token.OPEN_BRACKET,
+                                        "c",
+                                        Token.CLOSE_BRACKET,
+                                        Token.CLOSE_BRACKET,
+                                        "d");
+            new Builder("2+2").verifyTokenisationBrackets(tl);
+        });
     }
 
     @Test
     void verifyTokenisationBrackets_consecutiveBrackets()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertDoesNotThrow(() ->
+        {
+            TokenList tl = newTokenList("a",
+                                        Token.OPEN_BRACKET,
+                                        "b",
+                                        Token.CLOSE_BRACKET,
+                                        Token.OPEN_BRACKET,
+                                        "c",
+                                        Token.CLOSE_BRACKET);
+            new Builder("2+2").verifyTokenisationBrackets(tl);
+        });
     }
 
     @Test
     void verifyTokenisationBrackets_singleOpenBracket()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(Builder.UnmatchedOpenBracketException.class, () ->
+        {
+            TokenList tl = newTokenList("a", Token.OPEN_BRACKET);
+            new Builder("2+2").verifyTokenisationBrackets(tl);
+        });
     }
 
     @Test
     void verifyTokenisationBrackets_singleCloseBracket()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(Builder.UnexpectedCloseBracketException.class, () ->
+        {
+            TokenList tl = newTokenList("a", Token.CLOSE_BRACKET);
+            new Builder("2+2").verifyTokenisationBrackets(tl);
+        });
     }
 
     @Test
     void verifyTokenisationBrackets_bracketsWithExtraOpen()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(Builder.UnmatchedOpenBracketException.class, () ->
+        {
+            TokenList tl = newTokenList("a", Token.OPEN_BRACKET, Token.OPEN_BRACKET, "b", Token.CLOSE_BRACKET);
+            new Builder("2+2").verifyTokenisationBrackets(tl);
+        });
     }
 
     @Test
     void verifyTokenisationBrackets_bracketsWithExtraClose()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(Builder.UnexpectedCloseBracketException.class, () ->
+        {
+            TokenList tl = newTokenList("a", Token.OPEN_BRACKET, "b", Token.CLOSE_BRACKET, Token.CLOSE_BRACKET);
+            new Builder("2+2").verifyTokenisationBrackets(tl);
+        });
     }
 
     @Test
     void verifyTokenisationBrackets_unmatchedCloseFollowedByUnmatchedOpen()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(Builder.BracketMismatchException.class, () ->
+        {
+            TokenList tl = newTokenList("a", Token.CLOSE_BRACKET, Token.OPEN_BRACKET, "b");
+            new Builder("2+2").verifyTokenisationBrackets(tl);
+        });
     }
     //endregion
     
     //region startsWithNonPrefixOperator
     @Test
     void startsWithNonPrefixOperator_startsWithPrefixOperator()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertFalse(new Builder("2+2").startsWithNonPrefixOperator(newTokenList(new Token("-"), "a"))); }
 
     @Test
     void startsWithNonPrefixOperator_startsWithInfixOperator()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertTrue(new Builder("2+2").startsWithNonPrefixOperator(newTokenList(new Token("/"), "a"))); }
 
     @Test
     void startsWithNonPrefixOperator_startsWithNonOperator()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertFalse(new Builder("2+2").startsWithNonPrefixOperator(newTokenList("a", "b"))); }
     //endregion
 
     //region endsWithNonPostfixOperator
     @Test
     void endsWithNonPostfixOperator_endsWithPostfixOperator()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertFalse(new Builder("2+2").endsWithNonPostfixOperator(newTokenList("a", new Token("%")))); }
 
     @Test
     void endsWithNonPostfixOperator_endsWithInfixOperator()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertTrue(new Builder("2+2").endsWithNonPostfixOperator(newTokenList("a", new Token("/")))); }
 
     @Test
     void endsWithNonPostfixOperator_endsWithNonOperator()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertFalse(new Builder("2+2").endsWithNonPostfixOperator(newTokenList("a", "b"))); }
     //endregion
 
     //region getOpRun
+
+    // Note that Builder.getOpRun(...) assumes that the index it's given is a valid operator character and does not
+    // check whether or not this is true.
+
     @Test
     void getOpRun_tokenRunIn()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> ts = asListOfTokens("a", new Token("+"), new Token("-"), new Token("/"), "b");
+        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 2);
+        assertOpRun(opRun, ts, 1, 2, 3);
     }
 
     @Test
     void getOpRun_tokenRunAtStart()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> ts = asListOfTokens(new Token("+"), new Token("-"), new Token("/"), "b");
+        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 1);
+        assertOpRun(opRun, ts, 0, 1, 2);
     }
 
     @Test
     void getOpRun_tokenRunAtEnd()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> ts = asListOfTokens("a", new Token("+"), new Token("-"), new Token("/"));
+        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 2);
+        assertOpRun(opRun, ts, 1, 2, 3);
     }
 
     @Test
     void getOpRun_tokenRunIsEntire()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> ts = asListOfTokens(new Token("+"), new Token("-"), new Token("/"));
+        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 1);
+        assertOpRun(opRun, ts, 0, 1, 2);
     }
 
     @Test
     void getOpRun_tokenRunIsOneToken()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> ts = asListOfTokens("a", new Token("+"), "b");
+        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 1);
+        assertOpRun(opRun, ts, 1, 1, 1);
     }
 
     @Test
     void getOpRun_tokenRunIsOneTokenAtStart()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> ts = asListOfTokens(new Token("+"), "b");
+        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 0);
+        assertOpRun(opRun, ts, 0, 0, 0);
     }
 
     @Test
     void getOpRun_tokenRunIsOneTokenAtEnd()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> ts = asListOfTokens("a", new Token("+"));
+        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 1);
+        assertOpRun(opRun, ts, 1, 1, 1);
     }
 
     @Test
     void getOpRun_tokenRunIsOneTokenThatIsEntire()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> ts = asListOfTokens(new Token("+"));
+        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 0);
+        assertOpRun(opRun, ts, 0, 0, 0);
     }
     //endregion
 

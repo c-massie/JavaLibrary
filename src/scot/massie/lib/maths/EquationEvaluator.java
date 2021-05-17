@@ -288,10 +288,10 @@ public class EquationEvaluator
             {
                 this.startIndexInSource = runStartIndex;
                 this.endIndexInSource = runEndIndex;
-                this.indexOfPivotInRun = pivotIndexInSource + runStartIndex;
+                this.indexOfPivotInRun = pivotIndexInSource - runStartIndex;
                 this.tokens = source.subList(runStartIndex, runEndIndex + 1);
                 this.tokensBeforePivot = source.subList(runStartIndex, pivotIndexInSource);
-                this.tokensAfterPivot = source.subList(pivotIndexInSource + 1, runEndIndex);
+                this.tokensAfterPivot = source.subList(pivotIndexInSource + 1, runEndIndex + 1);
             }
         }
         //endregion
@@ -1002,7 +1002,7 @@ public class EquationEvaluator
         {
             int min = -1, max = -1;
 
-            for(int i = indexToGetOpRunThatContainsIt - 1; i > 0; i--)
+            for(int i = indexToGetOpRunThatContainsIt - 1; i >= 0; i--)
             {
                 Token itoken = tokens.get(i);
 
