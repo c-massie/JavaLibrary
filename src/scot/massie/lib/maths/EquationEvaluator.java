@@ -1816,11 +1816,11 @@ public class EquationEvaluator
 
     @FunctionalInterface
     public interface BinaryOperatorAction
-    { double performOperation(double a, double b); }
+    { double performOperation(double l, double r); }
 
     @FunctionalInterface
     public interface TernaryOperatorAction
-    { double performOperation(double a, double b, double c); }
+    { double performOperation(double l, double m, double r); }
     //endregion
     //endregion
 

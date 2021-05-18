@@ -3,12 +3,16 @@ package scot.massie.lib.maths;
 import org.junit.jupiter.api.Test;
 
 import org.junit.jupiter.api.function.Executable;
+import scot.massie.lib.collections.tree.Tree;
 import scot.massie.lib.maths.EquationEvaluator.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 public class EquationEvaluator_BuilderTest
 {
@@ -382,98 +386,173 @@ public class EquationEvaluator_BuilderTest
     //endregion
 
     //region canBeInfixOperatorToken
-
     @Test
     void canBeInfixOperatorToken_singleToken()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> tl = asListOfTokens("a", new Token("+"), "b");
+        assertTrue(new Builder("2+2").canBeInfixOperatorToken(tl, 1));
     }
 
     @Test
     void canBeInfixOperatorToken_followedByPrefix()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> tl = asListOfTokens("a", new Token("+"), new Token("-"), "b");
+        assertTrue(new Builder("2+2").canBeInfixOperatorToken(tl, 1));
     }
 
     @Test
     void canBeInfixOperatorToken_followingPostfix()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> tl = asListOfTokens("a", new Token("%"), new Token("+"), "b");
+        assertTrue(new Builder("2+2").canBeInfixOperatorToken(tl, 2));
     }
 
     @Test
     void canBeInfixOperatorToken_runAtStart()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> tl = asListOfTokens(new Token("+"), "b");
+        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 0));
     }
 
     @Test
     void canBeInfixOperatorToken_runAtEnd()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> tl = asListOfTokens("a", new Token("+"));
+        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 1));
     }
 
     @Test
     void canBeInfixOperatorToken_runIsEntire()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> tl = asListOfTokens(new Token("+"));
+        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 0));
     }
 
     @Test
     void canBeInfixOperatorToken_followedByNonPrefixOperatorTokens()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> tl = asListOfTokens("a", new Token("+"), new Token("%"), "b");
+        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 1));
     }
 
     @Test
     void canBeInfixOperatorToken_followsNonPostfixOperatorTokens()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        List<Token> tl = asListOfTokens("a", new Token("/"), new Token("+"), "b");
+        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 2));
     }
     //endregion
 
     //region buildOperatorGroups
+    void assertOpGroupHasOpsExactly(Builder.OperatorPriorityGroup actual, Operator... ops)
+    {
+        List<PrefixOperator> prefixOps = Arrays.stream(ops)
+                                               .filter(o -> o instanceof PrefixOperator)
+                                               .map(operator -> (PrefixOperator)operator)
+                                               .collect(Collectors.toList());
+
+        List<PostfixOperator> postfixOps = Arrays.stream(ops)
+                                                 .filter(o -> o instanceof PostfixOperator)
+                                                 .map(o -> (PostfixOperator)o)
+                                                 .collect(Collectors.toList());
+
+        List<InfixOperator> leftOps = Arrays.stream(ops)
+                                            .filter(o ->    o instanceof InfixOperator
+                                                         && ((InfixOperator)o).isLeftAssociative)
+                                            .map(o -> (InfixOperator)o)
+                                            .collect(Collectors.toList());
+
+        List<InfixOperator> rightOps = Arrays.stream(ops)
+                                             .filter(o ->    o instanceof InfixOperator
+                                                          && !((InfixOperator)o).isLeftAssociative)
+                                             .map(o -> (InfixOperator)o)
+                                             .collect(Collectors.toList());
+
+        assertThat(actual.prefixOperators.values()).hasSameElementsAs(prefixOps);
+        assertThat(actual.postfixOperators.values()).hasSameElementsAs(postfixOps);
+        assertThat(actual.leftAssociativeInfixOperators.getItems()).hasSameElementsAs(leftOps);
+        assertThat(actual.rightAssociativeInfixOperators.getItems()).hasSameElementsAs(rightOps);
+    }
+
     @Test
     void buildOperatorGroups_noOperators()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = new Builder("2+2", false);
+        b.buildOperatorGroups();
+        assertThat(b.operatorGroups).isEmpty();
+        assertThat(b.operatorGroupsInOrder).isEmpty();
     }
 
     @Test
     void buildOperatorGroups_oneOperator()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = new Builder("2+2", false);
+        BinaryOperator op = new BinaryOperator(new Token("+"), true, 1.3, (l, r) -> l + r);
+        b.addOperator(op);
+        b.buildOperatorGroups();
+
+        assertThat(b.operatorGroups).hasSize(1);
+        assertThat(b.operatorGroups).containsKey(1.3);
+        assertOpGroupHasOpsExactly(b.operatorGroups.get(1.3), op);
+
+        assertThat(b.operatorGroupsInOrder).hasSize(1);
+        assertSame(b.operatorGroups.get(1.3), b.operatorGroupsInOrder.get(0));
     }
 
     @Test
     void buildOperatorGroups_twoOperators_differentPriorities()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = new Builder("2+2", false);
+        BinaryOperator op1 = new BinaryOperator(new Token("+"), true, 1.3, (l, r) -> l + r);
+        BinaryOperator op2 = new BinaryOperator(new Token("-"), true, 3.4, (l, r) -> l - r);
+        b.addOperator(op1);
+        b.addOperator(op2);
+        b.buildOperatorGroups();
+
+        assertThat(b.operatorGroups).hasSize(2);
+        assertThat(b.operatorGroups).containsKeys(1.3, 3.4);
+        assertOpGroupHasOpsExactly(b.operatorGroups.get(1.3), op1);
+        assertOpGroupHasOpsExactly(b.operatorGroups.get(3.4), op2);
+
+        assertThat(b.operatorGroupsInOrder).hasSize(2);
+        assertSame(b.operatorGroups.get(1.3), b.operatorGroupsInOrder.get(0));
+        assertSame(b.operatorGroups.get(3.4), b.operatorGroupsInOrder.get(1));
     }
 
     @Test
     void buildOperatorGroups_twoOperators_samePriorityDifferentAssociativity()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = new Builder("2+2", false);
+        BinaryOperator op1 = new BinaryOperator(new Token("+"), true, 1.3, (l, r) -> l + r);
+        BinaryOperator op2 = new BinaryOperator(new Token("-"), false, 1.3, (l, r) -> l - r);
+        b.addOperator(op1);
+        b.addOperator(op2);
+        b.buildOperatorGroups();
+
+        assertThat(b.operatorGroups).hasSize(1);
+        assertThat(b.operatorGroups).containsKeys(1.3);
+        assertOpGroupHasOpsExactly(b.operatorGroups.get(1.3), op1, op2);
+
+        assertThat(b.operatorGroupsInOrder).hasSize(1);
+        assertSame(b.operatorGroups.get(1.3), b.operatorGroupsInOrder.get(0));
     }
 
     @Test
     void buildOperatorGroups_twoOperators_samePrioritySameAssociativity()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = new Builder("2+2", false);
+        BinaryOperator op1 = new BinaryOperator(new Token("+"), true, 1.3, (l, r) -> l + r);
+        BinaryOperator op2 = new BinaryOperator(new Token("-"), true, 1.3, (l, r) -> l - r);
+        b.addOperator(op1);
+        b.addOperator(op2);
+        b.buildOperatorGroups();
+
+        assertThat(b.operatorGroups).hasSize(1);
+        assertThat(b.operatorGroups).containsKeys(1.3);
+        assertOpGroupHasOpsExactly(b.operatorGroups.get(1.3), op1, op2);
+
+        assertThat(b.operatorGroupsInOrder).hasSize(1);
+        assertSame(b.operatorGroups.get(1.3), b.operatorGroupsInOrder.get(0));
     }
     //endregion
 
