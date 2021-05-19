@@ -265,6 +265,35 @@ public class EquationEvaluator
             public UnmatchedOpenBracketException withFullEquation(TokenList fullEquation)
             { return new UnmatchedOpenBracketException(fullEquation); }
         }
+
+        public static class UnrecognisedFunctionException extends EquationParseException
+        {
+            public UnrecognisedFunctionException(String functionName,
+                                                 TokenList fullEquation,
+                                                 TokenList equationSection)
+            {
+                super(fullEquation, equationSection, "Equation contained an unrecognised function: " + functionName);
+                this.functionName = functionName;
+            }
+
+            public UnrecognisedFunctionException(String functionName,
+                                                 TokenList fullEquation,
+                                                 TokenList equationSection,
+                                                 String msg)
+            {
+                super(fullEquation, equationSection, msg);
+                this.functionName = functionName;
+            }
+
+            String functionName;
+
+            public String getFunctionName()
+            { return functionName; }
+
+            @Override
+            public UnrecognisedFunctionException withFullEquation(TokenList fullEquation)
+            { return new UnrecognisedFunctionException(functionName, fullEquation, equationSection); }
+        }
         //endregion
 
         static class OperatorPriorityGroup
@@ -917,8 +946,9 @@ public class EquationEvaluator
 
         VariableReference tryParseVariable(TokenList tokenList)
         {
-            Double variableValue = variables.get(tokenList.equationAsString.trim());
-            return variableValue == null ? null : new VariableReference(variables, tokenList.equationAsString);
+            String varName = tokenList.equationAsString.trim();
+            Double variableValue = variables.get(varName);
+            return variableValue == null ? null : new VariableReference(variables, varName);
         }
 
         FunctionCall tryParseFunctionCall(TokenList tokenList)
@@ -957,6 +987,9 @@ public class EquationEvaluator
 
             for(int i = 0; i < argTokenLists.size(); i++)
                 arguments[i] = tryParse(argTokenLists.get(i));
+
+            if(!functions.containsKey(functionName))
+                throw new UnrecognisedFunctionException(functionName, tokenList, tokenList);
 
             return new FunctionCall(functions, functionName, arguments);
         }

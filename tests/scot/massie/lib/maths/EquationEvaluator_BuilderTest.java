@@ -9,6 +9,7 @@ import scot.massie.lib.maths.EquationEvaluator.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -559,89 +560,177 @@ public class EquationEvaluator_BuilderTest
     //region tryParseVariable
     @Test
     void tryParseVariable_notAVariable()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertNull(new Builder("2+2").tryParseVariable(newTokenList("doot"))); }
 
     @Test
     void tryParseVariable_isAVariable()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        VariableReference v = new Builder("2+2").withVariable("doot", 5).tryParseVariable(newTokenList("doot"));
+
+        assertNotNull(v);
+        assertEquals("doot", v.name);
+        assertEquals(5, v.evaluate());
     }
 
     @Test
     void tryParseVariable_isAVariableWithSpaces()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        VariableReference v = new Builder("2+2").withVariable("a doot", 5).tryParseVariable(newTokenList("a doot"));
+
+        assertNotNull(v);
+        assertEquals("a doot", v.name);
+        assertEquals(5, v.evaluate());
     }
 
     @Test
     void tryParseVariable_isAVariableWithTokenCharacters()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        VariableReference v = new Builder("2+2").withVariable("a  doot", 5).tryParseVariable(newTokenList("a", "doot"));
+
+        assertNotNull(v);
+        assertEquals("a  doot", v.name);
+        assertEquals(5, v.evaluate());
     }
     //endregion
 
     //region tryParseFunctionCall
     @Test
     void tryParseFunctionCall_notAFunctionCall()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertNull(new Builder("2+2").tryParseFunctionCall(newTokenList("doot"))); }
 
     @Test
     void tryParseFunctionCall_functionCallWithNoArgs()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        FunctionCall f = new Builder("2+2")
+                                 .withFunction("doot", x -> 3)
+                                 .tryParseFunctionCall(newTokenList("doot",
+                                                                    Token.OPEN_BRACKET,
+                                                                    Token.CLOSE_BRACKET));
+
+        assertNotNull(f);
+        assertThat(f.arguments).isEmpty();
+        assertEquals("doot", f.functionName);
+        assertEquals(3, f.evaluate());
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithSpaceWithNoArgs()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        FunctionCall f = new Builder("2+2")
+                                 .withFunction("a doot", x -> 3)
+                                 .tryParseFunctionCall(newTokenList("a doot",
+                                                                    Token.OPEN_BRACKET,
+                                                                    Token.CLOSE_BRACKET));
+
+        assertNotNull(f);
+        assertThat(f.arguments).isEmpty();
+        assertEquals("a doot", f.functionName);
+        assertEquals(3, f.evaluate());
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithOpTokensWithArgs()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        FunctionCall f = new Builder("2+2")
+                                 .withFunction("doot  +   dat", x -> 3)
+                                 .tryParseFunctionCall(newTokenList("doot",
+                                                                    new Token("+"),
+                                                                    "dat",
+                                                                    Token.OPEN_BRACKET,
+                                                                    Token.CLOSE_BRACKET));
+
+        assertNotNull(f);
+        assertThat(f.arguments).isEmpty();
+        assertEquals("doot  +   dat", f.functionName);
+        assertEquals(3, f.evaluate());
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithOneArgument()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        FunctionCall f = new Builder("2+2")
+                                 .withFunction("doot", x -> 3)
+                                 .withVariable("x", 5)
+                                 .tryParseFunctionCall(newTokenList("doot",
+                                                                    Token.OPEN_BRACKET,
+                                                                    "x",
+                                                                    Token.CLOSE_BRACKET));
+
+        assertNotNull(f);
+        assertThat(f.arguments).isEmpty();
+        assertEquals("doot", f.functionName);
+        assertEquals(3, f.evaluate());
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgs()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        FunctionCall f = new Builder("2+2")
+                                 .withFunction("doot", x -> 3)
+                                 .withVariable("x", 5)
+                                 .tryParseFunctionCall(newTokenList("doot",
+                                                                    Token.OPEN_BRACKET,
+                                                                    "x", "x", "x",
+                                                                    Token.CLOSE_BRACKET));
+
+        assertNotNull(f);
+        assertThat(f.arguments).isEmpty();
+        assertEquals("doot", f.functionName);
+        assertEquals(3, f.evaluate());
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsFunctionCall()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        FunctionCall f = new Builder("2+2")
+                                 .withFunction("doot", x -> 3)
+                                 .withVariable("x", 5)
+                                 .tryParseFunctionCall(newTokenList("doot",
+                                                                    Token.OPEN_BRACKET,
+                                                                    "x",
+                                                                    "doot",
+                                                                    Token.OPEN_BRACKET,
+                                                                    Token.CLOSE_BRACKET,
+                                                                    "x",
+                                                                    Token.CLOSE_BRACKET));
+
+        assertNotNull(f);
+        assertThat(f.arguments).isEmpty();
+        assertEquals("doot", f.functionName);
+        assertEquals(3, f.evaluate());
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsInBrackets()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        FunctionCall f = new Builder("2+2")
+                                 .withFunction("doot", x -> 3)
+                                 .withVariable("x", 5)
+                                 .tryParseFunctionCall(newTokenList("doot",
+                                                                    Token.OPEN_BRACKET,
+                                                                    "x",
+                                                                    Token.OPEN_BRACKET,
+                                                                    "x",
+                                                                    Token.CLOSE_BRACKET,
+                                                                    "x",
+                                                                    Token.CLOSE_BRACKET));
+
+        assertNotNull(f);
+        assertThat(f.arguments).isEmpty();
+        assertEquals("doot", f.functionName);
+        assertEquals(3, f.evaluate());
     }
+
+    @Test
+    void tryParseFunctionCall_unrecognisedFunction()
+    {
+        assertThrows(Builder.UnrecognisedFunctionException.class,
+                     () -> new Builder("2+2").withFunction("doot", x -> 3)
+                                             .tryParseFunctionCall(newTokenList("dat",
+                                                                                Token.OPEN_BRACKET,
+                                                                                Token.CLOSE_BRACKET)));
+    }
+
     //endregion
 
     //region tryParseNumber
