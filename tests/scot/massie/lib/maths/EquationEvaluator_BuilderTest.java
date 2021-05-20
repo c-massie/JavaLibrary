@@ -601,11 +601,9 @@ public class EquationEvaluator_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithNoArgs()
     {
-        FunctionCall f = new Builder("2+2")
-                                 .withFunction("doot", x -> 3)
-                                 .tryParseFunctionCall(newTokenList("doot",
-                                                                    Token.OPEN_BRACKET,
-                                                                    Token.CLOSE_BRACKET));
+        Builder b = new Builder("2+2").withFunction("doot", x -> 3);
+        b.buildOperatorGroups();
+        FunctionCall f = b.tryParseFunctionCall(newTokenList("doot", Token.OPEN_BRACKET, Token.CLOSE_BRACKET));
 
         assertNotNull(f);
         assertThat(f.arguments).isEmpty();
@@ -657,7 +655,9 @@ public class EquationEvaluator_BuilderTest
                                                                     Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).isEmpty();
+        assertThat(f.arguments).hasSize(1);
+        assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
+        assertEquals(5, f.arguments[0].evaluate());
         assertEquals("doot", f.functionName);
         assertEquals(3, f.evaluate());
     }
@@ -665,16 +665,25 @@ public class EquationEvaluator_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgs()
     {
-        FunctionCall f = new Builder("2+2")
-                                 .withFunction("doot", x -> 3)
-                                 .withVariable("x", 5)
-                                 .tryParseFunctionCall(newTokenList("doot",
-                                                                    Token.OPEN_BRACKET,
-                                                                    "x", "x", "x",
-                                                                    Token.CLOSE_BRACKET));
+        Builder b = new Builder("2+2").withFunction("doot", x -> 3).withVariable("x", 5);
+        b.buildOperatorGroups();
+        FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
+                                                             Token.OPEN_BRACKET,
+                                                             "x",
+                                                             Token.ARGUMENT_SEPARATOR,
+                                                             "x",
+                                                             Token.ARGUMENT_SEPARATOR,
+                                                             "x",
+                                                             Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).isEmpty();
+        assertThat(f.arguments).hasSize(3);
+        assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
+        assertThat(f.arguments[1]).isInstanceOf(VariableReference.class);
+        assertThat(f.arguments[2]).isInstanceOf(VariableReference.class);
+        assertEquals(5, f.arguments[0].evaluate());
+        assertEquals(5, f.arguments[1].evaluate());
+        assertEquals(5, f.arguments[2].evaluate());
         assertEquals("doot", f.functionName);
         assertEquals(3, f.evaluate());
     }
@@ -682,20 +691,27 @@ public class EquationEvaluator_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsFunctionCall()
     {
-        FunctionCall f = new Builder("2+2")
-                                 .withFunction("doot", x -> 3)
-                                 .withVariable("x", 5)
-                                 .tryParseFunctionCall(newTokenList("doot",
-                                                                    Token.OPEN_BRACKET,
-                                                                    "x",
-                                                                    "doot",
-                                                                    Token.OPEN_BRACKET,
-                                                                    Token.CLOSE_BRACKET,
-                                                                    "x",
-                                                                    Token.CLOSE_BRACKET));
+        Builder b = new Builder("2+2").withFunction("doot", x -> 3).withVariable("x", 5);
+        b.buildOperatorGroups();
+        FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
+                                                             Token.OPEN_BRACKET,
+                                                             "x",
+                                                             Token.ARGUMENT_SEPARATOR,
+                                                             "doot",
+                                                             Token.OPEN_BRACKET,
+                                                             Token.CLOSE_BRACKET,
+                                                             Token.ARGUMENT_SEPARATOR,
+                                                             "x",
+                                                             Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).isEmpty();
+        assertThat(f.arguments).hasSize(3);
+        assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
+        assertThat(f.arguments[1]).isInstanceOf(FunctionCall.class);
+        assertThat(f.arguments[2]).isInstanceOf(VariableReference.class);
+        assertEquals(5, f.arguments[0].evaluate());
+        assertEquals(3, f.arguments[1].evaluate());
+        assertEquals(5, f.arguments[2].evaluate());
         assertEquals("doot", f.functionName);
         assertEquals(3, f.evaluate());
     }
@@ -703,20 +719,27 @@ public class EquationEvaluator_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsInBrackets()
     {
-        FunctionCall f = new Builder("2+2")
-                                 .withFunction("doot", x -> 3)
-                                 .withVariable("x", 5)
-                                 .tryParseFunctionCall(newTokenList("doot",
-                                                                    Token.OPEN_BRACKET,
-                                                                    "x",
-                                                                    Token.OPEN_BRACKET,
-                                                                    "x",
-                                                                    Token.CLOSE_BRACKET,
-                                                                    "x",
-                                                                    Token.CLOSE_BRACKET));
+        Builder b = new Builder("2+2").withFunction("doot", x -> 3).withVariable("x", 5);
+        b.buildOperatorGroups();
+        FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
+                                                             Token.OPEN_BRACKET,
+                                                             "x",
+                                                             Token.ARGUMENT_SEPARATOR,
+                                                             Token.OPEN_BRACKET,
+                                                             "x",
+                                                             Token.CLOSE_BRACKET,
+                                                             Token.ARGUMENT_SEPARATOR,
+                                                             "x",
+                                                             Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).isEmpty();
+        assertThat(f.arguments).hasSize(3);
+        assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
+        assertThat(f.arguments[1]).isInstanceOf(VariableReference.class);
+        assertThat(f.arguments[2]).isInstanceOf(VariableReference.class);
+        assertEquals(5, f.arguments[0].evaluate());
+        assertEquals(5, f.arguments[1].evaluate());
+        assertEquals(5, f.arguments[2].evaluate());
         assertEquals("doot", f.functionName);
         assertEquals(3, f.evaluate());
     }
@@ -736,23 +759,26 @@ public class EquationEvaluator_BuilderTest
     //region tryParseNumber
     @Test
     void tryParseNumber_notANumber()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertNull(new Builder("2+2").tryParseNumber(newTokenList("doot"))); }
 
     @Test
     void tryParseNumber_isANumber()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        LiteralNumber ln = new Builder("2+2").tryParseNumber(newTokenList("7.3"));
+        assertNotNull(ln);
+        assertEquals(7.3, ln.evaluate());
     }
 
     @Test
     void tryParseNumber_isNumberMadeUpOfMultipleTokens()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        LiteralNumber ln = new Builder("2+2").tryParseNumber(new TokenList("7.3",
+                                                                           Arrays.asList(new UntokenisedString("7"),
+                                                                                         new Token("."),
+                                                                                         new UntokenisedString("3")),
+                                                                           Arrays.asList(0, 0, 0, 0)));
+        assertNotNull(ln);
+        assertEquals(7.3, ln.evaluate());
     }
     //endregion
 

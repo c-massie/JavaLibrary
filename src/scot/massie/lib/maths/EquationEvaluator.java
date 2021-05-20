@@ -976,17 +976,24 @@ public class EquationEvaluator
             if(argListTokenList == null)
                 return null;
 
-            if(argListTokenList.startsWith(Token.ARGUMENT_SEPARATOR))
-                throw new LeadingArgumentSeparatorException(tokenList, tokenList);
+            EquationComponent[] arguments;
 
-            if(argListTokenList.endsWith(Token.ARGUMENT_SEPARATOR))
-                throw new TrailingArgumentSeparatorException(tokenList, tokenList);
+            if(argListTokenList.isEmpty())
+                arguments = new EquationComponent[0];
+            else
+            {
+                if(argListTokenList.startsWith(Token.ARGUMENT_SEPARATOR))
+                    throw new LeadingArgumentSeparatorException(tokenList, tokenList);
 
-            List<TokenList> argTokenLists = argListTokenList.splitBy(Token.ARGUMENT_SEPARATOR);
-            EquationComponent[] arguments = new EquationComponent[argTokenLists.size()];
+                if(argListTokenList.endsWith(Token.ARGUMENT_SEPARATOR))
+                    throw new TrailingArgumentSeparatorException(tokenList, tokenList);
 
-            for(int i = 0; i < argTokenLists.size(); i++)
-                arguments[i] = tryParse(argTokenLists.get(i));
+                List<TokenList> argTokenLists = argListTokenList.splitBy(Token.ARGUMENT_SEPARATOR);
+                arguments = new EquationComponent[argTokenLists.size()];
+
+                for(int i = 0; i < argTokenLists.size(); i++)
+                    arguments[i] = tryParse(argTokenLists.get(i));
+            }
 
             if(!functions.containsKey(functionName))
                 throw new UnrecognisedFunctionException(functionName, tokenList, tokenList);
@@ -1232,6 +1239,9 @@ public class EquationEvaluator
         {
             // Assumes that this TokenList doesn't have any bracket mismatches.
 
+            if(tokens.isEmpty())
+                return false;
+
             if(!tokens.get(0).equals(Token.OPEN_BRACKET))
                 return false;
 
@@ -1261,10 +1271,20 @@ public class EquationEvaluator
         { return tokens.get(index); }
 
         public Token first()
-        { return tokens.get(0); }
+        {
+            if(tokens.isEmpty())
+                return null;
+
+            return tokens.get(0);
+        }
 
         public Token last()
-        { return tokens.get(tokens.size() - 1); }
+        {
+            if(tokens.isEmpty())
+                return null;
+
+            return tokens.get(tokens.size() - 1);
+        }
 
         public TokenList unmodifiable()
         {
@@ -1273,11 +1293,24 @@ public class EquationEvaluator
             return new TokenList(equationAsString, newTokens, newSpacings);
         }
 
+        public boolean isEmpty()
+        { return tokens.isEmpty(); }
+
         public boolean startsWith(Token t)
-        { return tokens.get(0).equals(t); }
+        {
+            if(tokens.isEmpty())
+                return false;
+
+            return tokens.get(0).equals(t);
+        }
 
         public boolean endsWith(Token t)
-        { return tokens.get(tokens.size() - 1).equals(t); }
+        {
+            if(tokens.isEmpty())
+                return false;
+
+            return tokens.get(tokens.size() - 1).equals(t);
+        }
 
         public TokenList withoutFirst(int howMany)
         {
