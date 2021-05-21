@@ -173,6 +173,22 @@ public class EquationEvaluator_BuilderTest
         return new TokenList(sb.toString(), tokenList, spacings);
     }
 
+    Builder newBuilderWithInfixOp(boolean shouldBeLeftAssociative)
+    {
+        Builder result = new Builder("2+2", false).withVariable("a", 5)
+                                                  .withVariable("b", 6)
+                                                  .withVariable("c", 7)
+                                                  .withVariable("d", 8);
+
+        List<Token> opTokens = Arrays.asList(new Token("£"), new Token("€"), new Token("¢"));
+        result.addOperator(new InfixOperator(opTokens,
+                                             shouldBeLeftAssociative,
+                                             0,
+                                             o -> (o[0]) + (o[1] * 3) + (o[2] * 5) + (o[3] * 7)));
+        result.buildOperatorGroups();
+        return result;
+    }
+
     void assertOpRun(Builder.OperatorTokenRun opRun, List<Token> tokens, int lowerBound, int at, int upperBound)
     {
         assertEquals(tokens.subList(lowerBound, upperBound + 1), opRun.tokens);
@@ -786,43 +802,118 @@ public class EquationEvaluator_BuilderTest
     @Test
     void tryParseInfixOperation_rightAssociative_notAnInfixOperation()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = newBuilderWithInfixOp(false);
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("a", new Token("^"), "b", new Token("*"), "c", new Token("&"), "d");
+
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        assertNull(op);
     }
 
     @Test
     void tryParseInfixOperation_rightAssociative_notAnInfixOperationButHasFirstFewTokensOfIt()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = newBuilderWithInfixOp(false);
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("&"), "d");
+
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        assertNull(op);
     }
 
     @Test
     void tryParseInfixOperation_rightAssociative_notAnInfixOperationBecauseOneOfTheTokensCantBe()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = newBuilderWithInfixOp(false).withOperator("+", (l, r) -> l + r);
+        b.buildOperatorGroups();
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("a", new Token("£"), "b", new Token("+"), new Token("€"), "c", new Token("¢"), "d");
+
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        assertNull(op);
     }
 
     @Test
     void tryParseInfixOperation_rightAssociative_notAnInfixOperationBecauseOneOfTheTokensIsInBrackets()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = newBuilderWithInfixOp(false);
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("a", new Token("£"), Token.OPEN_BRACKET, "b", new Token("€"), "c",
+                                    Token.CLOSE_BRACKET, new Token("¢"), "d");
+
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        assertNull(op);
     }
 
     @Test
     void tryParseInfixOperation_rightAssociative_isAnInfixOperation()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = newBuilderWithInfixOp(false);
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"), "d");
+
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        assertNotNull(op);
+        OperatorAction expectedA = opGroup.rightAssociativeInfixOperators.getItems().stream().findFirst().get().action;
+        assertEquals(expectedA, op.action);
+        assertThat(op.components).hasSize(4);
+        assertThat(op.components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("a", ((VariableReference)op.components.get(0)).name);
+        assertEquals("b", ((VariableReference)op.components.get(1)).name);
+        assertEquals("c", ((VariableReference)op.components.get(2)).name);
+        assertEquals("d", ((VariableReference)op.components.get(3)).name);
+        assertSame(b.variables, ((VariableReference)op.components.get(0)).variableValues);
+        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
+        assertSame(b.variables, ((VariableReference)op.components.get(2)).variableValues);
+        assertSame(b.variables, ((VariableReference)op.components.get(3)).variableValues);
+        assertEquals(114.0, op.evaluate());
     }
 
     @Test
     void tryParseInfixOperation_rightAssociative_isAnInfixOperationFollowedBySameOne()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = newBuilderWithInfixOp(false);
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"),
+                                    "d", new Token("£"), "c", new Token("€"), "b", new Token("¢"), "a");
+
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        assertNotNull(op);
+        OperatorAction expectedA = opGroup.rightAssociativeInfixOperators.getItems().stream().findFirst().get().action;
+        assertEquals(expectedA, op.action);
+        assertThat(op.components).hasSize(4);
+        assertThat(op.components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(3)).isInstanceOf(Operation.class);
+        assertEquals("a", ((VariableReference)op.components.get(0)).name);
+        assertEquals("b", ((VariableReference)op.components.get(1)).name);
+        assertEquals("c", ((VariableReference)op.components.get(2)).name);
+        assertSame(b.variables, ((VariableReference)op.components.get(0)).variableValues);
+        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
+        assertSame(b.variables, ((VariableReference)op.components.get(2)).variableValues);
+
+        Operation innerOp = (Operation)op.components.get(3);
+        assertEquals(expectedA, innerOp.action);
+        assertThat(innerOp.components).hasSize(4);
+        assertThat(innerOp.components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(innerOp.components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(innerOp.components.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(innerOp.components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("d", ((VariableReference)innerOp.components.get(0)).name);
+        assertEquals("c", ((VariableReference)innerOp.components.get(1)).name);
+        assertEquals("b", ((VariableReference)innerOp.components.get(2)).name);
+        assertEquals("a", ((VariableReference)innerOp.components.get(3)).name);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(0)).variableValues);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(1)).variableValues);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(2)).variableValues);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(3)).variableValues);
+
+        assertEquals(94.0, innerOp.evaluate());
+        assertEquals(716.0, op.evaluate());
     }
     //endregion
 
