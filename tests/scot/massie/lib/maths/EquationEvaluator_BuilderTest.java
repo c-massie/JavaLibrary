@@ -915,6 +915,55 @@ public class EquationEvaluator_BuilderTest
         assertEquals(94.0, innerOp.evaluate());
         assertEquals(716.0, op.evaluate());
     }
+
+    @Test
+    void tryParseInfixOperation_rightAssociative_isAnInfixOperationContainingSameOneAsAnOperand()
+    {
+        Builder b = newBuilderWithInfixOp(false);
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("a",
+                                    new Token("£"),
+                                    "b",
+                                    new Token("€"),
+                                    "c", new Token("£"), "d", new Token("€"), "c", new Token("¢"), "b",
+                                    new Token("¢"),
+                                    "a");
+
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        assertNotNull(op);
+        OperatorAction expectedA = opGroup.rightAssociativeInfixOperators.getItems().stream().findFirst().get().action;
+        assertEquals(expectedA, op.action);
+        assertThat(op.components).hasSize(4);
+        assertThat(op.components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(2)).isInstanceOf(Operation.class);
+        assertThat(op.components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("a", ((VariableReference)op.components.get(0)).name);
+        assertEquals("b", ((VariableReference)op.components.get(1)).name);
+        assertEquals("a", ((VariableReference)op.components.get(3)).name);
+        assertSame(b.variables, ((VariableReference)op.components.get(0)).variableValues);
+        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
+        assertSame(b.variables, ((VariableReference)op.components.get(3)).variableValues);
+
+        Operation innerOp = (Operation)op.components.get(2);
+        assertEquals(expectedA, innerOp.action);
+        assertThat(innerOp.components).hasSize(4);
+        assertThat(innerOp.components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(innerOp.components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(innerOp.components.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(innerOp.components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("c", ((VariableReference)innerOp.components.get(0)).name);
+        assertEquals("d", ((VariableReference)innerOp.components.get(1)).name);
+        assertEquals("c", ((VariableReference)innerOp.components.get(2)).name);
+        assertEquals("b", ((VariableReference)innerOp.components.get(3)).name);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(0)).variableValues);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(1)).variableValues);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(2)).variableValues);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(3)).variableValues);
+
+        assertEquals(108.0, innerOp.evaluate());
+        assertEquals(605.0, op.evaluate());
+    }
     //endregion
 
     //region tryParseInfixOperation_leftAssociative
@@ -1033,6 +1082,55 @@ public class EquationEvaluator_BuilderTest
 
         assertEquals(114.0, innerOp.evaluate());
         assertEquals(200.0, op.evaluate());
+    }
+
+    @Test
+    void tryParseInfixOperation_leftAssociative_isAnInfixOperationContainingSameOneAsAnOperand()
+    {
+        Builder b = newBuilderWithInfixOp(true);
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("a",
+                                    new Token("£"),
+                                    "b",
+                                    new Token("€"),
+                                    "c", new Token("£"), "d", new Token("€"), "c", new Token("¢"), "b",
+                                    new Token("¢"),
+                                    "a");
+
+        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup);
+        assertNotNull(op);
+        OperatorAction expectedA = opGroup.leftAssociativeInfixOperators.getItems().stream().findFirst().get().action;
+        assertEquals(expectedA, op.action);
+        assertThat(op.components).hasSize(4);
+        assertThat(op.components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(op.components.get(2)).isInstanceOf(Operation.class);
+        assertThat(op.components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("a", ((VariableReference)op.components.get(0)).name);
+        assertEquals("b", ((VariableReference)op.components.get(1)).name);
+        assertEquals("a", ((VariableReference)op.components.get(3)).name);
+        assertSame(b.variables, ((VariableReference)op.components.get(0)).variableValues);
+        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
+        assertSame(b.variables, ((VariableReference)op.components.get(3)).variableValues);
+
+        Operation innerOp = (Operation)op.components.get(2);
+        assertEquals(expectedA, innerOp.action);
+        assertThat(innerOp.components).hasSize(4);
+        assertThat(innerOp.components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(innerOp.components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(innerOp.components.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(innerOp.components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("c", ((VariableReference)innerOp.components.get(0)).name);
+        assertEquals("d", ((VariableReference)innerOp.components.get(1)).name);
+        assertEquals("c", ((VariableReference)innerOp.components.get(2)).name);
+        assertEquals("b", ((VariableReference)innerOp.components.get(3)).name);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(0)).variableValues);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(1)).variableValues);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(2)).variableValues);
+        assertSame(b.variables, ((VariableReference)innerOp.components.get(3)).variableValues);
+
+        assertEquals(108.0, innerOp.evaluate());
+        assertEquals(605.0, op.evaluate());
     }
     //endregion
     
