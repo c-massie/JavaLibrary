@@ -831,28 +831,32 @@ public class EquationEvaluator
         Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
                                                           OperatorPriorityGroup opGroup)
         {
-            return tryParseInfixOperation_rightAssociative(tokenList,
-                                                           opGroup.rightAssociativeInfixOperators,
-                                                           -1,
-                                                           Collections.emptyList());
-        }
+            Tree<Token, InfixOperator> opTree = opGroup.rightAssociativeInfixOperators;
 
-        Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
-                                                          Tree<Token, InfixOperator> ops,
-                                                          int currentlyUpTo,
-                                                          List<Integer> indicesOfOperatorTokens)
-        {
-            if(ops.isEmpty())
+            if(opTree.isEmpty())
                 return null;
 
-            if(ops.hasRootItem())
-                return ops.getRootItem().tryParseFromSplits(tokenList, indicesOfOperatorTokens, this);
+            List<Integer> opTokenPoints = getInfixTokenPoints_rightAssociative(tokenList, opTree, 0);
 
+            if(opTokenPoints == null)
+                return null;
+
+            List<Token> opTokens = opTokenPoints.stream().map(tokenList::get).collect(Collectors.toList());
+            InfixOperator op = opTree.getAt(opTokens);
+            return op.tryParseFromSplits(tokenList, opTokenPoints, this);
+        }
+
+        List<Integer> getInfixTokenPoints_rightAssociative(TokenList of,
+                                                           Tree<Token, InfixOperator> opsTree,
+                                                           int startAt)
+        {
+            Tree<Token, InfixOperator> opsBranch = opsTree;
             int bracketDepth = 0;
+            List<Integer> points = new ArrayList<>();
 
-            for(int i = currentlyUpTo + 1; i < tokenList.size(); i++)
+            for(int i = startAt; i < of.size(); i++)
             {
-                Token itoken = tokenList.get(i);
+                Token itoken = of.get(i);
 
                 if(itoken.equals(Token.OPEN_BRACKET))
                     bracketDepth++;
@@ -860,16 +864,30 @@ public class EquationEvaluator
                     bracketDepth--;
                 else if(bracketDepth == 0
                      && infixOperatorTokens.contains(itoken)
-                     && canBeInfixOperatorToken(tokenList.tokens, i)
-                     && ops.hasItemsAtOrUnder(itoken))
+                     && canBeInfixOperatorToken(of.tokens, i))
                 {
-                    List<Integer> newIndices = new ArrayList<>(indicesOfOperatorTokens);
-                    newIndices.add(i);
-                    Operation o
-                            = tryParseInfixOperation_rightAssociative(tokenList, ops.getBranch(itoken), i, newIndices);
+                    if(opsBranch.hasItemsAtOrUnder(itoken))
+                    {
+                        points.add(i);
+                        opsBranch = opsBranch.getBranch(itoken);
 
-                    if(o != null)
-                        return o;
+                        if(opsBranch.hasRootItem())
+                        {
+                            List<Integer> restOfPoints = getInfixTokenPoints_rightAssociative(of, opsBranch, i + 1);
+
+                            if(restOfPoints == null)
+                                return points;
+
+                            return points;
+                        }
+                    }
+                    else if(opsTree.hasItemsAtOrUnder(itoken))
+                    {
+                        List<Integer> subOfPoints = getInfixTokenPoints_rightAssociative(of, opsTree, i);
+
+                        if(subOfPoints != null)
+                            i = subOfPoints.get(subOfPoints.size() - 1);
+                    }
                 }
             }
 
