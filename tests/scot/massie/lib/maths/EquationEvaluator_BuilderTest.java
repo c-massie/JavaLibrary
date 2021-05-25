@@ -1130,7 +1130,7 @@ public class EquationEvaluator_BuilderTest
         assertSame(b.variables, ((VariableReference)innerOp.components.get(3)).variableValues);
 
         assertEquals(108.0, innerOp.evaluate());
-        assertEquals(605.0, op.evaluate());
+        assertEquals(598.0, op.evaluate());
     }
     //endregion
     

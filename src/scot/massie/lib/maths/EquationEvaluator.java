@@ -875,8 +875,8 @@ public class EquationEvaluator
                         {
                             List<Integer> restOfPoints = getInfixTokenPoints_rightAssociative(of, opsBranch, i + 1);
 
-                            if(restOfPoints == null)
-                                return points;
+                            if(restOfPoints != null)
+                                points.addAll(restOfPoints);
 
                             return points;
                         }
@@ -897,28 +897,33 @@ public class EquationEvaluator
         Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
                                                          OperatorPriorityGroup opGroup)
         {
-            return tryParseInfixOperation_leftAssociative(tokenList,
-                                                          opGroup.leftAssociativeInfixOperators.withReversedKeys(),
-                                                          tokenList.size(),
-                                                          Collections.emptyList());
-        }
+            Tree<Token, InfixOperator> opTree = opGroup.leftAssociativeInfixOperators;
 
-        Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
-                                                         Tree<Token, InfixOperator> ops,
-                                                         int currentlyDownTo,
-                                                         List<Integer> indicesOfOperatorTokens)
-        {
-            if(ops.isEmpty())
+            if(opTree.isEmpty())
                 return null;
 
-            if(ops.hasRootItem())
-                return ops.getRootItem().tryParseFromSplits(tokenList, indicesOfOperatorTokens, this);
+            List<Integer> opTokenPoints
+                    = getInfixTokenPoints_leftAssociative(tokenList, opTree.withReversedKeys(), tokenList.size() - 1);
 
+            if(opTokenPoints == null)
+                return null;
+
+            List<Token> opTokens = opTokenPoints.stream().map(tokenList::get).collect(Collectors.toList());
+            InfixOperator op = opTree.getAt(opTokens);
+            return op.tryParseFromSplits(tokenList, opTokenPoints, this);
+        }
+
+        List<Integer> getInfixTokenPoints_leftAssociative(TokenList of,
+                                                          Tree<Token, InfixOperator> opsTreeReversed,
+                                                          int startAt)
+        {
+            Tree<Token, InfixOperator> opsBranch = opsTreeReversed;
             int bracketDepth = 0;
+            List<Integer> points = new ArrayList<>();
 
-            for(int i = currentlyDownTo - 1; i >= 0; i--)
+            for(int i = startAt; i >= 0; i--)
             {
-                Token itoken = tokenList.get(i);
+                Token itoken = of.get(i);
 
                 if(itoken.equals(Token.CLOSE_BRACKET))
                     bracketDepth++;
@@ -926,16 +931,30 @@ public class EquationEvaluator
                     bracketDepth--;
                 else if(bracketDepth == 0
                      && infixOperatorTokens.contains(itoken)
-                     && canBeInfixOperatorToken(tokenList.tokens, i)
-                     && ops.hasItemsAtOrUnder(itoken))
+                     && canBeInfixOperatorToken(of.tokens, i))
                 {
-                    List<Integer> newIndices = new ArrayList<>(indicesOfOperatorTokens);
-                    newIndices.add(i);
-                    Operation o
-                            = tryParseInfixOperation_leftAssociative(tokenList, ops.getBranch(itoken), i, newIndices);
+                    if(opsBranch.hasItemsAtOrUnder(itoken))
+                    {
+                        points.add(0, i);
+                        opsBranch = opsBranch.getBranch(itoken);
 
-                    if(o != null)
-                        return o;
+                        if(opsBranch.hasRootItem())
+                        {
+                            List<Integer> restOfPoints = getInfixTokenPoints_leftAssociative(of, opsBranch, i - 1);
+
+                            if(restOfPoints != null)
+                                points.addAll(0, restOfPoints);
+
+                            return points;
+                        }
+                    }
+                    else if(opsTreeReversed.hasItemsAtOrUnder(itoken))
+                    {
+                        List<Integer> subOfPoints = getInfixTokenPoints_leftAssociative(of, opsTreeReversed, i);
+
+                        if(subOfPoints != null)
+                            i = subOfPoints.get(0);
+                    }
                 }
             }
 
