@@ -1138,15 +1138,32 @@ public class EquationEvaluator_BuilderTest
     @Test
     void tryParsePrefixOperation_notAPrefixOperation()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = new Builder("2+2", false).withPrefixOperator("£", o -> o * 3);
+        b.buildOperatorGroups();
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("x", new Token("£"), new NumberToken("7", 7.0));
+
+        Operation op = b.tryParsePrefixOperation(tl, opGroup);
+        assertNull(op);
     }
 
     @Test
     void tryParsePrefixOperation_isAPrefixOperation()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = new Builder("2+2", false).withPrefixOperator("£", o -> o * 3);
+        b.buildOperatorGroups();
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList(new Token("£"), new NumberToken("7", 7.0));
+
+        Operation op = b.tryParsePrefixOperation(tl, opGroup);
+        assertNotNull(op);
+        OperatorAction expectedA = opGroup.prefixOperators.values().stream().findFirst().get().action;
+        assertEquals(expectedA, op.action);
+        assertThat(op.components).hasSize(1);
+        EquationComponent operand = op.components.get(0);
+        assertThat(operand).isInstanceOf(LiteralNumber.class);
+        assertEquals(7.0, ((LiteralNumber)operand).value);
+        assertEquals(21.0, op.evaluate());
     }
     //endregion
 
@@ -1154,15 +1171,32 @@ public class EquationEvaluator_BuilderTest
     @Test
     void tryParsePostfixOperation_notAPostfixOperation()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = new Builder("2+2", false).withPostfixOperator("£", o -> o * 3);
+        b.buildOperatorGroups();
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList("x", new Token("£"), new NumberToken("7", 7.0));
+
+        Operation op = b.tryParsePrefixOperation(tl, opGroup);
+        assertNull(op);
     }
 
     @Test
     void tryParsePostfixOperation_isAPostfixOperation()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Builder b = new Builder("2+2", false).withPostfixOperator("£", o -> o * 3);
+        b.buildOperatorGroups();
+        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        TokenList tl = newTokenList(new NumberToken("7", 7.0), new Token("£"));
+
+        Operation op = b.tryParsePostfixOperation(tl, opGroup);
+        assertNotNull(op);
+        OperatorAction expectedA = opGroup.postfixOperators.values().stream().findFirst().get().action;
+        assertEquals(expectedA, op.action);
+        assertThat(op.components).hasSize(1);
+        EquationComponent operand = op.components.get(0);
+        assertThat(operand).isInstanceOf(LiteralNumber.class);
+        assertEquals(7.0, ((LiteralNumber)operand).value);
+        assertEquals(21.0, op.evaluate());
     }
     //endregion
 }
