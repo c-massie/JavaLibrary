@@ -2,20 +2,15 @@ package scot.massie.lib.maths;
 
 import org.junit.jupiter.api.Test;
 
-import org.junit.jupiter.api.function.Executable;
-import scot.massie.lib.collections.tree.Tree;
-import scot.massie.lib.maths.EquationEvaluator.*;
+import scot.massie.lib.maths.Equation.*;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class EquationEvaluator_BuilderTest
+public class Equation_BuilderTest
 {
     // These tests assume that the methods for registering operators, functions, and variables are working as intended.
 

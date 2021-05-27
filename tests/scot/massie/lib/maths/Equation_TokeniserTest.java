@@ -8,12 +8,12 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import scot.massie.lib.maths.EquationEvaluator.*;
+import scot.massie.lib.maths.Equation.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class EquationEvaluator_TokeniserTest
+public class Equation_TokeniserTest
 {
     /*
 

@@ -2,8 +2,7 @@ package scot.massie.lib.maths;
 
 import org.junit.jupiter.api.Test;
 
-import org.junit.jupiter.api.function.Executable;
-import scot.massie.lib.maths.EquationEvaluator.*;
+import scot.massie.lib.maths.Equation.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +13,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.*;
 
-public class EquationEvaluator_TokenListTest
+public class Equation_TokenListTest
 {
     /*
 

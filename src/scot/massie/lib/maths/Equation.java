@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 import static scot.massie.lib.utils.ControlFlowUtils.*;
 
-public class EquationEvaluator
+public class Equation
 {
     //region inner classes
     //region exceptions
@@ -731,7 +731,7 @@ public class EquationEvaluator
             operatorGroupsInOrder = null;
         }
 
-        public EquationEvaluator build()
+        public Equation build()
         {
             buildOperatorGroups();
             Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
@@ -744,7 +744,7 @@ public class EquationEvaluator
             catch(EquationParseException e)
             { throw e.withFullEquation(tokenisation); }
 
-            return new EquationEvaluator(topLevelComponent, variables, functions);
+            return new Equation(topLevelComponent, variables, functions);
         }
 
         void verifyTokenisationBrackets(TokenList tokenisation)
@@ -1934,9 +1934,9 @@ public class EquationEvaluator
     //endregion
 
     //region initialisation
-    EquationEvaluator(EquationComponent topLevelComponent,
-                      Map<String, Double> variableValues,
-                      Map<String, ToDoubleFunction<double[]>> functions)
+    Equation(EquationComponent topLevelComponent,
+             Map<String, Double> variableValues,
+             Map<String, ToDoubleFunction<double[]>> functions)
     {
         this.topLevelComponent = topLevelComponent;
         this.variableValues = variableValues;
