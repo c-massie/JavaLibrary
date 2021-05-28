@@ -170,10 +170,10 @@ public class Equation_BuilderTest
 
     Builder newBuilderWithInfixOp(boolean shouldBeLeftAssociative)
     {
-        Builder result = new Builder("2+2", false).withVariable("a", 5)
-                                                  .withVariable("b", 6)
-                                                  .withVariable("c", 7)
-                                                  .withVariable("d", 8);
+        Builder result = new Builder(false).withVariable("a", 5)
+                                           .withVariable("b", 6)
+                                           .withVariable("c", 7)
+                                           .withVariable("d", 8);
 
         List<Token> opTokens = Arrays.asList(new Token("£"), new Token("€"), new Token("¢"));
         result.addOperator(new InfixOperator(opTokens,
@@ -201,7 +201,7 @@ public class Equation_BuilderTest
         assertDoesNotThrow(() ->
         {
             TokenList tl = newTokenList("a", "b", "c");
-            new Builder("2+2").verifyTokenisationBrackets(tl);
+            new Builder().verifyTokenisationBrackets(tl);
         });
     }
 
@@ -211,7 +211,7 @@ public class Equation_BuilderTest
         assertDoesNotThrow(() ->
         {
             TokenList tl = newTokenList("a", Token.OPEN_BRACKET, "b", Token.CLOSE_BRACKET, "c");
-            new Builder("2+2").verifyTokenisationBrackets(tl);
+            new Builder().verifyTokenisationBrackets(tl);
         });
     }
 
@@ -228,7 +228,7 @@ public class Equation_BuilderTest
                                         Token.CLOSE_BRACKET,
                                         Token.CLOSE_BRACKET,
                                         "d");
-            new Builder("2+2").verifyTokenisationBrackets(tl);
+            new Builder().verifyTokenisationBrackets(tl);
         });
     }
 
@@ -244,7 +244,7 @@ public class Equation_BuilderTest
                                         Token.OPEN_BRACKET,
                                         "c",
                                         Token.CLOSE_BRACKET);
-            new Builder("2+2").verifyTokenisationBrackets(tl);
+            new Builder().verifyTokenisationBrackets(tl);
         });
     }
 
@@ -254,7 +254,7 @@ public class Equation_BuilderTest
         assertThrows(Builder.UnmatchedOpenBracketException.class, () ->
         {
             TokenList tl = newTokenList("a", Token.OPEN_BRACKET);
-            new Builder("2+2").verifyTokenisationBrackets(tl);
+            new Builder().verifyTokenisationBrackets(tl);
         });
     }
 
@@ -264,7 +264,7 @@ public class Equation_BuilderTest
         assertThrows(Builder.UnexpectedCloseBracketException.class, () ->
         {
             TokenList tl = newTokenList("a", Token.CLOSE_BRACKET);
-            new Builder("2+2").verifyTokenisationBrackets(tl);
+            new Builder().verifyTokenisationBrackets(tl);
         });
     }
 
@@ -274,7 +274,7 @@ public class Equation_BuilderTest
         assertThrows(Builder.UnmatchedOpenBracketException.class, () ->
         {
             TokenList tl = newTokenList("a", Token.OPEN_BRACKET, Token.OPEN_BRACKET, "b", Token.CLOSE_BRACKET);
-            new Builder("2+2").verifyTokenisationBrackets(tl);
+            new Builder().verifyTokenisationBrackets(tl);
         });
     }
 
@@ -284,7 +284,7 @@ public class Equation_BuilderTest
         assertThrows(Builder.UnexpectedCloseBracketException.class, () ->
         {
             TokenList tl = newTokenList("a", Token.OPEN_BRACKET, "b", Token.CLOSE_BRACKET, Token.CLOSE_BRACKET);
-            new Builder("2+2").verifyTokenisationBrackets(tl);
+            new Builder().verifyTokenisationBrackets(tl);
         });
     }
 
@@ -294,7 +294,7 @@ public class Equation_BuilderTest
         assertThrows(Builder.BracketMismatchException.class, () ->
         {
             TokenList tl = newTokenList("a", Token.CLOSE_BRACKET, Token.OPEN_BRACKET, "b");
-            new Builder("2+2").verifyTokenisationBrackets(tl);
+            new Builder().verifyTokenisationBrackets(tl);
         });
     }
     //endregion
@@ -302,29 +302,29 @@ public class Equation_BuilderTest
     //region startsWithNonPrefixOperator
     @Test
     void startsWithNonPrefixOperator_startsWithPrefixOperator()
-    { assertFalse(new Builder("2+2").startsWithNonPrefixOperator(newTokenList(new Token("-"), "a"))); }
+    { assertFalse(new Builder().startsWithNonPrefixOperator(newTokenList(new Token("-"), "a"))); }
 
     @Test
     void startsWithNonPrefixOperator_startsWithInfixOperator()
-    { assertTrue(new Builder("2+2").startsWithNonPrefixOperator(newTokenList(new Token("/"), "a"))); }
+    { assertTrue(new Builder().startsWithNonPrefixOperator(newTokenList(new Token("/"), "a"))); }
 
     @Test
     void startsWithNonPrefixOperator_startsWithNonOperator()
-    { assertFalse(new Builder("2+2").startsWithNonPrefixOperator(newTokenList("a", "b"))); }
+    { assertFalse(new Builder().startsWithNonPrefixOperator(newTokenList("a", "b"))); }
     //endregion
 
     //region endsWithNonPostfixOperator
     @Test
     void endsWithNonPostfixOperator_endsWithPostfixOperator()
-    { assertFalse(new Builder("2+2").endsWithNonPostfixOperator(newTokenList("a", new Token("%")))); }
+    { assertFalse(new Builder().endsWithNonPostfixOperator(newTokenList("a", new Token("%")))); }
 
     @Test
     void endsWithNonPostfixOperator_endsWithInfixOperator()
-    { assertTrue(new Builder("2+2").endsWithNonPostfixOperator(newTokenList("a", new Token("/")))); }
+    { assertTrue(new Builder().endsWithNonPostfixOperator(newTokenList("a", new Token("/")))); }
 
     @Test
     void endsWithNonPostfixOperator_endsWithNonOperator()
-    { assertFalse(new Builder("2+2").endsWithNonPostfixOperator(newTokenList("a", "b"))); }
+    { assertFalse(new Builder().endsWithNonPostfixOperator(newTokenList("a", "b"))); }
     //endregion
 
     //region getOpRun
@@ -336,7 +336,7 @@ public class Equation_BuilderTest
     void getOpRun_tokenRunIn()
     {
         List<Token> ts = asListOfTokens("a", new Token("+"), new Token("-"), new Token("/"), "b");
-        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 2);
+        Builder.OperatorTokenRun opRun = new Builder().getOpRun(ts, 2);
         assertOpRun(opRun, ts, 1, 2, 3);
     }
 
@@ -344,7 +344,7 @@ public class Equation_BuilderTest
     void getOpRun_tokenRunAtStart()
     {
         List<Token> ts = asListOfTokens(new Token("+"), new Token("-"), new Token("/"), "b");
-        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 1);
+        Builder.OperatorTokenRun opRun = new Builder().getOpRun(ts, 1);
         assertOpRun(opRun, ts, 0, 1, 2);
     }
 
@@ -352,7 +352,7 @@ public class Equation_BuilderTest
     void getOpRun_tokenRunAtEnd()
     {
         List<Token> ts = asListOfTokens("a", new Token("+"), new Token("-"), new Token("/"));
-        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 2);
+        Builder.OperatorTokenRun opRun = new Builder().getOpRun(ts, 2);
         assertOpRun(opRun, ts, 1, 2, 3);
     }
 
@@ -360,7 +360,7 @@ public class Equation_BuilderTest
     void getOpRun_tokenRunIsEntire()
     {
         List<Token> ts = asListOfTokens(new Token("+"), new Token("-"), new Token("/"));
-        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 1);
+        Builder.OperatorTokenRun opRun = new Builder().getOpRun(ts, 1);
         assertOpRun(opRun, ts, 0, 1, 2);
     }
 
@@ -368,7 +368,7 @@ public class Equation_BuilderTest
     void getOpRun_tokenRunIsOneToken()
     {
         List<Token> ts = asListOfTokens("a", new Token("+"), "b");
-        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 1);
+        Builder.OperatorTokenRun opRun = new Builder().getOpRun(ts, 1);
         assertOpRun(opRun, ts, 1, 1, 1);
     }
 
@@ -376,7 +376,7 @@ public class Equation_BuilderTest
     void getOpRun_tokenRunIsOneTokenAtStart()
     {
         List<Token> ts = asListOfTokens(new Token("+"), "b");
-        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 0);
+        Builder.OperatorTokenRun opRun = new Builder().getOpRun(ts, 0);
         assertOpRun(opRun, ts, 0, 0, 0);
     }
 
@@ -384,7 +384,7 @@ public class Equation_BuilderTest
     void getOpRun_tokenRunIsOneTokenAtEnd()
     {
         List<Token> ts = asListOfTokens("a", new Token("+"));
-        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 1);
+        Builder.OperatorTokenRun opRun = new Builder().getOpRun(ts, 1);
         assertOpRun(opRun, ts, 1, 1, 1);
     }
 
@@ -392,7 +392,7 @@ public class Equation_BuilderTest
     void getOpRun_tokenRunIsOneTokenThatIsEntire()
     {
         List<Token> ts = asListOfTokens(new Token("+"));
-        Builder.OperatorTokenRun opRun = new Builder("2+2").getOpRun(ts, 0);
+        Builder.OperatorTokenRun opRun = new Builder().getOpRun(ts, 0);
         assertOpRun(opRun, ts, 0, 0, 0);
     }
     //endregion
@@ -402,56 +402,56 @@ public class Equation_BuilderTest
     void canBeInfixOperatorToken_singleToken()
     {
         List<Token> tl = asListOfTokens("a", new Token("+"), "b");
-        assertTrue(new Builder("2+2").canBeInfixOperatorToken(tl, 1));
+        assertTrue(new Builder().canBeInfixOperatorToken(tl, 1));
     }
 
     @Test
     void canBeInfixOperatorToken_followedByPrefix()
     {
         List<Token> tl = asListOfTokens("a", new Token("+"), new Token("-"), "b");
-        assertTrue(new Builder("2+2").canBeInfixOperatorToken(tl, 1));
+        assertTrue(new Builder().canBeInfixOperatorToken(tl, 1));
     }
 
     @Test
     void canBeInfixOperatorToken_followingPostfix()
     {
         List<Token> tl = asListOfTokens("a", new Token("%"), new Token("+"), "b");
-        assertTrue(new Builder("2+2").canBeInfixOperatorToken(tl, 2));
+        assertTrue(new Builder().canBeInfixOperatorToken(tl, 2));
     }
 
     @Test
     void canBeInfixOperatorToken_runAtStart()
     {
         List<Token> tl = asListOfTokens(new Token("+"), "b");
-        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 0));
+        assertFalse(new Builder().canBeInfixOperatorToken(tl, 0));
     }
 
     @Test
     void canBeInfixOperatorToken_runAtEnd()
     {
         List<Token> tl = asListOfTokens("a", new Token("+"));
-        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 1));
+        assertFalse(new Builder().canBeInfixOperatorToken(tl, 1));
     }
 
     @Test
     void canBeInfixOperatorToken_runIsEntire()
     {
         List<Token> tl = asListOfTokens(new Token("+"));
-        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 0));
+        assertFalse(new Builder().canBeInfixOperatorToken(tl, 0));
     }
 
     @Test
     void canBeInfixOperatorToken_followedByNonPrefixOperatorTokens()
     {
         List<Token> tl = asListOfTokens("a", new Token("+"), new Token("%"), "b");
-        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 1));
+        assertFalse(new Builder().canBeInfixOperatorToken(tl, 1));
     }
 
     @Test
     void canBeInfixOperatorToken_followsNonPostfixOperatorTokens()
     {
         List<Token> tl = asListOfTokens("a", new Token("/"), new Token("+"), "b");
-        assertFalse(new Builder("2+2").canBeInfixOperatorToken(tl, 2));
+        assertFalse(new Builder().canBeInfixOperatorToken(tl, 2));
     }
     //endregion
 
@@ -489,7 +489,7 @@ public class Equation_BuilderTest
     @Test
     void buildOperatorGroups_noOperators()
     {
-        Builder b = new Builder("2+2", false);
+        Builder b = new Builder(false);
         b.buildOperatorGroups();
         assertThat(b.operatorGroups).isEmpty();
         assertThat(b.operatorGroupsInOrder).isEmpty();
@@ -498,7 +498,7 @@ public class Equation_BuilderTest
     @Test
     void buildOperatorGroups_oneOperator()
     {
-        Builder b = new Builder("2+2", false);
+        Builder b = new Builder(false);
         BinaryOperator op = new BinaryOperator(new Token("+"), true, 1.3, (l, r) -> l + r);
         b.addOperator(op);
         b.buildOperatorGroups();
@@ -514,7 +514,7 @@ public class Equation_BuilderTest
     @Test
     void buildOperatorGroups_twoOperators_differentPriorities()
     {
-        Builder b = new Builder("2+2", false);
+        Builder b = new Builder(false);
         BinaryOperator op1 = new BinaryOperator(new Token("+"), true, 1.3, (l, r) -> l + r);
         BinaryOperator op2 = new BinaryOperator(new Token("-"), true, 3.4, (l, r) -> l - r);
         b.addOperator(op1);
@@ -534,7 +534,7 @@ public class Equation_BuilderTest
     @Test
     void buildOperatorGroups_twoOperators_samePriorityDifferentAssociativity()
     {
-        Builder b = new Builder("2+2", false);
+        Builder b = new Builder(false);
         BinaryOperator op1 = new BinaryOperator(new Token("+"), true, 1.3, (l, r) -> l + r);
         BinaryOperator op2 = new BinaryOperator(new Token("-"), false, 1.3, (l, r) -> l - r);
         b.addOperator(op1);
@@ -552,7 +552,7 @@ public class Equation_BuilderTest
     @Test
     void buildOperatorGroups_twoOperators_samePrioritySameAssociativity()
     {
-        Builder b = new Builder("2+2", false);
+        Builder b = new Builder(false);
         BinaryOperator op1 = new BinaryOperator(new Token("+"), true, 1.3, (l, r) -> l + r);
         BinaryOperator op2 = new BinaryOperator(new Token("-"), true, 1.3, (l, r) -> l - r);
         b.addOperator(op1);
@@ -571,12 +571,12 @@ public class Equation_BuilderTest
     //region tryParseVariable
     @Test
     void tryParseVariable_notAVariable()
-    { assertNull(new Builder("2+2").tryParseVariable(newTokenList("doot"))); }
+    { assertNull(new Builder().tryParseVariable(newTokenList("doot"))); }
 
     @Test
     void tryParseVariable_isAVariable()
     {
-        VariableReference v = new Builder("2+2").withVariable("doot", 5).tryParseVariable(newTokenList("doot"));
+        VariableReference v = new Builder().withVariable("doot", 5).tryParseVariable(newTokenList("doot"));
 
         assertNotNull(v);
         assertEquals("doot", v.name);
@@ -586,7 +586,7 @@ public class Equation_BuilderTest
     @Test
     void tryParseVariable_isAVariableWithSpaces()
     {
-        VariableReference v = new Builder("2+2").withVariable("a doot", 5).tryParseVariable(newTokenList("a doot"));
+        VariableReference v = new Builder().withVariable("a doot", 5).tryParseVariable(newTokenList("a doot"));
 
         assertNotNull(v);
         assertEquals("a doot", v.name);
@@ -596,7 +596,7 @@ public class Equation_BuilderTest
     @Test
     void tryParseVariable_isAVariableWithTokenCharacters()
     {
-        VariableReference v = new Builder("2+2").withVariable("a  doot", 5).tryParseVariable(newTokenList("a", "doot"));
+        VariableReference v = new Builder().withVariable("a  doot", 5).tryParseVariable(newTokenList("a", "doot"));
 
         assertNotNull(v);
         assertEquals("a  doot", v.name);
@@ -607,12 +607,12 @@ public class Equation_BuilderTest
     //region tryParseFunctionCall
     @Test
     void tryParseFunctionCall_notAFunctionCall()
-    { assertNull(new Builder("2+2").tryParseFunctionCall(newTokenList("doot"))); }
+    { assertNull(new Builder().tryParseFunctionCall(newTokenList("doot"))); }
 
     @Test
     void tryParseFunctionCall_functionCallWithNoArgs()
     {
-        Builder b = new Builder("2+2").withFunction("doot", x -> 3);
+        Builder b = new Builder().withFunction("doot", x -> 3);
         b.buildOperatorGroups();
         FunctionCall f = b.tryParseFunctionCall(newTokenList("doot", Token.OPEN_BRACKET, Token.CLOSE_BRACKET));
 
@@ -625,7 +625,7 @@ public class Equation_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithSpaceWithNoArgs()
     {
-        FunctionCall f = new Builder("2+2")
+        FunctionCall f = new Builder()
                                  .withFunction("a doot", x -> 3)
                                  .tryParseFunctionCall(newTokenList("a doot",
                                                                     Token.OPEN_BRACKET,
@@ -640,7 +640,7 @@ public class Equation_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithOpTokensWithArgs()
     {
-        FunctionCall f = new Builder("2+2")
+        FunctionCall f = new Builder()
                                  .withFunction("doot  +   dat", x -> 3)
                                  .tryParseFunctionCall(newTokenList("doot",
                                                                     new Token("+"),
@@ -657,7 +657,7 @@ public class Equation_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithOneArgument()
     {
-        FunctionCall f = new Builder("2+2")
+        FunctionCall f = new Builder()
                                  .withFunction("doot", x -> 3)
                                  .withVariable("x", 5)
                                  .tryParseFunctionCall(newTokenList("doot",
@@ -676,7 +676,7 @@ public class Equation_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgs()
     {
-        Builder b = new Builder("2+2").withFunction("doot", x -> 3).withVariable("x", 5);
+        Builder b = new Builder().withFunction("doot", x -> 3).withVariable("x", 5);
         b.buildOperatorGroups();
         FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
                                                              Token.OPEN_BRACKET,
@@ -702,7 +702,7 @@ public class Equation_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsFunctionCall()
     {
-        Builder b = new Builder("2+2").withFunction("doot", x -> 3).withVariable("x", 5);
+        Builder b = new Builder().withFunction("doot", x -> 3).withVariable("x", 5);
         b.buildOperatorGroups();
         FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
                                                              Token.OPEN_BRACKET,
@@ -730,7 +730,7 @@ public class Equation_BuilderTest
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsInBrackets()
     {
-        Builder b = new Builder("2+2").withFunction("doot", x -> 3).withVariable("x", 5);
+        Builder b = new Builder().withFunction("doot", x -> 3).withVariable("x", 5);
         b.buildOperatorGroups();
         FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
                                                              Token.OPEN_BRACKET,
@@ -759,7 +759,7 @@ public class Equation_BuilderTest
     void tryParseFunctionCall_unrecognisedFunction()
     {
         assertThrows(Builder.UnrecognisedFunctionException.class,
-                     () -> new Builder("2+2").withFunction("doot", x -> 3)
+                     () -> new Builder().withFunction("doot", x -> 3)
                                              .tryParseFunctionCall(newTokenList("dat",
                                                                                 Token.OPEN_BRACKET,
                                                                                 Token.CLOSE_BRACKET)));
@@ -770,12 +770,12 @@ public class Equation_BuilderTest
     //region tryParseNumber
     @Test
     void tryParseNumber_notANumber()
-    { assertNull(new Builder("2+2").tryParseNumber(newTokenList("doot"))); }
+    { assertNull(new Builder().tryParseNumber(newTokenList("doot"))); }
 
     @Test
     void tryParseNumber_isANumber()
     {
-        LiteralNumber ln = new Builder("2+2").tryParseNumber(newTokenList("7.3"));
+        LiteralNumber ln = new Builder().tryParseNumber(newTokenList("7.3"));
         assertNotNull(ln);
         assertEquals(7.3, ln.evaluate());
     }
@@ -783,11 +783,11 @@ public class Equation_BuilderTest
     @Test
     void tryParseNumber_isNumberMadeUpOfMultipleTokens()
     {
-        LiteralNumber ln = new Builder("2+2").tryParseNumber(new TokenList("7.3",
-                                                                           Arrays.asList(new UntokenisedString("7"),
-                                                                                         new Token("."),
-                                                                                         new UntokenisedString("3")),
-                                                                           Arrays.asList(0, 0, 0, 0)));
+        LiteralNumber ln = new Builder().tryParseNumber(new TokenList("7.3",
+                                                                      Arrays.asList(new UntokenisedString("7"),
+                                                                                    new Token("."),
+                                                                                    new UntokenisedString("3")),
+                                                                      Arrays.asList(0, 0, 0, 0)));
         assertNotNull(ln);
         assertEquals(7.3, ln.evaluate());
     }
@@ -1133,7 +1133,7 @@ public class Equation_BuilderTest
     @Test
     void tryParsePrefixOperation_notAPrefixOperation()
     {
-        Builder b = new Builder("2+2", false).withPrefixOperator("£", o -> o * 3);
+        Builder b = new Builder(false).withPrefixOperator("£", o -> o * 3);
         b.buildOperatorGroups();
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("x", new Token("£"), new NumberToken("7", 7.0));
@@ -1145,7 +1145,7 @@ public class Equation_BuilderTest
     @Test
     void tryParsePrefixOperation_isAPrefixOperation()
     {
-        Builder b = new Builder("2+2", false).withPrefixOperator("£", o -> o * 3);
+        Builder b = new Builder(false).withPrefixOperator("£", o -> o * 3);
         b.buildOperatorGroups();
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList(new Token("£"), new NumberToken("7", 7.0));
@@ -1166,7 +1166,7 @@ public class Equation_BuilderTest
     @Test
     void tryParsePostfixOperation_notAPostfixOperation()
     {
-        Builder b = new Builder("2+2", false).withPostfixOperator("£", o -> o * 3);
+        Builder b = new Builder(false).withPostfixOperator("£", o -> o * 3);
         b.buildOperatorGroups();
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("x", new Token("£"), new NumberToken("7", 7.0));
@@ -1178,7 +1178,7 @@ public class Equation_BuilderTest
     @Test
     void tryParsePostfixOperation_isAPostfixOperation()
     {
-        Builder b = new Builder("2+2", false).withPostfixOperator("£", o -> o * 3);
+        Builder b = new Builder(false).withPostfixOperator("£", o -> o * 3);
         b.buildOperatorGroups();
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList(new NumberToken("7", 7.0), new Token("£"));

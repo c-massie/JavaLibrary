@@ -330,8 +330,6 @@ public class Equation
 
         static final double PHI = (1 + Math.sqrt(5)) / 2;
 
-        String unparsedEquation;
-
         /**
          * Fixed string tokens that may appear in an equation. Does not include variable names, function names,
          * numbers, or unparsable portions of equation.
@@ -369,19 +367,11 @@ public class Equation
         Map<Double, OperatorPriorityGroup> operatorGroups        = null;
         List<OperatorPriorityGroup>        operatorGroupsInOrder = null;
 
-        public Builder(@NotNull String equation)
-        { this(equation, true); }
+        public Builder()
+        { this(true); }
 
-        public Builder(@NotNull String equation, boolean includeDefaults)
+        public Builder(boolean includeDefaults)
         {
-            if(equation == null)
-                throw new NullPointerException("Equations cannot be null strings.");
-
-            if(equation.trim().isEmpty())
-                throw new IllegalArgumentException("Equations cannot be empty strings.");
-
-            this.unparsedEquation = equation;
-
             if(includeDefaults)
             {
                 addDefaultOperators();
@@ -731,11 +721,17 @@ public class Equation
             operatorGroupsInOrder = null;
         }
 
-        public Equation build()
+        public Equation build(String toParse)
         {
+            if(toParse == null)
+                throw new IllegalArgumentException("Cannot parse a null string as an equation.");
+
+            if(toParse.isEmpty())
+                throw new IllegalArgumentException("Cannot parse an empty string as an equation.");
+
             buildOperatorGroups();
             Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
-            TokenList tokenisation = tokeniser.tokenise(unparsedEquation).unmodifiable();
+            TokenList tokenisation = tokeniser.tokenise(toParse).unmodifiable();
             verifyTokenisationBrackets(tokenisation);
             EquationComponent topLevelComponent;
 
