@@ -862,11 +862,7 @@ public class Equation_BuilderTest
         assertEquals("b", ((VariableReference)op.components.get(1)).name);
         assertEquals("c", ((VariableReference)op.components.get(2)).name);
         assertEquals("d", ((VariableReference)op.components.get(3)).name);
-        assertSame(b.variables, ((VariableReference)op.components.get(0)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(2)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(3)).variableValues);
-        assertEquals(114.0, op.evaluate());
+        assertEquals(114.0, op.evaluate(newDummyEquation(b)));
     }
 
     @Test
@@ -889,9 +885,6 @@ public class Equation_BuilderTest
         assertEquals("a", ((VariableReference)op.components.get(0)).name);
         assertEquals("b", ((VariableReference)op.components.get(1)).name);
         assertEquals("c", ((VariableReference)op.components.get(2)).name);
-        assertSame(b.variables, ((VariableReference)op.components.get(0)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(2)).variableValues);
 
         Operation innerOp = (Operation)op.components.get(3);
         assertEquals(expectedA, innerOp.action);
@@ -904,13 +897,9 @@ public class Equation_BuilderTest
         assertEquals("c", ((VariableReference)innerOp.components.get(1)).name);
         assertEquals("b", ((VariableReference)innerOp.components.get(2)).name);
         assertEquals("a", ((VariableReference)innerOp.components.get(3)).name);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(0)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(2)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(3)).variableValues);
 
-        assertEquals(94.0, innerOp.evaluate());
-        assertEquals(716.0, op.evaluate());
+        assertEquals(94.0, innerOp.evaluate(newDummyEquation(b)));
+        assertEquals(716.0, op.evaluate(newDummyEquation(b)));
     }
 
     @Test
@@ -938,9 +927,6 @@ public class Equation_BuilderTest
         assertEquals("a", ((VariableReference)op.components.get(0)).name);
         assertEquals("b", ((VariableReference)op.components.get(1)).name);
         assertEquals("a", ((VariableReference)op.components.get(3)).name);
-        assertSame(b.variables, ((VariableReference)op.components.get(0)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(3)).variableValues);
 
         Operation innerOp = (Operation)op.components.get(2);
         assertEquals(expectedA, innerOp.action);
@@ -953,13 +939,9 @@ public class Equation_BuilderTest
         assertEquals("d", ((VariableReference)innerOp.components.get(1)).name);
         assertEquals("c", ((VariableReference)innerOp.components.get(2)).name);
         assertEquals("b", ((VariableReference)innerOp.components.get(3)).name);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(0)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(2)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(3)).variableValues);
 
-        assertEquals(108.0, innerOp.evaluate());
-        assertEquals(598.0, op.evaluate());
+        assertEquals(108.0, innerOp.evaluate(newDummyEquation(b)));
+        assertEquals(598.0, op.evaluate(newDummyEquation(b)));
     }
     //endregion
 
@@ -1030,11 +1012,7 @@ public class Equation_BuilderTest
         assertEquals("b", ((VariableReference)op.components.get(1)).name);
         assertEquals("c", ((VariableReference)op.components.get(2)).name);
         assertEquals("d", ((VariableReference)op.components.get(3)).name);
-        assertSame(b.variables, ((VariableReference)op.components.get(0)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(2)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(3)).variableValues);
-        assertEquals(114.0, op.evaluate());
+        assertEquals(114.0, op.evaluate(newDummyEquation(b)));
     }
 
     @Test
@@ -1057,9 +1035,6 @@ public class Equation_BuilderTest
         assertEquals("c", ((VariableReference)op.components.get(1)).name);
         assertEquals("b", ((VariableReference)op.components.get(2)).name);
         assertEquals("a", ((VariableReference)op.components.get(3)).name);
-        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(2)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(3)).variableValues);
 
         Operation innerOp = (Operation)op.components.get(0);
         assertEquals(expectedA, innerOp.action);
@@ -1072,13 +1047,9 @@ public class Equation_BuilderTest
         assertEquals("b", ((VariableReference)innerOp.components.get(1)).name);
         assertEquals("c", ((VariableReference)innerOp.components.get(2)).name);
         assertEquals("d", ((VariableReference)innerOp.components.get(3)).name);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(0)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(2)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(3)).variableValues);
 
-        assertEquals(114.0, innerOp.evaluate());
-        assertEquals(200.0, op.evaluate());
+        assertEquals(114.0, innerOp.evaluate(newDummyEquation(b)));
+        assertEquals(200.0, op.evaluate(newDummyEquation(b)));
     }
 
     @Test
@@ -1106,9 +1077,6 @@ public class Equation_BuilderTest
         assertEquals("a", ((VariableReference)op.components.get(0)).name);
         assertEquals("b", ((VariableReference)op.components.get(1)).name);
         assertEquals("a", ((VariableReference)op.components.get(3)).name);
-        assertSame(b.variables, ((VariableReference)op.components.get(0)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)op.components.get(3)).variableValues);
 
         Operation innerOp = (Operation)op.components.get(2);
         assertEquals(expectedA, innerOp.action);
@@ -1121,13 +1089,9 @@ public class Equation_BuilderTest
         assertEquals("d", ((VariableReference)innerOp.components.get(1)).name);
         assertEquals("c", ((VariableReference)innerOp.components.get(2)).name);
         assertEquals("b", ((VariableReference)innerOp.components.get(3)).name);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(0)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(1)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(2)).variableValues);
-        assertSame(b.variables, ((VariableReference)innerOp.components.get(3)).variableValues);
 
-        assertEquals(108.0, innerOp.evaluate());
-        assertEquals(598.0, op.evaluate());
+        assertEquals(108.0, innerOp.evaluate(newDummyEquation(b)));
+        assertEquals(598.0, op.evaluate(newDummyEquation(b)));
     }
     //endregion
     
@@ -1160,7 +1124,7 @@ public class Equation_BuilderTest
         EquationComponent operand = op.components.get(0);
         assertThat(operand).isInstanceOf(LiteralNumber.class);
         assertEquals(7.0, ((LiteralNumber)operand).value);
-        assertEquals(21.0, op.evaluate());
+        assertEquals(21.0, op.evaluate(newDummyEquation(b)));
     }
     //endregion
 
@@ -1193,7 +1157,7 @@ public class Equation_BuilderTest
         EquationComponent operand = op.components.get(0);
         assertThat(operand).isInstanceOf(LiteralNumber.class);
         assertEquals(7.0, ((LiteralNumber)operand).value);
-        assertEquals(21.0, op.evaluate());
+        assertEquals(21.0, op.evaluate(newDummyEquation(b)));
     }
     //endregion
 }
