@@ -740,7 +740,7 @@ public class Equation
             catch(EquationParseException e)
             { throw e.withFullEquation(tokenisation); }
 
-            return new Equation(topLevelComponent, variables, functions);
+            return new Equation(topLevelComponent, new HashMap<>(variables), new HashMap<>(functions));
         }
 
         void verifyTokenisationBrackets(TokenList tokenisation)
@@ -981,7 +981,7 @@ public class Equation
         {
             String varName = tokenList.equationAsString.trim();
             Double variableValue = variables.get(varName);
-            return variableValue == null ? null : new VariableReference(variables, varName);
+            return variableValue == null ? null : new VariableReference(varName);
         }
 
         FunctionCall tryParseFunctionCall(TokenList tokenList)
@@ -1031,7 +1031,7 @@ public class Equation
             if(!functions.containsKey(functionName))
                 throw new UnrecognisedFunctionException(functionName, tokenList, tokenList);
 
-            return new FunctionCall(functions, functionName, arguments);
+            return new FunctionCall(functionName, arguments);
         }
 
         LiteralNumber tryParseNumber(TokenList tokenList)
@@ -1802,7 +1802,7 @@ public class Equation
 
     //region equation components
     static abstract class EquationComponent
-    { public abstract double evaluate(); }
+    { public abstract double evaluate(Equation equationBeingEvaluated); }
 
     static class Operation extends EquationComponent
     {
@@ -1825,12 +1825,12 @@ public class Equation
         }
 
         @Override
-        public double evaluate()
+        public double evaluate(Equation equationBeingEvaluated)
         {
             double[] operands = new double[components.size()];
 
             for(int i = 0; i < components.size(); i++)
-                operands[i] = components.get(i).evaluate();
+                operands[i] = components.get(i).evaluate(equationBeingEvaluated);
 
             return action.performOperation(operands);
         }
@@ -1840,21 +1840,18 @@ public class Equation
     {
         String functionName;
         EquationComponent[] arguments;
-        Map<String, ToDoubleFunction<double[]>> functionMap;
 
-        public FunctionCall(Map<String, ToDoubleFunction<double[]>> functionMap,
-                            String functionName,
+        public FunctionCall(String functionName,
                             EquationComponent... arguments)
         {
-            this.functionMap = functionMap;
             this.functionName = functionName;
             this.arguments = arguments;
         }
 
         @Override
-        public double evaluate()
+        public double evaluate(Equation equationBeingEvaluated)
         {
-            ToDoubleFunction<double[]> f = functionMap.get(functionName);
+            ToDoubleFunction<double[]> f = equationBeingEvaluated.functions.get(functionName);
 
             if(f == null)
                 throw new EquationEvaluation.MissingFunctionException(functionName);
@@ -1862,7 +1859,7 @@ public class Equation
             double[] results = new double[arguments.length];
 
             for(int i = 0; i < results.length; i++)
-                results[i] = arguments[i].evaluate();
+                results[i] = arguments[i].evaluate(equationBeingEvaluated);
 
             return f.applyAsDouble(results);
         }
@@ -1870,19 +1867,15 @@ public class Equation
 
     static class VariableReference extends EquationComponent
     {
-        Map<String, Double> variableValues;
         String name;
 
-        public VariableReference(Map<String, Double> variableValues, String name)
-        {
-            this.variableValues = variableValues;
-            this.name = name;
-        }
+        public VariableReference(String name)
+        { this.name = name; }
 
         @Override
-        public double evaluate()
+        public double evaluate(Equation equationBeingEvaluated)
         {
-            Double result = variableValues.get(name);
+            Double result = equationBeingEvaluated.variableValues.get(name);
 
             if(result == null)
                 throw new EquationEvaluation.MissingVariableException(name);
@@ -1899,7 +1892,7 @@ public class Equation
         { this.value = value; }
 
         @Override
-        public double evaluate()
+        public double evaluate(Equation equationBeingEvaluated)
         { return value; }
     }
     //endregion
@@ -1942,7 +1935,7 @@ public class Equation
 
     //region methods
     public double evaluate()
-    { return topLevelComponent.evaluate(); }
+    { return topLevelComponent.evaluate(this); }
 
     public boolean setVariable(String variableName, double newValue)
     {

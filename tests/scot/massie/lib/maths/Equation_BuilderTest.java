@@ -194,6 +194,9 @@ public class Equation_BuilderTest
         assertEquals(tokens.subList(at + 1, upperBound + 1), opRun.tokensAfterPivot);
     }
 
+    Equation newDummyEquation(Equation.Builder builder)
+    { return new Equation(null, builder.variables, builder.functions); }
+
     //region verifyTokenisationBrackets
     @Test
     void verifyTokenisationBrackets_noBrackets()
@@ -576,31 +579,34 @@ public class Equation_BuilderTest
     @Test
     void tryParseVariable_isAVariable()
     {
-        VariableReference v = new Builder().withVariable("doot", 5).tryParseVariable(newTokenList("doot"));
+        Builder b = new Builder().withVariable("doot", 5);
+        VariableReference v = b.tryParseVariable(newTokenList("doot"));
 
         assertNotNull(v);
         assertEquals("doot", v.name);
-        assertEquals(5, v.evaluate());
+        assertEquals(5, v.evaluate(newDummyEquation(b)));
     }
 
     @Test
     void tryParseVariable_isAVariableWithSpaces()
     {
-        VariableReference v = new Builder().withVariable("a doot", 5).tryParseVariable(newTokenList("a doot"));
+        Builder b = new Builder().withVariable("a doot", 5);
+        VariableReference v = b.tryParseVariable(newTokenList("a doot"));
 
         assertNotNull(v);
         assertEquals("a doot", v.name);
-        assertEquals(5, v.evaluate());
+        assertEquals(5, v.evaluate(newDummyEquation(b)));
     }
 
     @Test
     void tryParseVariable_isAVariableWithTokenCharacters()
     {
-        VariableReference v = new Builder().withVariable("a  doot", 5).tryParseVariable(newTokenList("a", "doot"));
+        Builder b = new Builder().withVariable("a  doot", 5);
+        VariableReference v = b.tryParseVariable(newTokenList("a", "doot"));
 
         assertNotNull(v);
         assertEquals("a  doot", v.name);
-        assertEquals(5, v.evaluate());
+        assertEquals(5, v.evaluate(newDummyEquation(b)));
     }
     //endregion
 
@@ -619,64 +625,56 @@ public class Equation_BuilderTest
         assertNotNull(f);
         assertThat(f.arguments).isEmpty();
         assertEquals("doot", f.functionName);
-        assertEquals(3, f.evaluate());
+        assertEquals(3, f.evaluate(newDummyEquation(b)));
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithSpaceWithNoArgs()
     {
-        FunctionCall f = new Builder()
-                                 .withFunction("a doot", x -> 3)
-                                 .tryParseFunctionCall(newTokenList("a doot",
-                                                                    Token.OPEN_BRACKET,
-                                                                    Token.CLOSE_BRACKET));
+        Builder b = new Builder().withFunction("a doot", x -> 3);
+        FunctionCall f = b.tryParseFunctionCall(newTokenList("a doot", Token.OPEN_BRACKET,  Token.CLOSE_BRACKET));
 
         assertNotNull(f);
         assertThat(f.arguments).isEmpty();
         assertEquals("a doot", f.functionName);
-        assertEquals(3, f.evaluate());
+        assertEquals(3, f.evaluate(newDummyEquation(b)));
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithOpTokensWithArgs()
     {
-        FunctionCall f = new Builder()
-                                 .withFunction("doot  +   dat", x -> 3)
-                                 .tryParseFunctionCall(newTokenList("doot",
-                                                                    new Token("+"),
-                                                                    "dat",
-                                                                    Token.OPEN_BRACKET,
-                                                                    Token.CLOSE_BRACKET));
+        Builder b = new Builder().withFunction("doot  +   dat", x -> 3);
+        FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
+                                                              new Token("+"),
+                                                              "dat",
+                                                              Token.OPEN_BRACKET,
+                                                              Token.CLOSE_BRACKET));
 
         assertNotNull(f);
         assertThat(f.arguments).isEmpty();
         assertEquals("doot  +   dat", f.functionName);
-        assertEquals(3, f.evaluate());
+        assertEquals(3, f.evaluate(newDummyEquation(b)));
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithOneArgument()
     {
-        FunctionCall f = new Builder()
-                                 .withFunction("doot", x -> 3)
-                                 .withVariable("x", 5)
-                                 .tryParseFunctionCall(newTokenList("doot",
-                                                                    Token.OPEN_BRACKET,
-                                                                    "x",
-                                                                    Token.CLOSE_BRACKET));
+        Builder b = new Builder().withFunction("doot", x -> 3).withVariable("x", 5);
+        FunctionCall f = b.tryParseFunctionCall(newTokenList("doot", Token.OPEN_BRACKET, "x", Token.CLOSE_BRACKET));
 
         assertNotNull(f);
         assertThat(f.arguments).hasSize(1);
         assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
-        assertEquals(5, f.arguments[0].evaluate());
+        assertEquals(5, f.arguments[0].evaluate(newDummyEquation(b)));
         assertEquals("doot", f.functionName);
-        assertEquals(3, f.evaluate());
+        assertEquals(3, f.evaluate(newDummyEquation(b)));
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgs()
     {
         Builder b = new Builder().withFunction("doot", x -> 3).withVariable("x", 5);
+        Equation dummy = newDummyEquation(b);
         b.buildOperatorGroups();
         FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
                                                              Token.OPEN_BRACKET,
@@ -692,17 +690,18 @@ public class Equation_BuilderTest
         assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
         assertThat(f.arguments[1]).isInstanceOf(VariableReference.class);
         assertThat(f.arguments[2]).isInstanceOf(VariableReference.class);
-        assertEquals(5, f.arguments[0].evaluate());
-        assertEquals(5, f.arguments[1].evaluate());
-        assertEquals(5, f.arguments[2].evaluate());
+        assertEquals(5, f.arguments[0].evaluate(dummy));
+        assertEquals(5, f.arguments[1].evaluate(dummy));
+        assertEquals(5, f.arguments[2].evaluate(dummy));
         assertEquals("doot", f.functionName);
-        assertEquals(3, f.evaluate());
+        assertEquals(3, f.evaluate(dummy));
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsFunctionCall()
     {
         Builder b = new Builder().withFunction("doot", x -> 3).withVariable("x", 5);
+        Equation dummy = newDummyEquation(b);
         b.buildOperatorGroups();
         FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
                                                              Token.OPEN_BRACKET,
@@ -720,17 +719,18 @@ public class Equation_BuilderTest
         assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
         assertThat(f.arguments[1]).isInstanceOf(FunctionCall.class);
         assertThat(f.arguments[2]).isInstanceOf(VariableReference.class);
-        assertEquals(5, f.arguments[0].evaluate());
-        assertEquals(3, f.arguments[1].evaluate());
-        assertEquals(5, f.arguments[2].evaluate());
+        assertEquals(5, f.arguments[0].evaluate(dummy));
+        assertEquals(3, f.arguments[1].evaluate(dummy));
+        assertEquals(5, f.arguments[2].evaluate(dummy));
         assertEquals("doot", f.functionName);
-        assertEquals(3, f.evaluate());
+        assertEquals(3, f.evaluate(dummy));
     }
 
     @Test
     void tryParseFunctionCall_functionCallWithThreeArgsWhereOneIsInBrackets()
     {
         Builder b = new Builder().withFunction("doot", x -> 3).withVariable("x", 5);
+        Equation dummy = newDummyEquation(b);
         b.buildOperatorGroups();
         FunctionCall f = b.tryParseFunctionCall(newTokenList("doot",
                                                              Token.OPEN_BRACKET,
@@ -748,11 +748,11 @@ public class Equation_BuilderTest
         assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
         assertThat(f.arguments[1]).isInstanceOf(VariableReference.class);
         assertThat(f.arguments[2]).isInstanceOf(VariableReference.class);
-        assertEquals(5, f.arguments[0].evaluate());
-        assertEquals(5, f.arguments[1].evaluate());
-        assertEquals(5, f.arguments[2].evaluate());
+        assertEquals(5, f.arguments[0].evaluate(dummy));
+        assertEquals(5, f.arguments[1].evaluate(dummy));
+        assertEquals(5, f.arguments[2].evaluate(dummy));
         assertEquals("doot", f.functionName);
-        assertEquals(3, f.evaluate());
+        assertEquals(3, f.evaluate(dummy));
     }
 
     @Test
@@ -775,21 +775,23 @@ public class Equation_BuilderTest
     @Test
     void tryParseNumber_isANumber()
     {
-        LiteralNumber ln = new Builder().tryParseNumber(newTokenList("7.3"));
+        Builder b = new Builder();
+        LiteralNumber ln = b.tryParseNumber(newTokenList("7.3"));
         assertNotNull(ln);
-        assertEquals(7.3, ln.evaluate());
+        assertEquals(7.3, ln.evaluate(newDummyEquation(b)));
     }
 
     @Test
     void tryParseNumber_isNumberMadeUpOfMultipleTokens()
     {
-        LiteralNumber ln = new Builder().tryParseNumber(new TokenList("7.3",
-                                                                      Arrays.asList(new UntokenisedString("7"),
-                                                                                    new Token("."),
-                                                                                    new UntokenisedString("3")),
-                                                                      Arrays.asList(0, 0, 0, 0)));
+        Builder b = new Builder();
+        LiteralNumber ln = b.tryParseNumber(new TokenList("7.3",
+                                                          Arrays.asList(new UntokenisedString("7"),
+                                                                        new Token("."),
+                                                                        new UntokenisedString("3")),
+                                                          Arrays.asList(0, 0, 0, 0)));
         assertNotNull(ln);
-        assertEquals(7.3, ln.evaluate());
+        assertEquals(7.3, ln.evaluate(newDummyEquation(b)));
     }
     //endregion
 
