@@ -1923,6 +1923,14 @@ public class Equation
     //endregion
 
     //region initialisation
+    public Equation(String equationAsString)
+    {
+        Equation parsedEquation = new Builder(true).build(equationAsString);
+        this.topLevelComponent  = parsedEquation.topLevelComponent;
+        this.variableValues     = parsedEquation.variableValues;
+        this.functions          = parsedEquation.functions;
+    }
+
     Equation(EquationComponent topLevelComponent,
              Map<String, Double> variableValues,
              Map<String, ToDoubleFunction<double[]>> functions)
