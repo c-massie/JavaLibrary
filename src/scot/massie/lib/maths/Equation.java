@@ -382,20 +382,20 @@ public class Equation
 
         void addDefaultOperators()
         {
-            withOperator        ("?", ":",   -100, (a, b, c) -> a >= 0.5 ? b : c);
-            withOperator        ("-",        100,  (l, r)    -> l - r);
-            withOperator        ("+",        100,  (l, r)    -> l + r);
-            withOperator        ("/",        200,  (l, r)    -> l / r);
-            withOperator        ("÷",        200,  (l, r)    -> l / r);
-            withOperator        ("*",        200,  (l, r)    -> l * r);
-            withOperator        ("×",        200,  (l, r)    -> l * r);
-            withOperator        ("%",        300,  (l, r)    -> l % r);
-            withPrefixOperator  ("-",        500,  x         -> -x);
-            withPrefixOperator  ("+",        500,  x         -> +x);
-            withOperator        ("√",        600,  (l, r)    -> Math.pow(r, 1.0 / l));
-            withPrefixOperator  ("√",        700,  x         -> Math.sqrt(x));
-            withOperator        ("^", false, 800,  (l, r)    -> Math.pow(l, r));
-            withPostfixOperator ("%",        900,  x         -> x / 100);
+            withOperator        ("?", ":", false, -100, (a, b, c) -> a >= 0.5 ? b : c);
+            withOperator        ("-",             100,  (l, r)    -> l - r);
+            withOperator        ("+",             100,  (l, r)    -> l + r);
+            withOperator        ("/",             200,  (l, r)    -> l / r);
+            withOperator        ("÷",             200,  (l, r)    -> l / r);
+            withOperator        ("*",             200,  (l, r)    -> l * r);
+            withOperator        ("×",             200,  (l, r)    -> l * r);
+            withOperator        ("%",             300,  (l, r)    -> l % r);
+            withPrefixOperator  ("-",             500,  x         -> -x);
+            withPrefixOperator  ("+",             500,  x         -> +x);
+            withOperator        ("√",             600,  (l, r)    -> Math.pow(r, 1.0 / l));
+            withPrefixOperator  ("√",             700,  x         -> Math.sqrt(x));
+            withOperator        ("^",      false, 800,  (l, r)    -> Math.pow(l, r));
+            withPostfixOperator ("%",             900,  x         -> x / 100);
         }
 
         void addDefaultFunctions()
