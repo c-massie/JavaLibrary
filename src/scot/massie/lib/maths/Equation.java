@@ -6,6 +6,7 @@ import scot.massie.lib.collections.tree.Tree;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1029,7 +1030,12 @@ public class Equation
             }
 
             if(!functions.containsKey(functionName))
+            {
+                if(tokenList.containsAnyOf(operatorTokens))
+                    return null;
+
                 throw new UnrecognisedFunctionException(functionName, tokenList, tokenList);
+            }
 
             return new FunctionCall(functionName, arguments);
         }
@@ -1343,6 +1349,18 @@ public class Equation
                 return false;
 
             return tokens.get(tokens.size() - 1).equals(t);
+        }
+
+        public boolean contains(Token t)
+        { return tokens.contains(t); }
+
+        public boolean containsAnyOf(Collection<Token> ts)
+        {
+            for(int i = 0; i < tokens.size(); i++)
+                if(ts.contains(tokens.get(i)))
+                    return true;
+
+            return false;
         }
 
         public TokenList withoutFirst(int howMany)

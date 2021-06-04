@@ -2,6 +2,8 @@ package scot.massie.lib.maths;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.function.ToDoubleFunction;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class EquationTest
@@ -246,53 +248,60 @@ class EquationTest
     @Test
     void brackets()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertEquation(5.0, "(5)");
+        assertEquation(14.0, "(5 + 9)");
+        assertEquation(17.0, "4 + (6 + 7)");
     }
 
     @Test
     void orderOfOperations()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertEquation(-681.0, "√25 + -7^3 * 2√4", Math.ulp(-681.0)); }
 
     @Test
     void orderRespectingBrackets()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertEquation(65.0, "5 * (6 + 7)"); }
 
     //region variables
     @Test
     void variables_default()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertEquation(Math.PI, "π");
+        assertEquation(Math.E, "e");
+        assertEquation((1 + Math.sqrt(5)) / 2, "ϕ");
+        assertEquation((1 + Math.sqrt(5)) / 2, "φ");
+        assertEquation(Double.POSITIVE_INFINITY, "∞");
+
+        assertEquation(Math.PI, "pi");
+        assertEquation((1 + Math.sqrt(5)) / 2, "phi");
+        assertEquation(Double.POSITIVE_INFINITY, "inf");
     }
 
     @Test
     void variables_custom()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertEquals(5.0, new Equation.Builder().withVariable("x", 5).build("x").evaluate()); }
     //endregion
 
     //region functions
     @Test
     void functions_premade()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertEquation(8.25, "avg(5, 8, 9, 11)"); }
 
     @Test
     void functions_custom()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertEquals(10.0, new Equation.Builder().withFunction("double", a -> a[0] * 2).build("double(5)").evaluate());
+
+        assertEquals(120.0, new Equation.Builder().withFunction("multiplytogether", 1, a ->
+        {
+            double current = a[0];
+
+            for(int i = 1; i < a.length; i++)
+                current *= a[i];
+
+            return current;
+        }).build("multiplytogether(2, 3, 4, 5)").evaluate());
+
+        assertEquals(5.0, new Equation.Builder().withFunction("get5", a -> 5).build("get5()").evaluate());
     }
     //endregion
     
@@ -300,66 +309,103 @@ class EquationTest
     @Test
     void operatorsSeparateFromBuilder()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Equation.Builder eqb = new Equation.Builder(false).withOperator("§", (l, r) -> l * r);
+        Equation eq = eqb.build("5 § 7");
+        eqb.withOperator("§", (l, r) -> l + r);
+        assertEquals(35.0, eq.evaluate());
     }
 
     @Test
     void variablesSeparateFromBuilder()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Equation.Builder eqb = new Equation.Builder(false).withVariable("doot", 7);
+        Equation eq = eqb.build("doot");
+        eqb.withVariable("doot", 5);
+        assertEquals(7.0, eq.evaluate());
+        eq.setVariable("doot", 8);
+        assertEquals(8.0, eq.evaluate());
     }
 
     @Test
     void functionsSeparateFromBuilder()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Equation.Builder eqb = new Equation.Builder(false).withFunction("getdoot", x -> 7);
+        Equation eq = eqb.build("getdoot()");
+        eqb.withFunction("getdoot", x -> 5);
+        assertEquals(7.0, eq.evaluate());
+        eq.redefineFunction("getdoot", x -> 8);
+        assertEquals(8.0, eq.evaluate());
     }
     //endregion
     
     //region invalid
     @Test
     void invalid_nonExistentVariable()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(Equation.Builder.EquationParseException.class, () -> new Equation("doot")); }
 
     @Test
     void invalid_trailingInfixOperator()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(Equation.Builder.TrailingNonPostfixOperatorException.class, () -> new Equation("9*")); }
 
     @Test
     void invalid_leadingInfixOperator()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(Equation.Builder.LeadingNonPrefixOperatorException.class, () -> new Equation("*9")); }
 
     @Test
     void invalid_noInfixOperatorsBetweenOperands()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(Equation.Builder.EquationParseException.class,
+                     () -> new Equation.Builder(false)
+                                   .withPrefixOperator("§", o -> o * 2)
+                                   .build("5§7"));
     }
 
     @Test
     void invalid_mismatchedBrackets()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(Equation.Builder.UnmatchedOpenBracketException.class, () -> new Equation("(5 + 7"));
+        assertThrows(Equation.Builder.UnexpectedCloseBracketException.class, () -> new Equation("5 + 7)"));
+        assertThrows(Equation.Builder.BracketMismatchException.class, () -> new Equation("5) + (7"));
     }
 
     @Test
     void invalid_mismatchedFunctionBrackets()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        Equation.Builder eqb = new Equation.Builder(false).withFunction("doot", value -> 5);
+
+        assertThrows(Equation.Builder.EquationParseException.class, () -> eqb.build("doot("));
+        assertThrows(Equation.Builder.EquationParseException.class, () -> eqb.build("doot(9"));
+        assertThrows(Equation.Builder.EquationParseException.class, () -> eqb.build("doot(9, 5"));
     }
+
+    @Test
+    void invalid_functionWithTrailingComma()
+    {
+        Equation.Builder eqb = new Equation.Builder(false).withFunction("doot", value -> 5);
+        assertThrows(Equation.Builder.DanglingArgumentSeparatorException.class, () -> eqb.build("doot(,)"));
+        assertThrows(Equation.Builder.TrailingArgumentSeparatorException.class, () -> eqb.build("doot(5,)"));
+    }
+
+
+
+    @Test
+    void invalid_functionWithLeadingComma()
+    {
+        Equation.Builder eqb = new Equation.Builder(false).withFunction("doot", value -> 5);
+        assertThrows(Equation.Builder.DanglingArgumentSeparatorException.class, () -> eqb.build("doot(,)"));
+        assertThrows(Equation.Builder.LeadingArgumentSeparatorException.class, () -> eqb.build("doot(,5)"));
+    }
+
+    //endregion
+
+    //region disallowed
+    @Test
+    void disallowed_newVariableOnEquation()
+    { assertFalse(new Equation("5 + 7").setVariable("doot", 9)); }
+
+    @Test
+    void disallowed_newFunctionOnEquation()
+    { assertFalse(new Equation("5 + 7").redefineFunction("doot", x -> 9)); }
+
     //endregion
 }
