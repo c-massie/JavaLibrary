@@ -805,9 +805,9 @@ public class Equation
                left-associative.
              */
 
-            for(OperatorPriorityGroup opGroup : operatorGroupsInOrder)
+            for(int i = 0; i < operatorGroupsInOrder.size(); i++)
             {
-                Operation o = tryParseOperation(tokenList, opGroup);
+                Operation o = tryParseOperation(tokenList, operatorGroupsInOrder.get(i), i);
 
                 if(o != null)
                     return o;
@@ -816,17 +816,18 @@ public class Equation
             return null;
         }
 
-        Operation tryParseOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
+        Operation tryParseOperation(TokenList tokenList, OperatorPriorityGroup opGroup, int opGroupIndex)
         {
-            return nullCoalesce(() -> tryParseInfixOperation_rightAssociative(tokenList, opGroup),
-                                () -> tryParseInfixOperation_leftAssociative(tokenList, opGroup),
+            return nullCoalesce(() -> tryParseInfixOperation_rightAssociative(tokenList, opGroup, opGroupIndex),
+                                () -> tryParseInfixOperation_leftAssociative(tokenList, opGroup, opGroupIndex),
                                 () -> tryParsePrefixOperation(tokenList, opGroup),
                                 () -> tryParsePostfixOperation(tokenList, opGroup),
                                 () -> null);
         }
 
         Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
-                                                          OperatorPriorityGroup opGroup)
+                                                          OperatorPriorityGroup opGroup,
+                                                          int opGroupIndex)
         {
             Tree<Token, InfixOperator> opTree = opGroup.rightAssociativeInfixOperators;
 
@@ -838,6 +839,9 @@ public class Equation
             if(opTokenPoints == null)
                 return null;
 
+            if(operationIsNestedInHigherPriorityInfixOperation(tokenList, opTokenPoints, opGroupIndex, true))
+                return null;
+
             List<Token> opTokens = opTokenPoints.stream().map(tokenList::get).collect(Collectors.toList());
             InfixOperator op = opTree.getAt(opTokens);
             return op.tryParseFromSplits(tokenList, opTokenPoints, this);
@@ -846,6 +850,13 @@ public class Equation
         List<Integer> getInfixTokenPoints_rightAssociative(TokenList of,
                                                            Tree<Token, InfixOperator> opsTree,
                                                            int startAt)
+        { return getInfixTokenPoints_rightAssociative(of, opsTree, startAt, 0, 0); }
+
+        List<Integer> getInfixTokenPoints_rightAssociative(TokenList of,
+                                                           Tree<Token, InfixOperator> opsTree,
+                                                           int startAt,
+                                                           int skipFromInclusive,
+                                                           int skipToExclusive)
         {
             Tree<Token, InfixOperator> opsBranch = opsTree;
             int bracketDepth = 0;
@@ -853,6 +864,9 @@ public class Equation
 
             for(int i = startAt; i < of.size(); i++)
             {
+                if(i >= skipFromInclusive && i < skipToExclusive)
+                    continue;
+
                 Token itoken = of.get(i);
 
                 if(itoken.equals(Token.OPEN_BRACKET))
@@ -870,7 +884,8 @@ public class Equation
 
                         if(opsBranch.hasRootItem())
                         {
-                            List<Integer> restOfPoints = getInfixTokenPoints_rightAssociative(of, opsBranch, i + 1);
+                            List<Integer> restOfPoints = getInfixTokenPoints_rightAssociative(
+                                    of, opsBranch, i + 1, skipFromInclusive, skipToExclusive);
 
                             if(restOfPoints != null)
                                 points.addAll(restOfPoints);
@@ -880,7 +895,8 @@ public class Equation
                     }
                     else if(opsTree.hasItemsAtOrUnder(itoken))
                     {
-                        List<Integer> subOfPoints = getInfixTokenPoints_rightAssociative(of, opsTree, i);
+                        List<Integer> subOfPoints = getInfixTokenPoints_rightAssociative(
+                                of, opsTree, i, skipFromInclusive, skipToExclusive);
 
                         if(subOfPoints != null)
                             i = subOfPoints.get(subOfPoints.size() - 1);
@@ -892,7 +908,8 @@ public class Equation
         }
 
         Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
-                                                         OperatorPriorityGroup opGroup)
+                                                         OperatorPriorityGroup opGroup,
+                                                         int opGroupIndex)
         {
             Tree<Token, InfixOperator> opTree = opGroup.leftAssociativeInfixOperators;
 
@@ -905,6 +922,9 @@ public class Equation
             if(opTokenPoints == null)
                 return null;
 
+            if(operationIsNestedInHigherPriorityInfixOperation(tokenList, opTokenPoints, opGroupIndex, false))
+                return null;
+
             List<Token> opTokens = opTokenPoints.stream().map(tokenList::get).collect(Collectors.toList());
             InfixOperator op = opTree.getAt(opTokens);
             return op.tryParseFromSplits(tokenList, opTokenPoints, this);
@@ -913,6 +933,13 @@ public class Equation
         List<Integer> getInfixTokenPoints_leftAssociative(TokenList of,
                                                           Tree<Token, InfixOperator> opsTreeReversed,
                                                           int startAt)
+        { return getInfixTokenPoints_leftAssociative(of, opsTreeReversed, startAt, 0, 0); }
+
+        List<Integer> getInfixTokenPoints_leftAssociative(TokenList of,
+                                                          Tree<Token, InfixOperator> opsTreeReversed,
+                                                          int startAt,
+                                                          int skipFromInclusive,
+                                                          int skipToExclusive)
         {
             Tree<Token, InfixOperator> opsBranch = opsTreeReversed;
             int bracketDepth = 0;
@@ -920,6 +947,9 @@ public class Equation
 
             for(int i = startAt; i >= 0; i--)
             {
+                if(i >= skipFromInclusive && i < skipToExclusive)
+                    continue;
+
                 Token itoken = of.get(i);
 
                 if(itoken.equals(Token.CLOSE_BRACKET))
@@ -937,7 +967,8 @@ public class Equation
 
                         if(opsBranch.hasRootItem())
                         {
-                            List<Integer> restOfPoints = getInfixTokenPoints_leftAssociative(of, opsBranch, i - 1);
+                            List<Integer> restOfPoints = getInfixTokenPoints_leftAssociative(
+                                    of, opsBranch, i - 1, skipFromInclusive, skipToExclusive);
 
                             if(restOfPoints != null)
                                 points.addAll(0, restOfPoints);
@@ -947,7 +978,8 @@ public class Equation
                     }
                     else if(opsTreeReversed.hasItemsAtOrUnder(itoken))
                     {
-                        List<Integer> subOfPoints = getInfixTokenPoints_leftAssociative(of, opsTreeReversed, i);
+                        List<Integer> subOfPoints = getInfixTokenPoints_leftAssociative(
+                                of, opsTreeReversed, i, skipFromInclusive, skipToExclusive);
 
                         if(subOfPoints != null)
                             i = subOfPoints.get(0);
@@ -956,6 +988,71 @@ public class Equation
             }
 
             return null;
+        }
+
+        boolean operationIsNestedInHigherPriorityInfixOperation(TokenList tokenList,
+                                                                List<Integer> potentiallyInnerOpTokenPoints,
+                                                                int opPriorityGroupIndex,
+                                                                boolean checkLeftAssociativeOfSameGroup)
+        {
+            int firstOpTokenPoint = potentiallyInnerOpTokenPoints.get(0);
+            int lastOpTokenPoint = potentiallyInnerOpTokenPoints.get(potentiallyInnerOpTokenPoints.size() - 1);
+
+            int skipFromInclusive = getOpRun(tokenList.tokens, firstOpTokenPoint).startIndexInSource;
+            int skipToExclusive   = getOpRun(tokenList.tokens, lastOpTokenPoint ).endIndexInSource + 1;
+
+            // Don't need to check the same associativity of the same priority group, as in a nested arrangement of
+            // infix operators of the same associativity and priority group, the outer infix operator will always be
+            // parsed before the inner infix operator.
+
+            if(checkLeftAssociativeOfSameGroup)
+            {
+                OperatorPriorityGroup opGroup = operatorGroupsInOrder.get(opPriorityGroupIndex);
+
+                List<Integer> possiblyEnclosingInfixOpPoints = getInfixTokenPoints_leftAssociative(
+                        tokenList,
+                        opGroup.leftAssociativeInfixOperators.withReversedKeys(),
+                        tokenList.size() - 1,
+                        skipFromInclusive,
+                        skipToExclusive);
+
+                if(possiblyEnclosingInfixOpPoints != null
+                   && possiblyEnclosingInfixOpPoints.get(0) < firstOpTokenPoint
+                   && possiblyEnclosingInfixOpPoints.get(possiblyEnclosingInfixOpPoints.size() - 1) > lastOpTokenPoint)
+                { return true; }
+            }
+
+            for(int i = opPriorityGroupIndex + 1; i < operatorGroupsInOrder.size(); i++)
+            {
+                OperatorPriorityGroup opGroup = operatorGroupsInOrder.get(i);
+
+                List<Integer> possiblyEnclosingInfixOpPoints = getInfixTokenPoints_rightAssociative(
+                        tokenList,
+                        opGroup.rightAssociativeInfixOperators,
+                        0,
+                        skipFromInclusive,
+                        skipToExclusive);
+
+                if(possiblyEnclosingInfixOpPoints != null
+                   && possiblyEnclosingInfixOpPoints.get(0) < firstOpTokenPoint
+                   && possiblyEnclosingInfixOpPoints.get(possiblyEnclosingInfixOpPoints.size() - 1) > lastOpTokenPoint)
+                { return true; }
+
+
+                possiblyEnclosingInfixOpPoints = getInfixTokenPoints_leftAssociative(
+                        tokenList,
+                        opGroup.leftAssociativeInfixOperators.withReversedKeys(),
+                        tokenList.size() - 1,
+                        skipFromInclusive,
+                        skipToExclusive);
+
+                if(possiblyEnclosingInfixOpPoints != null
+                   && possiblyEnclosingInfixOpPoints.get(0) < firstOpTokenPoint
+                   && possiblyEnclosingInfixOpPoints.get(possiblyEnclosingInfixOpPoints.size() - 1) > lastOpTokenPoint)
+                { return true; }
+            }
+
+            return false;
         }
 
         Operation tryParsePrefixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)

@@ -803,7 +803,7 @@ public class Equation_BuilderTest
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("a", new Token("^"), "b", new Token("*"), "c", new Token("&"), "d");
 
-        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNull(op);
     }
 
@@ -814,7 +814,7 @@ public class Equation_BuilderTest
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("&"), "d");
 
-        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNull(op);
     }
 
@@ -826,7 +826,7 @@ public class Equation_BuilderTest
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("+"), new Token("€"), "c", new Token("¢"), "d");
 
-        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNull(op);
     }
 
@@ -838,7 +838,7 @@ public class Equation_BuilderTest
         TokenList tl = newTokenList("a", new Token("£"), Token.OPEN_BRACKET, "b", new Token("€"), "c",
                                     Token.CLOSE_BRACKET, new Token("¢"), "d");
 
-        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNull(op);
     }
 
@@ -849,7 +849,7 @@ public class Equation_BuilderTest
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"), "d");
 
-        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.rightAssociativeInfixOperators.getItems().stream().findFirst().get().action;
         assertEquals(expectedA, op.action);
@@ -873,7 +873,7 @@ public class Equation_BuilderTest
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"),
                                     "d", new Token("£"), "c", new Token("€"), "b", new Token("¢"), "a");
 
-        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.rightAssociativeInfixOperators.getItems().stream().findFirst().get().action;
         assertEquals(expectedA, op.action);
@@ -915,7 +915,7 @@ public class Equation_BuilderTest
                                     new Token("¢"),
                                     "a");
 
-        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.rightAssociativeInfixOperators.getItems().stream().findFirst().get().action;
         assertEquals(expectedA, op.action);
@@ -953,7 +953,7 @@ public class Equation_BuilderTest
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("a", new Token("^"), "b", new Token("*"), "c", new Token("&"), "d");
 
-        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNull(op);
     }
 
@@ -964,7 +964,7 @@ public class Equation_BuilderTest
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("a", new Token("^"), "b", new Token("€"), "c", new Token("¢"), "d");
 
-        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNull(op);
     }
 
@@ -976,7 +976,7 @@ public class Equation_BuilderTest
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("+"), new Token("€"), "c", new Token("¢"), "d");
 
-        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNull(op);
     }
 
@@ -988,7 +988,7 @@ public class Equation_BuilderTest
         TokenList tl = newTokenList("a", new Token("£"), Token.OPEN_BRACKET, "b", new Token("€"), "c",
                                     Token.CLOSE_BRACKET, new Token("¢"), "d");
 
-        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNull(op);
     }
 
@@ -999,7 +999,7 @@ public class Equation_BuilderTest
         Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"), "d");
 
-        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.leftAssociativeInfixOperators.getItems().stream().findFirst().get().action;
         assertEquals(expectedA, op.action);
@@ -1023,7 +1023,7 @@ public class Equation_BuilderTest
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"),
                                     "d", new Token("£"), "c", new Token("€"), "b", new Token("¢"), "a");
 
-        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.leftAssociativeInfixOperators.getItems().stream().findFirst().get().action;
         assertEquals(expectedA, op.action);
@@ -1065,7 +1065,7 @@ public class Equation_BuilderTest
                                     new Token("¢"),
                                     "a");
 
-        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup);
+        Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.leftAssociativeInfixOperators.getItems().stream().findFirst().get().action;
         assertEquals(expectedA, op.action);

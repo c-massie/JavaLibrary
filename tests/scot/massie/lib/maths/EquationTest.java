@@ -219,25 +219,7 @@ class EquationTest
                                        .withOperator("§", "$", true, (a, b, c) -> a * b + c)
                                        .withOperator("£", "€", false, (a, b, c) -> a * 4 + b * 9 + c * 16);
 
-        // The first (commented out) assertion currently fails. In the assertion, the inner operation parses before the
-        // outer operation. This doesn't fail for infix n-ary operators (where n >= 3) of the same associativity and
-        // priority as in every instance, the outer operation is parsed first regardless.
-        //
-        // Document that where two infix operators have the same priority but different associativities, the
-        // left-associative operator is always treated as having infinitesimally higher priority/stickiness than the
-        // right-associative operator.
-        //
-        // This is not expected to succeed where the operators are of different priorities and the inner one is
-        // evaluated first.
-        //
-        // This may be made to succeed, not just in this example, but in all examples where higher priority infix
-        // operator has a lower priority one as an argument, by, when parsing a particular operator group's infix
-        // operator tree, checking if the tokenlist being parsed may be parsed with a higher priority infix operator
-        // while skipping over this one and its operands, treating it as a single operand.
-        //
-        // TO DO: This.
-
-        // assertEquals(790.0, eqb.build("3 § 5£7€11 $ 13").evaluate());
+        assertEquals(790.0, eqb.build("3 § 5£7€11 $ 13").evaluate());
         assertEquals(634.0, eqb.build("3 £ 5§7$11 € 13").evaluate());
     }
 
