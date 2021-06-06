@@ -326,11 +326,14 @@ public class Equation
         }
         //endregion
 
+        //region constants
         static final double DEFAULT_PRIORITY = 0;
         static final boolean DEFAULT_ASSOCIATIVITY = true; // true == left, false == right.
 
         static final double PHI = (1 + Math.sqrt(5)) / 2;
+        //endregion
 
+        //region variables
         /**
          * Fixed string tokens that may appear in an equation. Does not include variable names, function names,
          * numbers, or unparsable portions of equation.
@@ -367,7 +370,9 @@ public class Equation
 
         Map<Double, OperatorPriorityGroup> operatorGroups        = null;
         List<OperatorPriorityGroup>        operatorGroupsInOrder = null;
+        //endregion
 
+        //region initialisation
         public Builder()
         { this(true); }
 
@@ -380,7 +385,12 @@ public class Equation
                 addDefaultVariables();
             }
         }
+        //endregion
 
+        //region methods
+        //region add functionality
+        //region internal
+        //region add groups of functionality
         void addDefaultOperators()
         {
             withOperator        ("?", ":", false, -100, (a, b, c) -> a >= 0.5 ? b : c);
@@ -476,11 +486,11 @@ public class Equation
             withVariable("∞", Double.POSITIVE_INFINITY);
             withVariable("inf", Double.POSITIVE_INFINITY);
         }
+        //endregion
 
+        //region add single pieces of functionality
         void addOperator(Operator op)
         {
-            invalidateOperatorGroups();
-
             if(op instanceof PrefixOperator)
                 addOperator((PrefixOperator)op);
             else if(op instanceof PostfixOperator)
@@ -493,6 +503,7 @@ public class Equation
 
         void addOperator(PrefixOperator op)
         {
+            invalidateOperatorGroups();
             Token popToken = op.getToken();
             prefixOperators.put(popToken, op);
             addOperatorToken(popToken);
@@ -500,6 +511,7 @@ public class Equation
 
         void addOperator(PostfixOperator op)
         {
+            invalidateOperatorGroups();
             Token popToken = op.getToken();
             postfixOperators.put(popToken, op);
             addOperatorToken(popToken);
@@ -507,6 +519,7 @@ public class Equation
 
         void addOperator(InfixOperator op)
         {
+            invalidateOperatorGroups();
             List<Token> iopTokens = op.getTokens();
             infixOperators.put(iopTokens, op);
             addOperatorTokens(iopTokens);
@@ -531,19 +544,27 @@ public class Equation
                     operatorTokens.add(token);
                 }
         }
+        //endregion
+        //endregion
 
+        //region public interface
+        //region add tokens
         public Builder withToken(String token)
         {
             addOperatorToken(new Token(token));
             return this;
         }
+        //endregion
 
+        //region add variables
         public Builder withVariable(String name, double value)
         {
             variables.put(name, value);
             return this;
         }
+        //endregion
 
+        //region add functions
         public Builder withFunction(String name, ToDoubleFunction<double[]> f)
         {
             functions.put(name, f);
@@ -585,7 +606,9 @@ public class Equation
                 return f.applyAsDouble(args[0], args[1]);
             });
         }
+        //endregion
 
+        //region add operators
         public Builder withPrefixOperator(String token, UnaryOperatorAction action)
         { return withPrefixOperator(token, DEFAULT_PRIORITY, action); }
 
@@ -675,53 +698,11 @@ public class Equation
             addOperator(new InfixOperator(ts, isLeftAssociative, priority, action));
             return this;
         }
+        //endregion
+        //endregion
+        //endregion
 
-        void buildOperatorGroups()
-        {
-            if(operatorGroups != null)
-                return;
-
-            operatorGroups = new HashMap<>();
-
-            for(Map.Entry<Token, PrefixOperator> e : prefixOperators.entrySet())
-            {
-                operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
-                              .prefixOperators
-                              .put(e.getKey(), e.getValue());
-            }
-
-            for(Map.Entry<Token, PostfixOperator> e : postfixOperators.entrySet())
-            {
-                operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
-                              .postfixOperators
-                              .put(e.getKey(), e.getValue());
-            }
-
-            for(Map.Entry<List<Token>, InfixOperator> e : infixOperators.entrySet())
-            {
-                if(e.getValue().isLeftAssociative)
-                    operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
-                                  .leftAssociativeInfixOperators
-                                  .setAt(e.getValue(), e.getValue().tokens);
-                else
-                    operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
-                                  .rightAssociativeInfixOperators
-                                  .setAt(e.getValue(), e.getValue().tokens);
-            }
-
-            operatorGroupsInOrder = operatorGroups.entrySet()
-                                                  .stream()
-                                                  .sorted(Map.Entry.comparingByKey())
-                                                  .map(Map.Entry::getValue)
-                                                  .collect(Collectors.toList());
-        }
-
-        void invalidateOperatorGroups()
-        {
-            operatorGroups = null;
-            operatorGroupsInOrder = null;
-        }
-
+        //region parsing
         public Equation build(String toParse)
         {
             if(toParse == null)
@@ -742,6 +723,52 @@ public class Equation
             { throw e.withFullEquation(tokenisation); }
 
             return new Equation(topLevelComponent, new HashMap<>(variables), new HashMap<>(functions));
+        }
+
+        void buildOperatorGroups()
+        {
+            if(operatorGroups != null)
+                return;
+
+            operatorGroups = new HashMap<>();
+
+            for(Map.Entry<Token, PrefixOperator> e : prefixOperators.entrySet())
+            {
+                operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
+                        .prefixOperators
+                        .put(e.getKey(), e.getValue());
+            }
+
+            for(Map.Entry<Token, PostfixOperator> e : postfixOperators.entrySet())
+            {
+                operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
+                        .postfixOperators
+                        .put(e.getKey(), e.getValue());
+            }
+
+            for(Map.Entry<List<Token>, InfixOperator> e : infixOperators.entrySet())
+            {
+                if(e.getValue().isLeftAssociative)
+                    operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
+                            .leftAssociativeInfixOperators
+                            .setAt(e.getValue(), e.getValue().tokens);
+                else
+                    operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
+                            .rightAssociativeInfixOperators
+                            .setAt(e.getValue(), e.getValue().tokens);
+            }
+
+            operatorGroupsInOrder = operatorGroups.entrySet()
+                                                  .stream()
+                                                  .sorted(Map.Entry.comparingByKey())
+                                                  .map(Map.Entry::getValue)
+                                                  .collect(Collectors.toList());
+        }
+
+        void invalidateOperatorGroups()
+        {
+            operatorGroups = null;
+            operatorGroupsInOrder = null;
         }
 
         void verifyTokenisationBrackets(TokenList tokenisation)
@@ -781,6 +808,7 @@ public class Equation
                                 () -> { throw new EquationParseException(tokenisation, tokenisation); });
         }
 
+        //region parsing utility functions
         boolean startsWithNonPrefixOperator(TokenList tokenList)
         {
             Token first = tokenList.first();
@@ -793,6 +821,135 @@ public class Equation
             return operatorTokens.contains(last) && !postfixOperators.containsKey(last);
         }
 
+        // Tokens in a tokenised equation may only be infix operators where:
+        //  - There are tokens before and after the run.
+        //  - All tokens in the run of operator tokens it's in before it may be postfix operators
+        //  - All tokens in the run of operator tokens it's in after it may be prefix operators
+        boolean canBeInfixOperatorToken(List<Token> tokens, int tokenIndex)
+        {
+            if(tokenIndex == 0 || tokenIndex == tokens.size() - 1)
+                return false;
+
+            OperatorTokenRun run = getOpRun(tokens, tokenIndex);
+
+            if((run.startIndexInSource == 0) || (run.endIndexInSource == tokens.size() - 1))
+                return false;
+
+            for(Token i : run.tokensBeforePivot)
+                if(!postfixOperators.containsKey(i))
+                    return false;
+
+            for(Token i : run.tokensAfterPivot)
+                if(!prefixOperators.containsKey(i))
+                    return false;
+
+            return true;
+        }
+
+        // idk, I'm bad at naming things.
+        OperatorTokenRun getOpRun(List<Token> tokens, int indexToGetOpRunThatContainsIt)
+        {
+            int min = -1, max = -1;
+
+            for(int i = indexToGetOpRunThatContainsIt - 1; i >= 0; i--)
+            {
+                Token itoken = tokens.get(i);
+
+                if(!operatorTokens.contains(itoken))
+                {
+                    min = i + 1;
+                    break;
+                }
+            }
+
+            for(int i = indexToGetOpRunThatContainsIt + 1; i < tokens.size(); i++)
+            {
+                Token itoken = tokens.get(i);
+
+                if(!operatorTokens.contains(itoken))
+                {
+                    max = i - 1;
+                    break;
+                }
+            }
+
+            if(min == -1)
+                min = 0;
+
+            if(max == -1)
+                max = tokens.size() - 1;
+
+            return new OperatorTokenRun(tokens, min, max, indexToGetOpRunThatContainsIt);
+        }
+        //endregion
+
+        //region variable parsing
+        VariableReference tryParseVariable(TokenList tokenList)
+        {
+            String varName = tokenList.equationAsString.trim();
+            Double variableValue = variables.get(varName);
+            return variableValue == null ? null : new VariableReference(varName);
+        }
+        //endregion
+
+        //region function parsing
+        FunctionCall tryParseFunctionCall(TokenList tokenList)
+        {
+            if(tokenList.size() < 3) // Needs at least 3 tokens: a name, "(", and ")".
+                return null;
+
+            if(!tokenList.last().equals(Token.CLOSE_BRACKET))
+                return null;
+
+            int lastIndexToCheck = tokenList.size() - 2;
+            String functionName = null;
+            TokenList argListTokenList = null;
+
+            for(int i = 1; i <= lastIndexToCheck; i++)
+            {
+                if(tokenList.get(i).equals(Token.OPEN_BRACKET))
+                {
+                    functionName = tokenList.subList(0, i).equationAsString.trim();
+                    argListTokenList = tokenList.subList(i + 1, tokenList.size() - 1);
+                    break;
+                }
+            }
+
+            if(argListTokenList == null)
+                return null;
+
+            EquationComponent[] arguments;
+
+            if(argListTokenList.isEmpty())
+                arguments = new EquationComponent[0];
+            else
+            {
+                if(argListTokenList.startsWith(Token.ARGUMENT_SEPARATOR))
+                    throw new LeadingArgumentSeparatorException(tokenList, tokenList);
+
+                if(argListTokenList.endsWith(Token.ARGUMENT_SEPARATOR))
+                    throw new TrailingArgumentSeparatorException(tokenList, tokenList);
+
+                List<TokenList> argTokenLists = argListTokenList.splitBy(Token.ARGUMENT_SEPARATOR);
+                arguments = new EquationComponent[argTokenLists.size()];
+
+                for(int i = 0; i < argTokenLists.size(); i++)
+                    arguments[i] = tryParse(argTokenLists.get(i));
+            }
+
+            if(!functions.containsKey(functionName))
+            {
+                if(tokenList.containsAnyOf(operatorTokens))
+                    return null;
+
+                throw new UnrecognisedFunctionException(functionName, tokenList, tokenList);
+            }
+
+            return new FunctionCall(functionName, arguments);
+        }
+        //endregion
+
+        //region operation parsing
         Operation tryParseOperation(TokenList tokenList)
         {
             /*
@@ -1074,69 +1231,9 @@ public class Equation
 
             return op.tryParse(tokenList, this);
         }
+        //endregion
 
-        VariableReference tryParseVariable(TokenList tokenList)
-        {
-            String varName = tokenList.equationAsString.trim();
-            Double variableValue = variables.get(varName);
-            return variableValue == null ? null : new VariableReference(varName);
-        }
-
-        FunctionCall tryParseFunctionCall(TokenList tokenList)
-        {
-            if(tokenList.size() < 3) // Needs at least 3 tokens: a name, "(", and ")".
-                return null;
-
-            if(!tokenList.last().equals(Token.CLOSE_BRACKET))
-                return null;
-
-            int lastIndexToCheck = tokenList.size() - 2;
-            String functionName = null;
-            TokenList argListTokenList = null;
-
-            for(int i = 1; i <= lastIndexToCheck; i++)
-            {
-                if(tokenList.get(i).equals(Token.OPEN_BRACKET))
-                {
-                    functionName = tokenList.subList(0, i).equationAsString.trim();
-                    argListTokenList = tokenList.subList(i + 1, tokenList.size() - 1);
-                    break;
-                }
-            }
-
-            if(argListTokenList == null)
-                return null;
-
-            EquationComponent[] arguments;
-
-            if(argListTokenList.isEmpty())
-                arguments = new EquationComponent[0];
-            else
-            {
-                if(argListTokenList.startsWith(Token.ARGUMENT_SEPARATOR))
-                    throw new LeadingArgumentSeparatorException(tokenList, tokenList);
-
-                if(argListTokenList.endsWith(Token.ARGUMENT_SEPARATOR))
-                    throw new TrailingArgumentSeparatorException(tokenList, tokenList);
-
-                List<TokenList> argTokenLists = argListTokenList.splitBy(Token.ARGUMENT_SEPARATOR);
-                arguments = new EquationComponent[argTokenLists.size()];
-
-                for(int i = 0; i < argTokenLists.size(); i++)
-                    arguments[i] = tryParse(argTokenLists.get(i));
-            }
-
-            if(!functions.containsKey(functionName))
-            {
-                if(tokenList.containsAnyOf(operatorTokens))
-                    return null;
-
-                throw new UnrecognisedFunctionException(functionName, tokenList, tokenList);
-            }
-
-            return new FunctionCall(functionName, arguments);
-        }
-
+        //region number parsing
         LiteralNumber tryParseNumber(TokenList tokenList)
         {
             try
@@ -1147,67 +1244,9 @@ public class Equation
             catch(NumberFormatException e)
             { return null; }
         }
-
-        // Tokens in a tokenised equation may only be infix operators where:
-        //  - There are tokens before and after the run.
-        //  - All tokens in the run of operator tokens it's in before it may be postfix operators
-        //  - All tokens in the run of operator tokens it's in after it may be prefix operators
-        boolean canBeInfixOperatorToken(List<Token> tokens, int tokenIndex)
-        {
-            if(tokenIndex == 0 || tokenIndex == tokens.size() - 1)
-                return false;
-
-            OperatorTokenRun run = getOpRun(tokens, tokenIndex);
-
-            if((run.startIndexInSource == 0) || (run.endIndexInSource == tokens.size() - 1))
-                return false;
-
-            for(Token i : run.tokensBeforePivot)
-                if(!postfixOperators.containsKey(i))
-                    return false;
-
-            for(Token i : run.tokensAfterPivot)
-                if(!prefixOperators.containsKey(i))
-                    return false;
-
-            return true;
-        }
-
-        // idk, I'm bad at naming things.
-        OperatorTokenRun getOpRun(List<Token> tokens, int indexToGetOpRunThatContainsIt)
-        {
-            int min = -1, max = -1;
-
-            for(int i = indexToGetOpRunThatContainsIt - 1; i >= 0; i--)
-            {
-                Token itoken = tokens.get(i);
-
-                if(!operatorTokens.contains(itoken))
-                {
-                    min = i + 1;
-                    break;
-                }
-            }
-
-            for(int i = indexToGetOpRunThatContainsIt + 1; i < tokens.size(); i++)
-            {
-                Token itoken = tokens.get(i);
-
-                if(!operatorTokens.contains(itoken))
-                {
-                    max = i - 1;
-                    break;
-                }
-            }
-
-            if(min == -1)
-                min = 0;
-
-            if(max == -1)
-                max = tokens.size() - 1;
-
-            return new OperatorTokenRun(tokens, min, max, indexToGetOpRunThatContainsIt);
-        }
+        //endregion
+        //endregion
+        //endregion
     }
 
     static class Tokeniser
@@ -1357,19 +1396,28 @@ public class Equation
 
     static class TokenList
     {
+        //region variables
         public final String equationAsString;
         public final List<Token> tokens;
         public final List<Integer> spacings;
+        //endregion
 
+        //region initialisation
         public TokenList(String equationAsString, List<Token> tokens, List<Integer> spacingList)
         {
             this.equationAsString = equationAsString;
             this.tokens = tokens;
             this.spacings = spacingList;
         }
+        //endregion
 
+        //region methods
+        //region check state
         public int size()
         { return tokens.size(); }
+
+        public boolean isEmpty()
+        { return tokens.isEmpty(); }
 
         public boolean isInBrackets()
         {
@@ -1403,35 +1451,6 @@ public class Equation
             return true;
         }
 
-        public Token get(int index)
-        { return tokens.get(index); }
-
-        public Token first()
-        {
-            if(tokens.isEmpty())
-                return null;
-
-            return tokens.get(0);
-        }
-
-        public Token last()
-        {
-            if(tokens.isEmpty())
-                return null;
-
-            return tokens.get(tokens.size() - 1);
-        }
-
-        public TokenList unmodifiable()
-        {
-            List<Token> newTokens = Collections.unmodifiableList(tokens);
-            List<Integer> newSpacings = Collections.unmodifiableList(spacings);
-            return new TokenList(equationAsString, newTokens, newSpacings);
-        }
-
-        public boolean isEmpty()
-        { return tokens.isEmpty(); }
-
         public boolean startsWith(Token t)
         {
             if(tokens.isEmpty())
@@ -1459,7 +1478,38 @@ public class Equation
 
             return false;
         }
+        //endregion
 
+        //region get elements
+        public Token get(int index)
+        { return tokens.get(index); }
+
+        public Token first()
+        {
+            if(tokens.isEmpty())
+                return null;
+
+            return tokens.get(0);
+        }
+
+        public Token last()
+        {
+            if(tokens.isEmpty())
+                return null;
+
+            return tokens.get(tokens.size() - 1);
+        }
+        //endregion
+
+        //region get mutations
+        public TokenList unmodifiable()
+        {
+            List<Token> newTokens = Collections.unmodifiableList(tokens);
+            List<Integer> newSpacings = Collections.unmodifiableList(spacings);
+            return new TokenList(equationAsString, newTokens, newSpacings);
+        }
+
+        //region sublists
         public TokenList withoutFirst(int howMany)
         {
             if(howMany < 0)
@@ -1566,7 +1616,9 @@ public class Equation
 
             return new TokenList(newString, newTokens, newSpacings);
         }
+        //endregion
 
+        //region split
         public List<TokenList> splitBy(Token t)
         {
             List<TokenList> sublists = new ArrayList<>();
@@ -1701,6 +1753,9 @@ public class Equation
             result.add(subList(previousPoint + 1, size()));
             return result;
         }
+        //endregion
+        //endregion
+        //endregion
     }
 
     //region Tokens
