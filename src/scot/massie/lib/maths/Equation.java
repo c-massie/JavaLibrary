@@ -2086,6 +2086,10 @@ public class Equation
     //endregion
     //endregion
 
+    //region constants
+    private static final Builder defaultBuilder = new Builder(true);
+    //endregion
+
     //region variables
     final EquationComponent topLevelComponent;
     final Map<String, Double> variableValues;
@@ -2095,7 +2099,7 @@ public class Equation
     //region initialisation
     public Equation(String equationAsString)
     {
-        Equation parsedEquation = new Builder(true).build(equationAsString);
+        Equation parsedEquation = defaultBuilder.build(equationAsString);
         this.topLevelComponent  = parsedEquation.topLevelComponent;
         this.variableValues     = parsedEquation.variableValues;
         this.functions          = parsedEquation.functions;
