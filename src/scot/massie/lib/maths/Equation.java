@@ -723,7 +723,9 @@ public class Equation
                 throw new IllegalArgumentException("Cannot parse an empty string as an equation.");
 
             buildOperatorGroups();
-            Tokeniser tokeniser = new Tokeniser(possibleTokensInOrder);
+            List<Token> possibleTokensInReverseOrder = new ArrayList<>(this.possibleTokensInOrder);
+            Collections.reverse(possibleTokensInReverseOrder);
+            Tokeniser tokeniser = new Tokeniser(possibleTokensInReverseOrder);
             TokenList tokenisation = tokeniser.tokenise(toParse).unmodifiable();
             verifyTokenisationBrackets(tokenisation);
             EquationComponent topLevelComponent;

@@ -224,6 +224,14 @@ class EquationTest
     }
 
     //endregion
+
+    //region correct tokenisation
+
+    @Test
+    void op_correctTokenisation()
+    { assertEquals(35.0 , new Equation.Builder(true).withOperator("+-", (l, r) -> l * r).build("5+-7").evaluate()); }
+
+    //endregion
     //endregion
     //endregion
 
