@@ -24,6 +24,17 @@ import java.util.stream.Collectors;
 
 import static scot.massie.lib.utils.ControlFlowUtils.*;
 
+/**
+ * <p>An equation compiled from a string representation of itself, which may be evaluated at any time.</p>
+ *
+ * <p>Equations may be created using the constructor accepting a string, which parses the string as an equation using
+ * the default variables, functions, and operators, or with the {@link Builder} class, which will allow the use of
+ * custom variables, functions, and operations.</p>
+ *
+ * <p>Variables and functions used in the equation may be redefined at any point, with
+ * {@link Equation#setVariable(String, double) .setVariable(...)} and
+ * {@link Equation#redefineFunction(String, ToDoubleFunction) .redefineFunction}.</p>
+ */
 public class Equation
 {
     //region inner classes
@@ -1971,29 +1982,78 @@ public class Equation
     //endregion
 
     //region equation components
+    /**
+     * An evaluatable component of an equation, corresponding to a single step in the equation evaluation process.
+     */
     static abstract class EquationComponent
-    { public abstract double evaluate(Equation equationBeingEvaluated); }
+    {
+        /**
+         * Evaluates this equation component.
+         * @param equationBeingEvaluated The equation this equation component is being evaluated in the context of.
+         * @return The result of evaluating this equation component, as a double.
+         */
+        public abstract double evaluate(Equation equationBeingEvaluated);
+    }
 
+    /**
+     * An equation component representing an operation - an operator's implementation and the operands to be passed into
+     * it. The operands are other equation components to be evaluated to determine the actual values passed into this
+     * operation.
+     */
     static class Operation extends EquationComponent
     {
+        /**
+         * The unevaluated operands of this operation.
+         */
         List<EquationComponent> components;
+
+        /**
+         * The implementation of the operator that will be performed on this operation's operands.
+         */
         OperatorAction action;
 
+        /**
+         * Creates a new unary operation from an equation component and an operator implementation.
+         * @param component The operand.
+         * @param action The operator implementation.
+         */
         public Operation(EquationComponent component, OperatorAction action)
         { this(Arrays.asList(component), action); }
 
+        /**
+         * Creates a new binary operation from a pair of equation components and an operator implementation.
+         * @param component1 The left operand.
+         * @param component2 The right operand.
+         * @param action The operator implementation
+         */
         public Operation(EquationComponent component1, EquationComponent component2, OperatorAction action)
         { this(Arrays.asList(component1, component2), action); }
 
+        /**
+         * Creates a new operation from a series of equation components and an operator implementation.
+         * @param components The operands.
+         * @param action The operator implementation.
+         */
         public Operation(EquationComponent[] components, OperatorAction action)
         { this(Arrays.asList(components), action); }
 
+        /**
+         * Creates a new operation from a series of equation components and an operator implementation.
+         * @param components The operands.
+         * @param action The operator implementation.
+         */
         public Operation(List<EquationComponent> components, OperatorAction action)
         {
             this.components = components;
             this.action = action;
         }
 
+        /**
+         * Evaluates the operation as a double. Evaluates each operand in this operation and passes the result into this
+         * operation's operator implementation in order, in order to produce a result.
+         * @param equationBeingEvaluated The equation this equation component is being evaluated in the context of.
+         * @return The result of evaluating this operation, as a double.
+         */
         @Override
         public double evaluate(Equation equationBeingEvaluated)
         {
@@ -2006,11 +2066,28 @@ public class Equation
         }
     }
 
+    /**
+     * An equation component that runs a function with a series of arguments - a function name to look up and the
+     * function arguments to be passed into it. The arguments are other equation components to be evaluated to determine
+     * the actual values passed into this function call.
+     */
     static class FunctionCall extends EquationComponent
     {
+        /**
+         * Ths name of the function being called. This is used to look up the function implementation to run.
+         */
         String functionName;
+
+        /**
+         * The unevaluated arguments of this function call.
+         */
         EquationComponent[] arguments;
 
+        /**
+         * Creates a new function call from a function name and a series of arguments.
+         * @param functionName The name of the function this calls.
+         * @param arguments The function arguments.
+         */
         public FunctionCall(String functionName,
                             EquationComponent... arguments)
         {
@@ -2018,6 +2095,12 @@ public class Equation
             this.arguments = arguments;
         }
 
+        /**
+         * Runs the function this corresponds to and returns the result as a double. Evaluates each argument in this
+         * function call's argument list and passes the results into the function implementation as arguments.
+         * @param equationBeingEvaluated The equation this equation component is being evaluated in the context of.
+         * @return The result of this function call, as a double.
+         */
         @Override
         public double evaluate(Equation equationBeingEvaluated)
         {
@@ -2035,13 +2118,28 @@ public class Equation
         }
     }
 
+    /**
+     * An equation component referencing a variable.
+     */
     static class VariableReference extends EquationComponent
     {
+        /**
+         * The name of the variable being referenced. This is used to look up the actual value.
+         */
         String name;
 
+        /**
+         * Creates a new variable reference from a given name.
+         * @param name The name of the variable this references.
+         */
         public VariableReference(String name)
         { this.name = name; }
 
+        /**
+         * Gets the value of the variable this corresponds to and returns it as a double.
+         * @param equationBeingEvaluated The equation this equation component is being evaluated in the context of.
+         * @return The current value of the variable this corresponds to, as a double.
+         */
         @Override
         public double evaluate(Equation equationBeingEvaluated)
         {
@@ -2054,13 +2152,28 @@ public class Equation
         }
     }
 
+    /**
+     * An equation components referencing a fixed number.
+     */
     static class LiteralNumber extends EquationComponent
     {
+        /**
+         * The number this references.
+         */
         double value;
 
+        /**
+         * Creates a new literal number referencing a given number.
+         * @param value The number to reference.
+         */
         public LiteralNumber(double value)
         { this.value = value; }
 
+        /**
+         * Gets the number this references.
+         * @param equationBeingEvaluated The equation this equation component is being evaluated in the context of.
+         * @return The number this references.
+         */
         @Override
         public double evaluate(Equation equationBeingEvaluated)
         { return value; }
@@ -2068,35 +2181,100 @@ public class Equation
     //endregion
 
     //region actions
+    /**
+     * An implementation of an operator, given any number of operands.
+     */
     @FunctionalInterface
     public interface OperatorAction
-    { double performOperation(double... operands); }
+    {
+        /**
+         * Performs this operator implementation on the given operands.
+         * @param o The operands passed into the operation.
+         * @return The result of this operator implementation on the given operands, as a double.
+         */
+        double performOperation(double... o);
+    }
 
+    /**
+     * An implementation of an operator, given one operand.
+     */
     @FunctionalInterface
     public interface UnaryOperatorAction
-    { double performOperation(double operand); }
+    {
+        /**
+         * Performs this operator implementation on the given operand.
+         * @param o The operand passed into the operation.
+         * @return The result of this operator implementation on the given operand, as a double.
+         */
+        double performOperation(double o);
+    }
 
+    /**
+     * An implementation of an operator, given two operands.
+     */
     @FunctionalInterface
     public interface BinaryOperatorAction
-    { double performOperation(double l, double r); }
+    {
+        /**
+         * Performs this operator implementation on the given operands.
+         * @param l The left operand passed into the operation.
+         * @param r The right operand passed into the operation.
+         * @return The result of this operator implementation on the given operands, as a double.
+         */
+        double performOperation(double l, double r);
+    }
 
+    /**
+     * An implementation of an operator, given three operands.
+     */
     @FunctionalInterface
     public interface TernaryOperatorAction
-    { double performOperation(double l, double m, double r); }
+    {
+        /**
+         * Performs this operator implementation on the given operands.
+         * @param l The left operand passed into the operation.
+         * @param m The middle operand passed into the operation.
+         * @param r The right operand passed into the operation.
+         * @return The result of this operator implementation on the given operands, as a double.
+         */
+        double performOperation(double l, double m, double r);
+    }
     //endregion
     //endregion
 
     //region constants
+    /**
+     * The default equation builder for constructing equations using the new Equation(String) constructor.
+     */
     private static final Builder defaultBuilder = new Builder(true);
     //endregion
 
     //region variables
+    /**
+     * <p>The equation component representing the first/root evaluatable component of the equation. This component holds
+     * references to other components in the equation, in a tree topology.</p>
+     */
     final EquationComponent topLevelComponent;
+
+    /**
+     * <p>The variables available to this equation, and their values. This is independent from the variables map of the
+     * builder used to create this equation object, allowing variables to be reässigned.</p>
+     */
     final Map<String, Double> variableValues;
+
+    /**
+     * <p>The functions available to this equation, and their implementations. This is independent from the functions
+     * map of the builder used to create this equation object, allowing functions to be redefined.</p>
+     */
     final Map<String, ToDoubleFunction<double[]>> functions;
     //endregion
 
     //region initialisation
+    /**
+     * <p>Creates a new equation object by parsing the given string as an equation, using the default operators,
+     * variables, and functions.</p>
+     * @param equationAsString The string to be compiled into an equation.
+     */
     public Equation(String equationAsString)
     {
         Equation parsedEquation = defaultBuilder.build(equationAsString);
@@ -2105,6 +2283,14 @@ public class Equation
         this.functions          = parsedEquation.functions;
     }
 
+    /**
+     * Creates a new equation object with the given top level component, variable map, and function map.
+     * @param topLevelComponent The top level component.
+     * @param variableValues The variable map. This should be a copy of the one used by the equation builder at the time
+     *                       of building.
+     * @param functions The function map. This should be a copy of the one used by the equation builder at the time of
+     *                  building.
+     */
     Equation(EquationComponent topLevelComponent,
              Map<String, Double> variableValues,
              Map<String, ToDoubleFunction<double[]>> functions)
@@ -2116,9 +2302,22 @@ public class Equation
     //endregion
 
     //region methods
+
+    /**
+     * Evaluates the equation.
+     * @return The result of the equation as a double.
+     */
     public double evaluate()
     { return topLevelComponent.evaluate(this); }
 
+    /**
+     * <p>Reässigns the value of a variable in this equation. If the equation does not have a variable available to it
+     * by the given variable name, does nothing.</p>
+     * @param variableName The name of the variable to reässign.
+     * @param newValue The value to assign to the variable.
+     * @return True if the variable was reässigned successfully. False if it was not, as a result of the variable not
+     *         being available to this equation.
+     */
     public boolean setVariable(String variableName, double newValue)
     {
         if(!variableValues.containsKey(variableName))
@@ -2128,6 +2327,14 @@ public class Equation
         return true;
     }
 
+    /**
+     * <p>Provides a new implementation of function in this equation. If the equation does not have a function
+     * available to it by the given function name, does nothing.</p>
+     * @param functionName The name of the function to redefine.
+     * @param function The new implementation of the function.
+     * @return True if the function was redefined successfully. False if it was not, as a result of the function not
+     *         being available to this equation.
+     */
     public boolean redefineFunction(String functionName, ToDoubleFunction<double[]> function)
     {
         if(!functions.containsKey(functionName))
