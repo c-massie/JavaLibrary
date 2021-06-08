@@ -1844,12 +1844,36 @@ public class Equation
     //endregion
 
     //region operators
+    /**
+     * A definition of an operator for an equation.
+     */
     static abstract class Operator
     {
+        /**
+         * The tokens affixed to operands to invoke this operator. Where an operator has more than 1 token, these are in
+         * order as they appear when invoking the operator.
+         */
         final List<Token> tokens;
+
+        /**
+         * The priority, or "stickiness", of this operator. Where multiple operators are used in conjunction, this
+         * determines the order in which the operators are evaluated, where higher priority operator calls are nested in
+         * lower priority operator calls. E.g. in "a + b * c", the '*' operator has a higher priority than '+' operator,
+         * so the equation could be rephrased as "a + (b * c)".
+         */
         final double priority;
+
+        /**
+         * The implementation of this operator.
+         */
         final OperatorAction action;
 
+        /**
+         * Creates a new operator object given a list of affix tokens, a priority, and an implementation.
+         * @param tokens The tokens affixed to operands to invoke this operator.
+         * @param priority How "sticky" the operator is.
+         * @param action The implementation of this operator.
+         */
         public Operator(List<Token> tokens, double priority, OperatorAction action)
         {
             this.tokens = Collections.unmodifiableList(tokens);
@@ -1857,12 +1881,28 @@ public class Equation
             this.action = action;
         }
 
+        /**
+         * Gets the priority, or "stickiness", of this operator.
+         * @return This operator's priority.
+         */
         public double getPriority()
         { return priority; }
 
+        /**
+         * Gets the tokens used to invoke this operator, in the order that they must be used.
+         * @return A list of the tokens used to invoke this operator. For instance, this would return ["?", ":"] (where
+         *         the quoted characters represent tokens) for the conditional ternary operator.
+         */
         public List<Token> getTokens()
         { return tokens; }
 
+        /**
+         * Attempts to produce an operation object for this operator given a tokenList and context.
+         * @param tokenList The token list to be parsed.
+         * @param builder The context - the builder to refer to in parsing operands
+         * @return An operation using this operator, or null if the given token list was not identifiable as an instance
+         *         of this operator being called.
+         */
         public abstract Operation tryParse(TokenList tokenList, Builder builder);
     }
 
