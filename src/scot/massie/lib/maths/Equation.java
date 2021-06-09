@@ -1906,17 +1906,39 @@ public class Equation
         public abstract Operation tryParse(TokenList tokenList, Builder builder);
     }
 
+    /**
+     * A definition of a unary operator (taking one operand) for an equation.
+     */
     static abstract class UnaryOperator extends Operator
     {
+        /**
+         * Creates a new unary operator object given a token, priority, and implementation.
+         * @param token The token to be affixed to the operand to invoke the operator.
+         * @param priority How "sticky" the operator is.
+         * @param action The implementation of this operator.
+         */
         public UnaryOperator(Token token, double priority, UnaryOperatorAction action)
         { super(Arrays.asList(token), priority, operands -> action.performOperation(operands[0])); }
 
+        /**
+         * Gets the token affixed to an operand to invoke this operator.
+         * @return The token to be affixed to an operand to invoke this operator.
+         */
         public Token getToken()
         { return this.tokens.get(0); }
     }
 
+    /**
+     * A definition of a prefix unary operator (affixed to before an operand) for an equation.
+     */
     static class PrefixOperator extends UnaryOperator
     {
+        /**
+         * Creates a new prefix unary operator object given a token, priority, and implementation.
+         * @param token The token to prefix an operand to invoke the operator.
+         * @param priority How "sticky" the operator is.
+         * @param action The implementation of this operator.
+         */
         public PrefixOperator(Token token, double priority, UnaryOperatorAction action)
         { super(token, priority, action); }
 
@@ -1930,8 +1952,17 @@ public class Equation
         }
     }
 
+    /**
+     * A definition of a postfix unary operator (affixed to after an operand) for an equation.
+     */
     static class PostfixOperator extends UnaryOperator
     {
+        /**
+         * Creates a new postfix unary operator object given a token, priority, and implementation.
+         * @param token The token to postfix an operand to invoke the operator.
+         * @param priority How "sticky" the operator is.
+         * @param action The implementation of this operator.
+         */
         public PostfixOperator(Token token, double priority, UnaryOperatorAction action)
         { super(token, priority, action); }
 
@@ -1945,22 +1976,51 @@ public class Equation
         }
     }
 
+    /**
+     * A definition of an infix operator (affixed to between operands) for an equation.
+     */
     static class InfixOperator extends Operator
     {
+        /**
+         * Whether the operator is left associative. If false, the operator is right associative.
+         */
         final boolean isLeftAssociative;
 
+        /**
+         * Creates a new infix operator object given a list of tokens, whether or not the operator is left associative,
+         * the priority, and the implementation.
+         * @param tokens The list of tokens in order to be placed between operands to invoke this equation.
+         * @param isLeftAssociative Whether or not the operator is left associative. If false, the operator is right
+         *                          associative. Associativity determines whether operators of the same priority to the
+         *                          left or right are "stickier".
+         * @param priority How "sticky" the operator is.
+         * @param action The implementation of this operator.
+         */
         public InfixOperator(List<Token> tokens, boolean isLeftAssociative, double priority, OperatorAction action)
         {
             super(tokens, priority, action);
             this.isLeftAssociative = isLeftAssociative;
         }
 
+        /**
+         * Gets whether or not this operator is left associative.
+         * @return True if this operator is left associative, false if this operator is right associative.
+         */
         public boolean isLeftAssociative()
         { return isLeftAssociative; }
 
+        /**
+         * Gets whether or not this operator is right associative.
+         * @return True if this operator is right associative, false if this operator is left associative.
+         */
         public boolean isRightAssociative()
         { return !isLeftAssociative; }
 
+        /**
+         * Gets the number of operands for this infix operator. This should be one more than the number of tokens used
+         * to infix this operator.
+         * @return The number of operands for this infix operator.
+         */
         public int getOperandCount()
         { return this.tokens.size() + 1; }
 
@@ -1973,9 +2033,24 @@ public class Equation
             return split == null ? null : compileFromOperandTokenLists(split, builder);
         }
 
+        /**
+         * Creates a new infix operation given a token list, list of indices in the token list that represents this
+         * operator's infix tokens, and the builder used to parse the operands.
+         * @param tokenList The list of tokens to parse.
+         * @param splitPoints The integer indices of this operator's infix tokens in the given token list.
+         * @param builder The builder to use to parse operands.
+         * @return A new infix operation of this operator.
+         */
         public Operation tryParseFromSplits(TokenList tokenList, List<Integer> splitPoints, Builder builder)
         { return compileFromOperandTokenLists(tokenList.splitAtPoints(splitPoints), builder); }
 
+        /**
+         * Creates a new infix operation given a list of token lists representing operators, and the builder used to
+         * parse the operands.
+         * @param tokenLists The operands.
+         * @param builder The builder to use to parse the operands.
+         * @return A new infix operation of this operator.
+         */
         Operation compileFromOperandTokenLists(List<TokenList> tokenLists, Builder builder)
         {
             List<EquationComponent> components = new ArrayList<>(tokenLists.size());
@@ -1987,8 +2062,19 @@ public class Equation
         }
     }
 
+    /**
+     * A definition of a binary infix operator (affixed to between two operands) for an equation.
+     */
     static class BinaryOperator extends InfixOperator
     {
+        /**
+         * Creates a new infix binary operator from a given token, whether or not it's left associative, the priority,
+         * and an implementation.
+         * @param token The infix token to be placed between two operands to invoke this operator.
+         * @param isLeftAssociative Whether or not this operator is left associative.
+         * @param priority How "sticky" this operator is.
+         * @param action The implementation.
+         */
         public BinaryOperator(Token token, boolean isLeftAssociative, double priority, BinaryOperatorAction action)
         {
             super(Arrays.asList(token),
@@ -1997,12 +2083,28 @@ public class Equation
                   operands -> action.performOperation(operands[0], operands[1]));
         }
 
+        /**
+         * Gets the token to be placed between two operands to invoke this operator.
+         * @return The token to be placed between two operands to invoke this operator.
+         */
         public Token getToken()
         { return this.tokens.get(0); }
     }
 
+    /**
+     * A definition of a ternary infix operator (affixed to between three operands) for an equation.
+     */
     static class TernaryOperator extends InfixOperator
     {
+        /**
+         * Creates a new infix ternary operator from given tokens, whether or not it's left associative, the priority,
+         * and an implementation.
+         * @param a The infix token to be placed between the first and second operands to invoke this operator.
+         * @param b The infix token to be placed between the second and third operands to invoke this operand.
+         * @param isLeftAssociative Whether or not this operand is left associative.
+         * @param priority How "sticky" the operator is.
+         * @param action The implementation.
+         */
         public TernaryOperator(Token a,
                                Token b,
                                boolean isLeftAssociative,
@@ -2015,9 +2117,17 @@ public class Equation
                   operands -> action.performOperation(operands[0], operands[1], operands[2]));
         }
 
+        /**
+         * Gets the operator token to be placed between the first and second operands to invoke this operator.
+         * @return The operator token to be placed between the first and second operands to invoke this operator.
+         */
         public Token getLeftToken()
         { return this.tokens.get(0); }
 
+        /**
+         * Gets the operator token to be placed between the second and third operands to invoke this operator.
+         * @return The operator token to be placed between the second and third operands to invoke this operator.
+         */
         public Token getRightToken()
         { return this.tokens.get(1); }
     }
