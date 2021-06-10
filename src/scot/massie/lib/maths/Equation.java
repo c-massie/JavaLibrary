@@ -1772,21 +1772,52 @@ public class Equation
     }
 
     //region Tokens
+
+    /**
+     * A representation of an identifiable meaningful portion of a string. (e.g. a variable name, an operator, etc.)
+     */
     static class Token
     {
+        /**
+         * The token representing an open bracket.
+         */
         public static final Token OPEN_BRACKET = new Token("(");
+
+        /**
+         * The token representing a close bracket.
+         */
         public static final Token CLOSE_BRACKET = new Token(")");
+
+        /**
+         * The token representing the separator between arguments in a function call.
+         */
         public static final Token ARGUMENT_SEPARATOR = new Token(",");
 
+        /**
+         * The actual test this token was created from.
+         */
         final String text;
 
+        /**
+         * Creates a new token from the given text.
+         * @param asText The text this token should represent.
+         */
         public Token(@NotNull String asText)
         { this.text = asText; }
 
+        /**
+         * Gets the text this token represents, what it was created from.
+         * @return The text this token represents.
+         */
         @Override
         public String toString()
         { return text; }
 
+        /**
+         * Two tokens are considered equal where they represent the same text.
+         * @param o The other object, likely a token.
+         * @return True if the two tokens were equal, otherwise false.
+         */
         @Override
         public boolean equals(Object o)
         {
@@ -1805,25 +1836,53 @@ public class Equation
         { return text.hashCode(); }
     }
 
+    /**
+     * A representation of a chunk of text that has yet to be tokenised. These may appear around or inbetween identified
+     * tokens.
+     */
     static class UntokenisedString extends Token
     {
+        /**
+         * Creates a new untokenised string token.
+         * @param s The text this token represents.
+         */
         public UntokenisedString(String s)
         { super(s); }
     }
 
+    /**
+     * A representation of a number in text.
+     */
     static class NumberToken extends Token
     {
+        /**
+         * This token's value as a number.
+         */
         final double value;
 
+        /**
+         * Creates a new number token, given its representation in text and the number it's been interpreted as.
+         * @param asText The original text representation of this token.
+         * @param asNumber The number this token represents.
+         */
         public NumberToken(String asText, double asNumber)
         {
             super(asText);
             this.value = asNumber;
         }
 
+        /**
+         * Gets the number this token represents.
+         * @return The number this token represents.
+         */
         public double getValue()
         { return value; }
 
+        /**
+         * Two number tokens are considered equal where they represent the same original text, and the same number.
+         * @param o The other object, likely a number token.
+         * @return True if the two tokens were equal. Otherwise, false.
+         */
         @Override
         public boolean equals(Object o)
         {
