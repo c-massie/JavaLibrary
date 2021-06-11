@@ -756,6 +756,26 @@ public class Equation_BuilderTest
     }
 
     @Test
+    void tryParseFunctionCall_emptyArg()
+    {
+        Builder b = new Builder().withFunction("doot", 3, args -> args[0] + args[1] * 3 + args[2] * 5)
+                                 .withVariable("x", 7)
+                                 .withVariable("y", 11);
+
+        Equation dummy = newDummyEquation(b);
+        b.buildOperatorGroups();
+
+        assertThrows(Builder.EmptyFunctionArgumentException.class,
+                     () -> b.tryParseFunctionCall(newTokenList("doot",
+                                                               Token.OPEN_BRACKET,
+                                                               "x",
+                                                               Token.ARGUMENT_SEPARATOR,
+                                                               Token.ARGUMENT_SEPARATOR,
+                                                               "y",
+                                                               Token.CLOSE_BRACKET)));
+    }
+
+    @Test
     void tryParseFunctionCall_unrecognisedFunction()
     {
         assertThrows(Builder.UnrecognisedFunctionException.class,

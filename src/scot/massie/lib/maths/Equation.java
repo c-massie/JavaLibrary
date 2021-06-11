@@ -233,6 +233,21 @@ public class Equation
             { return new TrailingArgumentSeparatorException(fullEquation, equationSection); }
         }
 
+        public static class EmptyFunctionArgumentException extends EquationParseException
+        {
+            public EmptyFunctionArgumentException(TokenList fullEquation, TokenList equationSection)
+            {
+                super(fullEquation, equationSection,
+                      "Equation contained an empty argument to a function. That is, argument separators were used, but "
+                      + "an argument wasn't passed in:"
+                      + fullEquation.equationAsString
+                      + "\nSpecifically, this portion: " + equationSection.equationAsString);
+            }
+
+            public EmptyFunctionArgumentException(TokenList fullEquation, TokenList equationSection, String msg)
+            { super(fullEquation, equationSection, msg); }
+        }
+
         public static class BracketMismatchException extends EquationParseException
         {
             public BracketMismatchException(TokenList equation)
@@ -947,7 +962,14 @@ public class Equation
                 arguments = new EquationComponent[argTokenLists.size()];
 
                 for(int i = 0; i < argTokenLists.size(); i++)
-                    arguments[i] = tryParse(argTokenLists.get(i));
+                {
+                    TokenList argTokenList = argTokenLists.get(i);
+
+                    if(argTokenList.isEmpty())
+                        throw new EmptyFunctionArgumentException(tokenList, tokenList);
+
+                    arguments[i] = tryParse(argTokenList);
+                }
             }
 
             if(!functions.containsKey(functionName))
@@ -1407,15 +1429,39 @@ public class Equation
         }
     }
 
+    /**
+     * A pseudo-list containing tokens in order at specific indices. This retains the text representation of the tokens
+     * within for quick access, and the spacings (number of spaces) between each token.
+     */
     static class TokenList
     {
         //region variables
+        /**
+         * The string representation of this token list.
+         */
         public final String equationAsString;
+
+        /**
+         * The tokens in this token list.
+         */
         public final List<Token> tokens;
+
+        /**
+         * The spacings between each token in this token list. Each integer stored is the number of spaces immediately
+         * before the token in {@link #tokens} at the same index. This list contains one more element than
+         * {@link #tokens}, where the final element is the number of trailing spaces.
+         */
         public final List<Integer> spacings;
         //endregion
 
         //region initialisation
+        /**
+         * Creates a new token list.
+         * @param equationAsString The string representation of the token list.
+         * @param tokens The tokens to be in the token list, in the order they should be in.
+         * @param spacingList The number of spaces before each element of tokens at the same integer, with one
+         *                    additional integer at the end representing the number of trailing spaces.
+         */
         public TokenList(String equationAsString, List<Token> tokens, List<Integer> spacingList)
         {
             this.equationAsString = equationAsString;
@@ -1426,12 +1472,24 @@ public class Equation
 
         //region methods
         //region check state
+        /**
+         * Gets the number of tokens in this token list.
+         * @return The number of tokens in this tokenlist.
+         */
         public int size()
         { return tokens.size(); }
 
+        /**
+         * Gets whether or not this token list is empty.
+         * @return True if this token list has no tokens. Otherwise, false.
+         */
         public boolean isEmpty()
         { return tokens.isEmpty(); }
 
+        /**
+         * Gets whether or not this token list is enclosed in matching brackets.
+         * @return True if this token list is enclosed in matching brackets. Otherwise, false.
+         */
         public boolean isInBrackets()
         {
             // Assumes that this TokenList doesn't have any bracket mismatches.
@@ -1464,6 +1522,12 @@ public class Equation
             return true;
         }
 
+        /**
+         * Gets whether or not the first token of this token list is the given token.
+         * @param t The token this token list may start with.
+         * @return True if this token list has at least one token and the first token is equal to the given token.
+         *         Otherwise, false.
+         */
         public boolean startsWith(Token t)
         {
             if(tokens.isEmpty())
@@ -1472,6 +1536,12 @@ public class Equation
             return tokens.get(0).equals(t);
         }
 
+        /**
+         * Gets whether or not the last token of this token list is the given token.
+         * @param t The token this token list may end with.
+         * @return True if this token list has at least one token and the last token is equal to the given token.
+         * Otherwise, false.
+         */
         public boolean endsWith(Token t)
         {
             if(tokens.isEmpty())
@@ -1480,9 +1550,20 @@ public class Equation
             return tokens.get(tokens.size() - 1).equals(t);
         }
 
+        /**
+         * Gets whether or not this token list contains the given token.
+         * @param t The token this token list may contain.
+         * @return True if any element in this token list is equal to the given token. Otherwise, false.
+         */
         public boolean contains(Token t)
         { return tokens.contains(t); }
 
+        /**
+         * Gets whether or not this token list contains any of the given tokens.
+         * @param ts The tokens this token list may contain.
+         * @return True if any element in this token list is equal to any element of the given collection of tokens.
+         *         Otherwise, false.
+         */
         public boolean containsAnyOf(Collection<Token> ts)
         {
             for(int i = 0; i < tokens.size(); i++)
@@ -1494,9 +1575,21 @@ public class Equation
         //endregion
 
         //region get elements
+
+        /**
+         * Gets the token in this token list at the given index.
+         * @param index The index of this list to get a token from.
+         * @return The token in this list at the given index.
+         * @throws IndexOutOfBoundsException if index is less than 0, or greater than or equal to this token list's
+         *                                   size.
+         */
         public Token get(int index)
         { return tokens.get(index); }
 
+        /**
+         * Gets the first token in this token list.
+         * @return The token at index 0 in this list, or null if this list doesn't have at least one element.
+         */
         public Token first()
         {
             if(tokens.isEmpty())
@@ -1505,6 +1598,10 @@ public class Equation
             return tokens.get(0);
         }
 
+        /**
+         * Gets the last token in this token list.
+         * @return The token at the greatest index in this list, or null if this list doesn't have at least one element.
+         */
         public Token last()
         {
             if(tokens.isEmpty())
@@ -1515,6 +1612,13 @@ public class Equation
         //endregion
 
         //region get mutations
+        /**
+         * Gets a view of this token list where the internal lists of tokens and spacings are explicitly marked as being
+         * unmodifiable. If this token list is updated, that will update the contents of the produced token list as
+         * well.
+         * @return A copy of this tokenlist object, where the internal lists of tokens and spacings are unmodifiable
+         * views of the ones in this tokenlist object.
+         */
         public TokenList unmodifiable()
         {
             List<Token> newTokens = Collections.unmodifiableList(tokens);
@@ -1523,6 +1627,14 @@ public class Equation
         }
 
         //region sublists
+        /**
+         * Gets a view of this tokenlist, dropping the given number of elements from the start.
+         * @param howMany How many elements to drop from the start.
+         * @return A view of this tokenlist, without the first given number of tokens. If howMany is equal to or greater
+         *         than the number of elements in this token list, returns an empty token list.
+         * @throws IllegalArgumentException if howMany is less than 0.
+         *
+         */
         public TokenList withoutFirst(int howMany)
         {
             if(howMany < 0)
@@ -1542,6 +1654,11 @@ public class Equation
             return new TokenList(newString, newTokens, newSpacings);
         }
 
+        /**
+         * Gets a view of this tokenlist, dropping the first element from the start.
+         * @return A view of this tokenlist, without the first token. If this tokenlist only has one or fewer tokens,
+         *         returns an empty tokenlist.
+         */
         public TokenList withoutFirst()
         {
             if(size() == 0)
@@ -1554,6 +1671,13 @@ public class Equation
             return new TokenList(newString, newTokens, newSpacings);
         }
 
+        /**
+         * Gets a view of this tokenlist, dropping the given number of elements from the end.
+         * @param howMany How many elements to drop from the end.
+         * @return A view of this tokenlist, without the last given number of tokens. If howMany is equal to or greater
+         *         than the number of lements in this token list, returns an empty token list.
+         * @throws IllegalArgumentException if howMany is less than 0.
+         */
         public TokenList withoutLast(int howMany)
         {
             if(howMany < 0)
@@ -1573,6 +1697,11 @@ public class Equation
             return new TokenList(newString, newTokens, newSpacings);
         }
 
+        /**
+         * Gets a view of this tokenlist, dropping the last element from the end.
+         * @return A view of this tokenlist, without the last token. If this tokenlist only has one or fewer tokens,
+         *         returns an empty tokenlist.
+         */
         public TokenList withoutLast()
         {
             if(size() == 0)
@@ -1585,6 +1714,11 @@ public class Equation
             return new TokenList(newString, newTokens, newSpacings);
         }
 
+        /**
+         * Gets a view of this tokenlist, dropping the first and last elements from the start and end.
+         * @return A view of this tokenlist, without the first and last tokens. If this tokenlist only has two or fewer
+         *         tokens, returns an empty tokenlist.
+         */
         public TokenList withoutFirstAndLast()
         {
             if(size() <= 1)
@@ -1600,6 +1734,16 @@ public class Equation
             return new TokenList(newString, newTokens, newSpacings);
         }
 
+        /**
+         * Gets a view of this tokenlist, only containing the elements from fromInclusive to (but not including)
+         * toExclusive.
+         * @param fromInclusive The first index of the sublist to view from this tokenlist.
+         * @param toExclusive The index after the last index of the sublist to view from this tokenlist.
+         * @return A view of this tokenlist, only covering the elements from the given lowerbound to the given
+         *         upperbound exclusive. Where fromInclusive and toExclusive are equal, this returns an empty tokenlist.
+         * @throws IllegalArgumentException if fromInclusive is less than 0, toExclusive is greater than this
+         *                                  tokenlist's size, or fromInclusive is greater than toInclusive.
+         */
         public TokenList subList(int fromInclusive, int toExclusive)
         {
             if(fromInclusive < 0)
@@ -1632,6 +1776,32 @@ public class Equation
         //endregion
 
         //region split
+        /**
+         * Gets a list of views of this tokenlist, which are sublists of this tokenlist split by, but not including, the
+         * given token.
+         * @param t The token to split by.
+         * @return <p>Where the given token does not appear in this tokenlist, returns a list containing just a direct
+         *         1:1 view of this tokenlist.</p>
+         *
+         *         <p>Where the given token appears once in this tokenlist, returns a list containing two elements: A
+         *         token list containing containing the first elements of this token list before the instance of the
+         *         given token, and a token list containing the last elements of this token list after the instance of
+         *         the given token.</p>
+         *
+         *         <p>Where the given token appears multiple times in this tokenlist, returns a list containing a
+         *         tokenlist containing the first tokens of this tokenlist up until the first instance of the given
+         *         token, tokenlists containing the tokens between instances of this token, and a tokenlist containing
+         *         the last tokens of this tokenlist from the last instance of the given token until the end of this
+         *         tokenlist.</p>
+         *
+         *         <p>The returned list is in the order the tokenlists appear as sublists of this tokenlist.</p>
+         *
+         *         <p>This may produce empty tokenlists, where the given token occurs consecutively, or where the given
+         *         token is the first or last token of this tokenlist.</p>
+         *
+         *         <p>Instances of the given token are not matched where they're within brackets. Specifically, where
+         *         the tokens preceding the instance contains at least one unmatched open bracket.</p>
+         */
         public List<TokenList> splitBy(Token t)
         {
             List<TokenList> sublists = new ArrayList<>();
@@ -1657,6 +1827,28 @@ public class Equation
             return sublists;
         }
 
+        /**
+         * <p>Gets a list of views of this tokenlist, which are sublists of this tokenlist split by, but not including,
+         * the given sequence of tokens in order.</p>
+         *
+         * <p>If there are multiple instance of the given sequence, this will split by the first one.</p>
+         * @param sequence The sequence of tokens to split by.
+         * @return <p>Where the given sequence of tokens does not appear in this tokenlist in the specified order, or
+         *         only partially appears in this tokenlist outwith brackets, returns null.</p>
+         *
+         *         <p>Where the given sequence appears in this tokenlist in order and outwith brackets, returns a list
+         *         of containing a tokenlist containing the first tokens of this tokenlist until the first token of the
+         *         sequence, tokenlists containing the tokens between tokens of the sequence, and a tokenlist containing
+         *         the last tokens of this tokenlist until the end.</p>
+         *
+         *         <p>The returned list is in the order the tokenlists appear as sublists of this tokenlist.</p>
+         *
+         *         <p>The may produce empty tokenlists, where tokens of the given sequence occur consecuritvely, or
+         *         where the first or last token of this tokenlist is the first or last token of the given sequence.</p>
+         *
+         *         <p>Tokens within the given sequence are not matched where they're within brackets. Specifically,
+         *         where the tokens preceding it in this tokenlist contains at least one unamtched open bracket.</p>
+         */
         public List<TokenList> splitBySequence(List<Token> sequence)
         {
             List<TokenList> result = new ArrayList<>();
@@ -1694,6 +1886,30 @@ public class Equation
             return result;
         }
 
+        /**
+         * <p>Gets a list of views of this tokenlist, which are sublists of this tokenlist split by, but not including,
+         * the given sequence of tokens in order.</p>
+         *
+         * <p>This differs from {@link #splitBySequence(List)} by scanning to the end to the start, rather than the
+         * start to the end. This means that if there are multiple instance of the given sequence, this will split by
+         * the last one.</p>
+         * @param sequence The sequence of tokens to split by.
+         * @return <p>Where the given sequence of tokens does not appear in this tokenlist in the specified order, or
+         *         only partially appears in this tokenlist outwith brackets, returns null.</p>
+         *
+         *         <p>Where the given sequence appears in this tokenlist in order and outwith brackets, returns a list
+         *         of containing a tokenlist containing the first tokens of this tokenlist until the first token of the
+         *         sequence, tokenlists containing the tokens between tokens of the sequence, and a tokenlist containing
+         *         the last tokens of this tokenlist until the end.</p>
+         *
+         *         <p>The returned list is in the order the tokenlists appear as sublists of this tokenlist.</p>
+         *
+         *         <p>The may produce empty tokenlists, where tokens of the given sequence occur consecuritvely, or
+         *         where the first or last token of this tokenlist is the first or last token of the given sequence.</p>
+         *
+         *         <p>Tokens within the given sequence are not matched where they're within brackets. Specifically,
+         *         where the tokens preceding it in this tokenlist contains at least one unamtched open bracket.</p>
+         */
         public List<TokenList> splitBySequenceInReverse(List<Token> sequence)
         {
             List<TokenList> result = new ArrayList<>();
@@ -1732,6 +1948,17 @@ public class Equation
             return result;
         }
 
+        /**
+         * Gets a list of views of this tokenlist, which are sublists of this tokenlists between the given indices
+         * in order.
+         * @param points The indices to get a split view of this tokenlist at.
+         * @return <p>A list of views of this tokenlist, where each view is a sublist of this tokenlist between the
+         *         indices passed, from the lowest to the highest indices provided in order.</p>
+         *
+         *         <p>Where the given list of points is empty, returns a list just containing this tokenlist.</p>
+         * @throws IndexOutOfBoundsException Where any of the indices passed are less than minus 1 or greater than this
+         *                                   tokenlist's size.
+         */
         public List<TokenList> splitAtPoints(List<Integer> points)
         {
             if(points.isEmpty())
