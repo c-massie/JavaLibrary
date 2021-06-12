@@ -1284,13 +1284,33 @@ public class Equation
         //endregion
     }
 
+    /**
+     * <p>Class for converting a string into a list of {@link Token tokens}.</p>
+     *
+     * <p>This works by going through the registered tokens and identifying them in the provided string, splitting it
+     * into the text around and between the tokens, (including the tokens themselves in the results) and doing the same
+     * to the split off parts. (That aren't tokens themselves)</p>
+     */
     static class Tokeniser
     {
+        /**
+         * The defined tokens this tokeniser should look for, in the order it should look for them in.
+         */
         List<Token> tokens;
 
+        /**
+         * Creates a new tokeniser, considering the given tokens.
+         * @param tokens The tokens for the tokeniser to consider.
+         */
         public Tokeniser(List<Token> tokens)
         { this.tokens = tokens; }
 
+        /**
+         * Converts a string into a token list, considering the tokens this tokeniser was initialised with.
+         * @param s The string to tokenise.
+         * @return A list of tokens and text before, between, and after tokens (as instances of
+         *         {@link UntokenisedString}) in the passed string.
+         */
         public TokenList tokenise(String s)
         {
             String sTrimmed = s.trim();
@@ -1338,6 +1358,13 @@ public class Equation
             return new TokenList(s, result, spacesBeforeTokens);
         }
 
+        /**
+         * Converts a string into a token list, considering only a single token.
+         * @param tokenText The string to tokenise.
+         * @param tokenToSplitBy The token to consider.
+         * @return A list of instances of the given token and text before, between, and after instances of the given
+         *         token (as instance of {@link UntokenisedString}) in the passed string.
+         */
         static TokenList tokeniseStringWithSingleToken(String tokenText, Token tokenToSplitBy)
         {
             String textToSplitBy = tokenToSplitBy.text;
@@ -1410,6 +1437,11 @@ public class Equation
             }
         }
 
+        /**
+         * Gets the number of spaces at the start of a string.
+         * @param s The string to count the leading spaces of.
+         * @return The number of spaces at the start of the given string.
+         */
         static int countSpacesAtStart(@NotNull String s)
         {
             for(int i = 0; i < s.length(); i++)
@@ -1419,6 +1451,11 @@ public class Equation
             return s.length();
         }
 
+        /**
+         * Gets the number of spaces at the end of a string.
+         * @param s The string to count the trailing spaces of.
+         * @return The number of spaces at the end of the given string.
+         */
         static int countSpacesAtEnd(@NotNull String s)
         {
             for(int i = 0, r = s.length() - 1; r >= 0; i++, r--)
