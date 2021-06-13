@@ -93,11 +93,27 @@ public class Equation
     {
         //region inner classes
         //region exceptions
+
+        /**
+         * Thrown when an equation provided as a string cannot be compiled into an equation.
+         */
         public static class EquationParseException extends RuntimeException
         {
+            /**
+             * The specific section of the equation causing this exception.
+             */
             final TokenList equationSection;
+
+            /**
+             * The full equation causing this equation.
+             */
             final TokenList fullEquation;
 
+            /**
+             * Creates a new EquationParseException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             */
             EquationParseException(TokenList fullEquation, TokenList equationSection)
             {
                 super("Equation was not parsable as an equation: " + fullEquation.equationAsString
@@ -107,6 +123,12 @@ public class Equation
                 this.equationSection = equationSection;
             }
 
+            /**
+             * Creates a new EquationParseException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             * @param msg The exception message.
+             */
             EquationParseException(TokenList fullEquation, TokenList equationSection, String msg)
             {
                 super(msg);
@@ -114,18 +136,42 @@ public class Equation
                 this.equationSection = equationSection;
             }
 
+            /**
+             * Gets the specific section of the equation that caused this exception.
+             * @return The specific substring of the given equation that caused this exception.
+             */
             public String getEquationSection()
             { return equationSection.equationAsString.trim(); }
 
+            /**
+             * Gets the equation that caused this exception.
+             * @return The full equation as a string, that caused this exception.
+             */
             public String getFullEquation()
             { return fullEquation.equationAsString.trim(); }
 
+            /**
+             * Copies this exception with a different given full equation. This allows the exception to be caught and
+             * rethrown with a fuller "full equation" value.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @return A copy of this exception, with the full equation set to the given TokenList. The equation section
+             *         remains the same.
+             */
             public EquationParseException withFullEquation(TokenList fullEquation)
             { return new EquationParseException(fullEquation, equationSection); }
         }
 
+        /**
+         * Thrown when an equation (or section thereof) starts with or ends with an operator than cannot be a prefix or
+         * postfix operator respectively.
+         */
         public static class DanglingOperatorException extends EquationParseException
         {
+            /**
+             * Creates a new DanglingOperatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             */
             public DanglingOperatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
@@ -134,6 +180,12 @@ public class Equation
                         + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
+            /**
+             * Creates a new DanglingOperatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public DanglingOperatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
@@ -142,8 +194,16 @@ public class Equation
             { return new DanglingOperatorException(fullEquation, equationSection); }
         }
 
+        /**
+         * Thrown when an equation (or section thereof) starts with an operator that cannot be a prefix operator.
+         */
         public static class LeadingNonPrefixOperatorException extends DanglingOperatorException
         {
+            /**
+             * Creates a new LeadingNonPrefixOperatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             */
             public LeadingNonPrefixOperatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
@@ -152,6 +212,12 @@ public class Equation
                       + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
+            /**
+             * Creates a new LeadingNonPrefixOperatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public LeadingNonPrefixOperatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
@@ -160,8 +226,16 @@ public class Equation
             { return new LeadingNonPrefixOperatorException(fullEquation, equationSection); }
         }
 
+        /**
+         * Thrown when an equation (or section thereof) ends with an operator that cannot be a postfix operator.
+         */
         public static class TrailingNonPostfixOperatorException extends DanglingOperatorException
         {
+            /**
+             * Creates a new TrailingNonPostfixOperatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             */
             public TrailingNonPostfixOperatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
@@ -170,6 +244,12 @@ public class Equation
                       + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
+            /**
+             * Creates a new TrailingNonPostfixOperatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public TrailingNonPostfixOperatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
@@ -178,8 +258,16 @@ public class Equation
             { return new TrailingNonPostfixOperatorException(fullEquation, equationSection); }
         }
 
+        /**
+         * Thrown when a list of arguments in a function call starts or ends with an argument separator. (A comma)
+         */
         public static class DanglingArgumentSeparatorException extends EquationParseException
         {
+            /**
+             * Creates a new DanglingArgumentSeparatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             */
             public DanglingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
@@ -188,6 +276,12 @@ public class Equation
                       + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
+            /**
+             * Creates a new DanglingArgumentSeparatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public DanglingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
@@ -196,8 +290,16 @@ public class Equation
             { return new DanglingArgumentSeparatorException(fullEquation, equationSection); }
         }
 
+        /**
+         * Thrown when a list of arguments in a function call starts with an argument separator. (A comma)
+         */
         public static class LeadingArgumentSeparatorException extends DanglingArgumentSeparatorException
         {
+            /**
+             * Creates a new LeadingArgumentSeparatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             */
             public LeadingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
@@ -206,6 +308,12 @@ public class Equation
                       + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
+            /**
+             * Creates a new LeadingArgumentSeparatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public LeadingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
@@ -214,9 +322,16 @@ public class Equation
             { return new LeadingArgumentSeparatorException(fullEquation, equationSection); }
         }
 
+        /**
+         * Thrown when a list of arguments in a function call ends with an argument separator. (A comma)
+         */
         public static class TrailingArgumentSeparatorException extends DanglingArgumentSeparatorException
         {
-
+            /**
+             * Creates a new TrailingArgumentSeparatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             */
             public TrailingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
@@ -225,6 +340,12 @@ public class Equation
                       + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
+            /**
+             * Creates a new TrailingArgumentSeparatorException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public TrailingArgumentSeparatorException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
 
@@ -233,8 +354,16 @@ public class Equation
             { return new TrailingArgumentSeparatorException(fullEquation, equationSection); }
         }
 
+        /**
+         * Thrown when an argument in a function call is empty. (e.g. it's two consecutive commas)
+         */
         public static class EmptyFunctionArgumentException extends EquationParseException
         {
+            /**
+             * Creates a new EmptyFunctionArgumentException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             */
             public EmptyFunctionArgumentException(TokenList fullEquation, TokenList equationSection)
             {
                 super(fullEquation, equationSection,
@@ -244,15 +373,33 @@ public class Equation
                       + "\nSpecifically, this portion: " + equationSection.equationAsString);
             }
 
+            /**
+             * Creates a new EmptyFunctionArgumentException.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public EmptyFunctionArgumentException(TokenList fullEquation, TokenList equationSection, String msg)
             { super(fullEquation, equationSection, msg); }
         }
 
+        /**
+         * Thrown when not all open brackets in an equation match with a closing bracket, or vice versa.
+         */
         public static class BracketMismatchException extends EquationParseException
         {
+            /**
+             * Creates a new BracketMismatchException.
+             * @param equation The full equation causing this exception, as a TokenList.
+             */
             public BracketMismatchException(TokenList equation)
             { super(equation, equation, "Equation contained a bracket mismatch: " + equation.equationAsString); }
 
+            /**
+             * Creates a new BracketMismatchException.
+             * @param equation The full equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public BracketMismatchException(TokenList equation, String msg)
             { super(equation, equation, msg); }
 
@@ -261,14 +408,26 @@ public class Equation
             { return new BracketMismatchException(fullEquation); }
         }
 
+        /**
+         * Scanning the equation, thrown when a close bracket is encountered without matching an open bracket.
+         */
         public static class UnexpectedCloseBracketException extends BracketMismatchException
         {
+            /**
+             * Creates a new UnexpectedCloseBracketException.
+             * @param equation The full equation causing this exception, as a TokenList.
+             */
             public UnexpectedCloseBracketException(TokenList equation)
             {
                 super(equation, "Equation contained a close bracket that didn't correlate to a matching open bracket: "
                                 + equation.equationAsString);
             }
 
+            /**
+             * Creates a new UnexpectedCloseBracketException.
+             * @param equation The full equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public UnexpectedCloseBracketException(TokenList equation, String msg)
             { super(equation, msg); }
 
@@ -277,14 +436,26 @@ public class Equation
             { return new UnexpectedCloseBracketException(fullEquation); }
         }
 
+        /**
+         * Thrown when an open bracket is never matched with a close bracket.
+         */
         public static class UnmatchedOpenBracketException extends BracketMismatchException
         {
+            /**
+             * Creates a new UnmatchedOpenBracketException.
+             * @param equation The full equation causing this exception, as a TokenList.
+             */
             public UnmatchedOpenBracketException(TokenList equation)
             {
                 super(equation, "Equation contained an open bracket that didn't correlate to a matching close bracket: "
                                 + equation.equationAsString);
             }
 
+            /**
+             * Creates a new UnmatchedOpenBracketException.
+             * @param equation The full equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public UnmatchedOpenBracketException(TokenList equation, String msg)
             { super(equation, msg); }
 
@@ -293,8 +464,17 @@ public class Equation
             { return new UnmatchedOpenBracketException(fullEquation); }
         }
 
+        /**
+         * Thrown when a function is referenced that hasn't been defined.
+         */
         public static class UnrecognisedFunctionException extends EquationParseException
         {
+            /**
+             * Creates a new UnrecognisedFunctionException.
+             * @param functionName The name of the function that was called, but isn't defined.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             */
             public UnrecognisedFunctionException(String functionName,
                                                  TokenList fullEquation,
                                                  TokenList equationSection)
@@ -303,6 +483,13 @@ public class Equation
                 this.functionName = functionName;
             }
 
+            /**
+             * Creates a new UnrecognisedFunctionException.
+             * @param functionName The name of the function that was called, but isn't defined.
+             * @param fullEquation The full equation causing this exception, as a TokenList.
+             * @param equationSection The specific section of the equation causing this exception, as a TokenList.
+             * @param msg The exception message
+             */
             public UnrecognisedFunctionException(String functionName,
                                                  TokenList fullEquation,
                                                  TokenList equationSection,
@@ -312,8 +499,15 @@ public class Equation
                 this.functionName = functionName;
             }
 
+            /**
+             * The name of the function that was called without being defined.
+             */
             String functionName;
 
+            /**
+             * Gets the name of the function that was called without being defined.
+             * @return The name of the function that was called without being defined.
+             */
             public String getFunctionName()
             { return functionName; }
 
