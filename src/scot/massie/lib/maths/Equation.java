@@ -62,8 +62,19 @@ public class Equation
             this.numberOfArgsProvided = numberOfArgsProvided;
         }
 
+        /**
+         * The name of the function that requires more arguments.
+         */
         final String functionName;
+
+        /**
+         * The number of arguments that are required to be passed to the function.
+         */
         final int numberOfArgsRequired;
+
+        /**
+         * The number of arguments that actually were passed to the function.
+         */
         final int numberOfArgsProvided;
 
         /**
@@ -89,6 +100,10 @@ public class Equation
     }
     //endregion
 
+    /**
+     * Class for constructing instances of {@link Equation}. Allows the definition of operators, functions, and
+     * variables for use in equations.
+     */
     public static final class Builder
     {
         //region inner classes
@@ -517,6 +532,9 @@ public class Equation
         }
         //endregion
 
+        /**
+         * A store of operators with the same priority level.
+         */
         static class OperatorPriorityGroup
         {
             final Map<Token, PrefixOperator> prefixOperators = new HashMap<>();
@@ -525,15 +543,50 @@ public class Equation
             final Tree<Token, InfixOperator> rightAssociativeInfixOperators = new RecursiveTree<>();
         }
 
+        /**
+         * A token list and information about how it was derived. This represents a token list being derived from
+         * getting tokens before and after a particular token in another {@link TokenList}.
+         */
         static class OperatorTokenRun
         {
+            /**
+             * The index in the original token list at which this token run starts.
+             */
             int startIndexInSource;
+
+            /**
+             * The index in the original token list at which this token run ends. (inclusive)
+             */
             int endIndexInSource;
+
+            /**
+             * The indext in this token run of the token around which this token run was formed.
+             */
             int indexOfPivotInRun;
+
+            /**
+             * The tokens in this token run.
+             */
             List<Token> tokens;
+
+            /**
+             * The tokens in this token run before the pivot.
+             */
             List<Token> tokensBeforePivot;
+
+            /**
+             * The tokens in this token run after the pivot.
+             */
             List<Token> tokensAfterPivot;
 
+            /**
+             * Creates a new OperatorTokenRun.
+             * @param source The token list to this should be derived from.
+             * @param runStartIndex The index in the given token list at which the derived token list should start.
+             * @param runEndIndex The index in the given token list at which the derived token list should end.
+             * @param pivotIndexInSource The index in the given token list of the token around which this token run was
+             *                           formed.
+             */
             public OperatorTokenRun(List<Token> source, int runStartIndex, int runEndIndex, int pivotIndexInSource)
             {
                 this.startIndexInSource = runStartIndex;
@@ -547,9 +600,20 @@ public class Equation
         //endregion
 
         //region constants
+        /**
+         * The default operator priority. If no priority value is provided, this is used instead.
+         */
         static final double DEFAULT_PRIORITY = 0;
+
+        /**
+         * The default operator associativity. If an associativity is not specified, this is used instead.
+         */
         static final boolean DEFAULT_ASSOCIATIVITY = true; // true == left, false == right.
 
+        /**
+         * The mathematical constant Phi, or the golen ratio.
+         * @see <a href="https://en.wikipedia.org/wiki/Golden_ratio">Wikipedia: The golden ratio.</a>
+         */
         static final double PHI = (1 + Math.sqrt(5)) / 2;
         //endregion
 
@@ -578,17 +642,59 @@ public class Equation
             possibleTokensInOrder.add(Token.ARGUMENT_SEPARATOR);
         }
 
+        /**
+         * Tokens used by operators registered to this builder.
+         */
         Set<Token> operatorTokens = new HashSet<>();
 
+        /**
+         * Tokens used by infix operators registered to this builder.
+         */
         Set<Token> infixOperatorTokens = new HashSet<>();
 
+        /**
+         * Infix operators. The operator definitions themselves, using the list of tokens used to invoke them in order
+         * in a list as the key.
+         */
         Map<List<Token>, InfixOperator>         infixOperators      = new HashMap<>();
+
+        /**
+         * Prefix operators. The operator definitions themselves, using the tokens used to prefix an operand to invoke
+         * them.
+         */
         Map<Token, PrefixOperator>              prefixOperators     = new HashMap<>();
+
+        /**
+         * Postfix operators. The operator definitions themselves, using the tokens used to postfix an operand to invoke
+         * them.
+         */
         Map<Token, PostfixOperator>             postfixOperators    = new HashMap<>();
+
+        /**
+         * Functions available to equations. The function that is called when the function is invoked in an equation,
+         * mapped against the name of the equation which may be used to invoke them.
+         */
         Map<String, ToDoubleFunction<double[]>> functions           = new HashMap<>();
+
+        /**
+         * Variables available to equations. The variable's value mapped against the name of the variable as it may be
+         * referred to as in an equation.
+         */
         Map<String, Double>                     variables           = new HashMap<>();
 
+
+        /**
+         * The operators in this builder, arranged into groups by priority, indexed against those operator priorities.
+         * This is initialised when an equation needs to be built (if it isn't already), and is invalidated when a new
+         * operator is registered.
+         */
         Map<Double, OperatorPriorityGroup> operatorGroups        = null;
+
+        /**
+         * The operators in this builder, arranged into groups by priority, in order of priority from lowest to highest.
+         * This is initialised when an equation needs to be built (if it isn't already), and is invalidated when a new
+         * operator is registered.
+         */
         List<OperatorPriorityGroup>        operatorGroupsInOrder = null;
         //endregion
 
