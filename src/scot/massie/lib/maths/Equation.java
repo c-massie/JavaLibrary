@@ -717,6 +717,9 @@ public class Equation
         //region add functionality
         //region internal
         //region add groups of functionality
+        /**
+         * Adds the default operators to this builder.
+         */
         void addDefaultOperators()
         {
             withOperator        ("?", ":", false, -100, (a, b, c) -> a >= 0.5 ? b : c);
@@ -735,6 +738,9 @@ public class Equation
             withPostfixOperator ("%",             900,  x         -> x / 100);
         }
 
+        /**
+         * Adds the default functions to this builder.
+         */
         void addDefaultFunctions()
         {
             withMonoFunction("cos",      Math::cos);
@@ -801,6 +807,9 @@ public class Equation
             });
         }
 
+        /**
+         * Adds the default variables to this builder.
+         */
         void addDefaultVariables()
         {
             withVariable("π", Math.PI);
@@ -815,6 +824,11 @@ public class Equation
         //endregion
 
         //region add single pieces of functionality
+
+        /**
+         * Adds an operator to this builder.
+         * @param op The operator to add.
+         */
         void addOperator(Operator op)
         {
             if(op instanceof PrefixOperator)
@@ -827,6 +841,10 @@ public class Equation
                 throw new UnsupportedOperationException("Unrecognised operator type: " + op.getClass().getName());
         }
 
+        /**
+         * Adds a prefix operator to this builder.
+         * @param op The operator to add.
+         */
         void addOperator(PrefixOperator op)
         {
             invalidateOperatorGroups();
@@ -835,6 +853,10 @@ public class Equation
             addOperatorToken(popToken);
         }
 
+        /**
+         * Adds a postfix operator to this builder.
+         * @param op The operator to add.
+         */
         void addOperator(PostfixOperator op)
         {
             invalidateOperatorGroups();
@@ -843,6 +865,10 @@ public class Equation
             addOperatorToken(popToken);
         }
 
+        /**
+         * Adds an infix (binary, ternary, etc.) operator to this builder.
+         * @param op The builder to add.
+         */
         void addOperator(InfixOperator op)
         {
             invalidateOperatorGroups();
@@ -852,6 +878,19 @@ public class Equation
             infixOperatorTokens.addAll(iopTokens);
         }
 
+        /**
+         * <p>Registers a token for the tokenisation phase of parsing an equation. Tokens should be added in reverse
+         * order of the order they should be parsed in. That is, tokens that may contain other tokens should be added
+         * after those other tokens, and where tokens overlap, the most recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens in order from shortest to longest.</p>
+         *
+         * <p>Adding an operator also registers its tokens if they're not already registered. If the order operators are
+         * added in can't reflect the order tokens should be registered in, tokens can be registered separately.</p>
+         *
+         * <p>Behaviour is undefined where a token is registered that is never used as part of any operator.</p>
+         * @param token The token to be registered.
+         */
         void addOperatorToken(Token token)
         {
             if(possibleTokens.add(token))
@@ -861,6 +900,19 @@ public class Equation
             }
         }
 
+        /**
+         * <p>Registers tokens for the tokenisation phase of parsing an equation. Tokens should be added in reverse
+         * order of the order they should be parsed in. That is, tokens that may contain other tokens should be added
+         * after those other tokens, and where tokens overlap, the most recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens in order from shortest to longest.</p>
+         *
+         * <p>Adding an operator also registers its tokens if they're not already registered. If the order operators are
+         * added in can't reflect the order tokens should be registered in, tokens can be registered separately.</p>
+         *
+         * <p>Behaviour is undefined where a token is registered that is never used as part of any operator.</p>
+         * @param tokens The tokens to be registered, in the order to register them.
+         */
         void addOperatorTokens(List<Token> tokens)
         {
             for(Token token : tokens)
@@ -875,6 +927,20 @@ public class Equation
 
         //region public interface
         //region add tokens
+        /**
+         * <p>Registers a token for the tokenisation phase of parsing an equation. Tokens should be added in reverse
+         * order of the order they should be parsed in. That is, tokens that may contain other tokens should be added
+         * after those other tokens, and where tokens overlap, the most recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens in order from shortest to longest.</p>
+         *
+         * <p>Adding an operator also registers its tokens if they're not already registered. If the order operators are
+         * added in can't reflect the order tokens should be registered in, tokens can be registered separately.</p>
+         *
+         * <p>Behaviour is undefined where a token is registered that is never used as part of any operator.</p>
+         * @param token The token to be registered.
+         * @return This.
+         */
         public Builder withToken(String token)
         {
             addOperatorToken(new Token(token));
@@ -883,6 +949,12 @@ public class Equation
         //endregion
 
         //region add variables
+        /**
+         * Defines a variable for equations made by this builder. Variables may be accessed by addressing them by name.
+         * @param name The name of the variable.
+         * @param value The value of the variable.
+         * @return This.
+         */
         public Builder withVariable(String name, double value)
         {
             variables.put(name, value);
@@ -891,15 +963,41 @@ public class Equation
         //endregion
 
         //region add functions
+        /**
+         * Defines a function for equations made by this builder. Functions may be invoked by addressing them by name,
+         * followed by a comma-separated list of arguments (equations) enclosed in (brackets).
+         * @param name The name of the function.
+         * @param f The implementation of a function. Arguments to the function are passed into the implementation as an
+         *          array of doubles.
+         * @return This.
+         */
         public Builder withFunction(String name, ToDoubleFunction<double[]> f)
         {
             functions.put(name, f);
             return this;
         }
 
+        /**
+         * Defines a function for equations made by this builder. Functions may be invoked by addressing them by name,
+         * followed by a pair of matching brackets().
+         * @param name The name of the function.
+         * @param f The implementation of a function, not taking any arguments.
+         * @return This.
+         */
         public Builder withFunction(String name, DoubleSupplier f)
         { return withFunction(name, value -> f.getAsDouble()); }
 
+        /**
+         * Defines a function for equations made by this builder. Functions may be invoked by addressing them by name,
+         * followed by a comma-separated list of arguments (equations) enclosed in (brackets).
+         * @param name The name of the function.
+         * @param requiredArgCount The number of arguments required to be passed into this function. Where the equation
+         *                         invokes the function without this number of arguments passed in, a
+         *                         {@link MissingFunctionArgumentsException} is thrown.
+         * @param f The implementation of a function. Arguments to the function are passed into the implementation as an
+         *          array of doubles.
+         * @return This.
+         */
         public Builder withFunction(String name, int requiredArgCount, ToDoubleFunction<double[]> f)
         {
             return withFunction(name, args ->
@@ -911,6 +1009,15 @@ public class Equation
             });
         }
 
+        /**
+         * Defines a function for equations made by this builder, only accepting a single argument. (Additional
+         * arguments are ignored if provided) Functions may be invoked by addressing them by name, followed by an
+         * argument (equation) enclosed in (brackets).
+         * @param name The name of the function.
+         * @param f The implementation of the function. The first argument to the function is passed into the
+         *          implementation as the first argument. (All others are discarded)
+         * @return This.
+         */
         public Builder withMonoFunction(String name, ToDoubleFunction<Double> f)
         {
             return withFunction(name, args ->
@@ -922,6 +1029,16 @@ public class Equation
             });
         }
 
+        /**
+         * Defines a function for equations made by this builder, only accepting two arguments. (Additional arguments
+         * are ignored if provided) Functions may be invoked by addressing them by name, followed by a comma-separated
+         * pair of arguments (equations) enclosed in (brackets).
+         * @param name The name of the function.
+         * @param f The implementation of the function. The first argument to the function is passed into the
+         *          implementation as the first argument, and the second argument to the function is passed into the
+         *          implementation as the second argument. (All others are discarded)
+         * @return This.
+         */
         public Builder withBiFunction(String name, ToDoubleBiFunction<Double, Double> f)
         {
             return withFunction(name, args ->
@@ -935,33 +1052,174 @@ public class Equation
         //endregion
 
         //region add operators
+
+        /**
+         * <p>Defines a prefix operator for equations made by this builder.</p>
+         *
+         * <p>Prefix operators are invoked by prefixing an operand (an equation) with the operator's token. e.g. "-7" is
+         * 7 prefixed with the minus prefix operator.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token The text representation of the operator, what operands are prefixed with to invoke it.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withPrefixOperator(String token, UnaryOperatorAction action)
         { return withPrefixOperator(token, DEFAULT_PRIORITY, action); }
 
+        /**
+         * <p>Defines a prefix operator for equations made by this builder.</p>
+         *
+         * <p>Prefix operators are invoked by prefixing an operand (an equation) with the operator's token. e.g. "-7" is
+         * 7 prefixed with the minus prefix operator.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token The text representation of the operator, what operands are prefixed with to invoke it.
+         * @param priority The operator's priority. Operators of higher priority are "stickier"
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withPrefixOperator(String token, double priority, UnaryOperatorAction action)
         {
             addOperator(new PrefixOperator(new Token(token), priority, action));
             return this;
         }
 
+        /**
+         * <p>Defines a postfix operator for equations made by this builder.</p>
+         *
+         * <p>Postfix operators are invoked by postfixing an operand (an equation) with the operator's token. e.g. "7%"
+         * is 7 postfixed with the percentage postfix operator.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token The text representation of the operator, what operands are postfixed with to invoke it.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withPostfixOperator(String token, UnaryOperatorAction action)
         { return withPostfixOperator(token, DEFAULT_PRIORITY, action); }
 
+        /**
+         * <p>Defines a postfix operator for equations made by this builder.</p>
+         *
+         * <p>Postfix operators are invoked by postfixing an operand (an equation) with the operator's token. e.g. "7%"
+         * is 7 postfixed with the percentage postfix operator.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token The text representation of the operator, what operands are postfixed with to invoke it.
+         * @param priority The operator's priority. Operators of higher priority are "stickier"
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withPostfixOperator(String token, double priority, UnaryOperatorAction action)
         {
             addOperator(new PostfixOperator(new Token(token), priority, action));
             return this;
         }
 
+        /**
+         * <p>Defines an binary infix operator for equations made by this builder.</p>
+         *
+         * <p>Binary operators are invoked by placing the text representation of the operator between two operands.
+         * (equations) e.g. "7+5" is the addition operator ("+") being invoked, passing in 7 and 5.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token The text representation of the operator, what is placed between two operands to invoke it.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withOperator(String token, BinaryOperatorAction action)
         { return withOperator(token, DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action); }
 
+        /**
+         * <p>Defines an binary infix operator for equations made by this builder.</p>
+         *
+         * <p>Binary operators are invoked by placing the text representation of the operator between two operands.
+         * (equations) e.g. "7+5" is the addition operator ("+") being invoked, passing in 7 and 5.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token The text representation of the operator, what is placed between two operands to invoke it.
+         * @param priority The operator's priority, how "sticky" it is.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withOperator(String token, double priority, BinaryOperatorAction action)
         { return withOperator(token, DEFAULT_ASSOCIATIVITY, priority, action); }
 
+        /**
+         * <p>Defines an binary infix operator for equations made by this builder.</p>
+         *
+         * <p>Binary operators are invoked by placing the text representation of the operator between two operands.
+         * (equations) e.g. "7+5" is the addition operator ("+") being invoked, passing in 7 and 5.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token The text representation of the operator, what is placed between two operands to invoke it.
+         * @param isLeftAssociative The operator's associativity. Where multiple infix operators are chained together
+         *                          and have the same level of priority, this determines whether they're "stickier" the
+         *                          further right or left they are. e.g. "5+6+7", were "+" to be right-associative,
+         *                          could be written as "5+(6+7)". Infix operators are left-associative by default.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withOperator(String token, boolean isLeftAssociative, BinaryOperatorAction action)
         { return withOperator(token, isLeftAssociative, DEFAULT_PRIORITY, action); }
 
+        /**
+         * <p>Defines an binary infix operator for equations made by this builder.</p>
+         *
+         * <p>Binary operators are invoked by placing the text representation of the operator between two operands.
+         * (equations) e.g. "7+5" is the addition operator ("+") being invoked, passing in 7 and 5.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token The text representation of the operator, what is placed between two operands to invoke it.
+         * @param isLeftAssociative The operator's associativity. Where multiple infix operators are chained together
+         *                          and have the same level of priority, this determines whether they're "stickier" the
+         *                          further right or left they are. e.g. "5+6+7", were "+" to be right-associative,
+         *                          could be written as "5+(6+7)". Infix operators are left-associative by default.
+         * @param priority The operator's priority, how "sticky" it is.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withOperator(String token,
                                     boolean isLeftAssociative,
                                     double priority,
@@ -971,15 +1229,101 @@ public class Equation
             return this;
         }
 
+        /**
+         * <p>Defines a ternary infix operator for equations made by this builder.</p>
+         * 
+         * <p>Ternary operators are invoked by placing the text representations of the operator between three operands.
+         * (equations) e.g. "5?6:7" is the conditional operator ("?" and ":") being invoked, passing in 5, 6, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token1 The left text representation of the operator, which must be placed between the first and second
+         *               operand to invoke it.
+         * @param token2 The right text representation of the operator, which must be placed between the second and third
+         *               operand to invoke it.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withOperator(String token1, String token2, TernaryOperatorAction action)
         { return withOperator(token1, token2, DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action); }
 
+        /**
+         * <p>Defines a ternary infix operator for equations made by this builder.</p>
+         *
+         * <p>Ternary operators are invoked by placing the text representations of the operator between three operands.
+         * (equations) e.g. "5?6:7" is the conditional operator ("?" and ":") being invoked, passing in 5, 6, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token1 The left text representation of the operator, which must be placed between the first and second
+         *               operand to invoke it.
+         * @param token2 The right text representation of the operator, which must be placed between the second and third
+         *               operand to invoke it.
+         * @param priority The operator's priority, how "sticky" it is.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withOperator(String token1, String token2, double priority, TernaryOperatorAction action)
         { return withOperator(token1, token2, DEFAULT_ASSOCIATIVITY, priority, action); }
 
+        /**
+         * <p>Defines a ternary infix operator for equations made by this builder.</p>
+         *
+         * <p>Ternary operators are invoked by placing the text representations of the operator between three operands.
+         * (equations) e.g. "5?6:7" is the conditional operator ("?" and ":") being invoked, passing in 5, 6, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token1 The left text representation of the operator, which must be placed between the first and second
+         *               operand to invoke it.
+         * @param token2 The right text representation of the operator, which must be placed between the second and third
+         *               operand to invoke it.
+         * @param isLeftAssociative The operator's associativity. Where multiple infix operators are chained together
+         *                          and have the same level of priority, this determines whether they're "stickier" the
+         *                          further right or left they are. e.g. "5+6+7", were "+" to be right-associative,
+         *                          could be written as "5+(6+7)". Infix operators are left-associative by default.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withOperator(String token1, String token2, boolean isLeftAssociative, TernaryOperatorAction action)
         { return withOperator(token1, token2, isLeftAssociative, DEFAULT_PRIORITY, action); }
 
+        /**
+         * <p>Defines a ternary infix operator for equations made by this builder.</p>
+         *
+         * <p>Ternary operators are invoked by placing the text representations of the operator between three operands.
+         * (equations) e.g. "5?6:7" is the conditional operator ("?" and ":") being invoked, passing in 5, 6, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param token1 The left text representation of the operator, which must be placed between the first and second
+         *               operand to invoke it.
+         * @param token2 The right text representation of the operator, which must be placed between the second and third
+         *               operand to invoke it.
+         * @param isLeftAssociative The operator's associativity. Where multiple infix operators are chained together
+         *                          and have the same level of priority, this determines whether they're "stickier" the
+         *                          further right or left they are. e.g. "5+6+7", were "+" to be right-associative,
+         *                          could be written as "5+(6+7)". Infix operators are left-associative by default.
+         * @param priority The operator's priority, how "sticky" it is.
+         * @param action The implementation of the operator.
+         * @return This.
+         */
         public Builder withOperator(String token1,
                                     String token2,
                                     boolean isLeftAssociative,
@@ -990,27 +1334,199 @@ public class Equation
             return this;
         }
 
+        /**
+         * <p>Defines an n-ary infix operator for equations made by this builder, where n is the number of strings in
+         * the array of text representations passed to this operator.</p>
+         *
+         * <p>Infix operators are invoked by placing the text representations of the operator between operands.
+         * (Equations) e.g. "5 § 6 ~ 7 @ 8" is invoking the hypothetical quaternary operator using "§", "~", and "@",
+         * passing in the operands 5, 6, 7, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param tokens An array of the text representations of this operator, which must be placed between operands
+         *               (equations) in order to invoke it.
+         * @param action The implementation of the operator. The operands are passed in as an array of doubles.
+         * @return This.
+         */
         public Builder withOperator(String[] tokens, OperatorAction action)
         { return withOperator(Arrays.asList(tokens), action); }
 
+        /**
+         * <p>Defines an n-ary infix operator for equations made by this builder, where n is the number of strings in
+         * the array of text representations passed to this operator.</p>
+         *
+         * <p>Infix operators are invoked by placing the text representations of the operator between operands.
+         * (Equations) e.g. "5 § 6 ~ 7 @ 8" is invoking the hypothetical quaternary operator using "§", "~", and "@",
+         * passing in the operands 5, 6, 7, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param tokens An array of the text representations of this operator, which must be placed between operands
+         *               (equations) in order to invoke it.
+         * @param isLeftAssociative The operator's associativity. Where multiple infix operators are chained together
+         *                          and have the same level of priority, this determines whether they're "stickier" the
+         *                          further right or left they are. e.g. "5+6+7", were "+" to be right-associative,
+         *                          could be written as "5+(6+7)". Infix operators are left-associative by default.
+         * @param action The implementation of the operator. The operands are passed in as an array of doubles.
+         * @return This.
+         */
         public Builder withOperator(String[] tokens, boolean isLeftAssociative, OperatorAction action)
         { return withOperator(Arrays.asList(tokens), isLeftAssociative, action); }
 
+        /**
+         * <p>Defines an n-ary infix operator for equations made by this builder, where n is the number of strings in
+         * the array of text representations passed to this operator.</p>
+         *
+         * <p>Infix operators are invoked by placing the text representations of the operator between operands.
+         * (Equations) e.g. "5 § 6 ~ 7 @ 8" is invoking the hypothetical quaternary operator using "§", "~", and "@",
+         * passing in the operands 5, 6, 7, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param tokens An array of the text representations of this operator, which must be placed between operands
+         *               (equations) in order to invoke it.
+         * @param priority The operator's priority, how "sticky" it is.
+         * @param action The implementation of the operator. The operands are passed in as an array of doubles.
+         * @return This.
+         */
         public Builder withOperator(String[] tokens, double priority, OperatorAction action)
         { return withOperator(Arrays.asList(tokens), priority, action); }
 
+        /**
+         * <p>Defines an n-ary infix operator for equations made by this builder, where n is the number of strings in
+         * the array of text representations passed to this operator.</p>
+         *
+         * <p>Infix operators are invoked by placing the text representations of the operator between operands.
+         * (Equations) e.g. "5 § 6 ~ 7 @ 8" is invoking the hypothetical quaternary operator using "§", "~", and "@",
+         * passing in the operands 5, 6, 7, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param tokens An array of the text representations of this operator, which must be placed between operands
+         *               (equations) in order to invoke it.
+         * @param isLeftAssociative The operator's associativity. Where multiple infix operators are chained together
+         *                          and have the same level of priority, this determines whether they're "stickier" the
+         *                          further right or left they are. e.g. "5+6+7", were "+" to be right-associative,
+         *                          could be written as "5+(6+7)". Infix operators are left-associative by default.
+         * @param priority The operator's priority, how "sticky" it is.
+         * @param action The implementation of the operator. The operands are passed in as an array of doubles.
+         * @return This.
+         */
         public Builder withOperator(String[] tokens, boolean isLeftAssociative, double priority, OperatorAction action)
         { return withOperator(Arrays.asList(tokens), isLeftAssociative, priority, action); }
 
+        /**
+         * <p>Defines an n-ary infix operator for equations made by this builder, where n is the number of strings in
+         * the list of text representations passed to this operator.</p>
+         *
+         * <p>Infix operators are invoked by placing the text representations of the operator between operands.
+         * (Equations) e.g. "5 § 6 ~ 7 @ 8" is invoking the hypothetical quaternary operator using "§", "~", and "@",
+         * passing in the operands 5, 6, 7, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param tokens A list of the text representations of this operator, which must be placed between operands
+         *               (equations) in order to invoke it.
+         * @param action The implementation of the operator. The operands are passed in as an array of doubles.
+         * @return This.
+         */
         public Builder withOperator(List<String> tokens, OperatorAction action)
         { return withOperator(tokens, DEFAULT_ASSOCIATIVITY, DEFAULT_PRIORITY, action); }
 
+        /**
+         * <p>Defines an n-ary infix operator for equations made by this builder, where n is the number of strings in
+         * the list of text representations passed to this operator.</p>
+         *
+         * <p>Infix operators are invoked by placing the text representations of the operator between operands.
+         * (Equations) e.g. "5 § 6 ~ 7 @ 8" is invoking the hypothetical quaternary operator using "§", "~", and "@",
+         * passing in the operands 5, 6, 7, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param tokens A list of the text representations of this operator, which must be placed between operands
+         *               (equations) in order to invoke it.
+         * @param isLeftAssociative The operator's associativity. Where multiple infix operators are chained together
+         *                          and have the same level of priority, this determines whether they're "stickier" the
+         *                          further right or left they are. e.g. "5+6+7", were "+" to be right-associative,
+         *                          could be written as "5+(6+7)". Infix operators are left-associative by default.
+         * @param action The implementation of the operator. The operands are passed in as an array of doubles.
+         * @return This.
+         */
         public Builder withOperator(List<String> tokens, boolean isLeftAssociative, OperatorAction action)
         { return withOperator(tokens, isLeftAssociative, DEFAULT_PRIORITY, action); }
 
+        /**
+         * <p>Defines an n-ary infix operator for equations made by this builder, where n is the number of strings in
+         * the list of text representations passed to this operator.</p>
+         *
+         * <p>Infix operators are invoked by placing the text representations of the operator between operands.
+         * (Equations) e.g. "5 § 6 ~ 7 @ 8" is invoking the hypothetical quaternary operator using "§", "~", and "@",
+         * passing in the operands 5, 6, 7, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param tokens A list of the text representations of this operator, which must be placed between operands
+         *               (equations) in order to invoke it.
+         * @param priority The operator's priority, how "sticky" it is.
+         * @param action The implementation of the operator. The operands are passed in as an array of doubles.
+         * @return This.
+         */
         public Builder withOperator(List<String> tokens, double priority, OperatorAction action)
         { return withOperator(tokens, DEFAULT_ASSOCIATIVITY, priority, action); }
 
+        /**
+         * <p>Defines an n-ary infix operator for equations made by this builder, where n is the number of strings in
+         * the list of text representations passed to this operator.</p>
+         *
+         * <p>Infix operators are invoked by placing the text representations of the operator between operands.
+         * (Equations) e.g. "5 § 6 ~ 7 @ 8" is invoking the hypothetical quaternary operator using "§", "~", and "@",
+         * passing in the operands 5, 6, 7, and 7.</p>
+         *
+         * <p>Registering an operator also registers the tokens used to invoke that operator if they're not already
+         * registered. Tokens should be added in reverse order of the order they should be parsed in. That is, tokens
+         * that may contain other tokens should be added after those other tokens, and where tokens overlap, the most
+         * recently added token takes precedence.</p>
+         *
+         * <p>In short, register tokens (including by registering operators) in order from shortest to longest.</p>
+         * @param tokens A list of the text representations of this operator, which must be placed between operands
+         *               (equations) in order to invoke it.
+         * @param isLeftAssociative The operator's associativity. Where multiple infix operators are chained together
+         *                          and have the same level of priority, this determines whether they're "stickier" the
+         *                          further right or left they are. e.g. "5+6+7", were "+" to be right-associative,
+         *                          could be written as "5+(6+7)". Infix operators are left-associative by default.
+         * @param priority The operator's priority, how "sticky" it is.
+         * @param action The implementation of the operator. The operands are passed in as an array of doubles.
+         * @return This.
+         */
         public Builder withOperator(List<String> tokens,
                                     boolean isLeftAssociative,
                                     double priority,
@@ -1029,6 +1545,13 @@ public class Equation
         //endregion
 
         //region parsing
+
+        /**
+         * Builds the given equation as a string, into an {@link Equation} object, which may then be evaluated.
+         * @param toParse The equation as a string.
+         * @return The equation representation of the given string.
+         * @throws EquationParseException is the given string is not a valid equation.
+         */
         public Equation build(String toParse)
         {
             if(toParse == null)
@@ -1053,6 +1576,9 @@ public class Equation
             return new Equation(topLevelComponent, new HashMap<>(variables), new HashMap<>(functions));
         }
 
+        /**
+         * Compiles this builder's operator priority groups from its operators.
+         */
         void buildOperatorGroups()
         {
             if(operatorGroups != null)
@@ -1093,12 +1619,20 @@ public class Equation
                                                   .collect(Collectors.toList());
         }
 
+        /**
+         * Invalidates this builder's currently built priority groups. This should be done when the builder is updated
+         * in a way that renders the previously built priority groups wrong, such as a new operator being added.
+         */
         void invalidateOperatorGroups()
         {
             operatorGroups = null;
             operatorGroupsInOrder = null;
         }
 
+        /**
+         * Ensures that the given tokenlist contains no unmatched brackets.
+         * @param tokenisation The tokenlist to check.
+         */
         void verifyTokenisationBrackets(TokenList tokenisation)
         {
             int bracketDepth = 0;
@@ -1118,6 +1652,12 @@ public class Equation
                 throw new UnmatchedOpenBracketException(tokenisation);
         }
 
+        /**
+         * Attempts to parse a tokenlist into an equation component.
+         * @param tokenisation The tokenlist to parse.
+         * @return The given tokenlist, compiled into an equation component.
+         * @throws EquationParseException if the given tokenlist is not a valid equation.
+         */
         EquationComponent tryParse(TokenList tokenisation)
         {
             if(startsWithNonPrefixOperator(tokenisation))
@@ -1137,12 +1677,23 @@ public class Equation
         }
 
         //region parsing utility functions
+
+        /**
+         * Checks if a given tokenlist starts with an operator that may not be a prefix operator.
+         * @param tokenList The tokenlist to check.
+         * @return True if the tokenlist starts with an operator that may not be a prefix operator. Otherwise, false.
+         */
         boolean startsWithNonPrefixOperator(TokenList tokenList)
         {
             Token first = tokenList.first();
             return operatorTokens.contains(first) && !prefixOperators.containsKey(first);
         }
 
+        /**
+         * Checks if a given tokenlist ends with an operator that may not be a postfix operator.
+         * @param tokenList The tokenlist to check.
+         * @return True if the tokenlist ends with an operator that may not be a postfix operator. Otherwise, false.
+         */
         boolean endsWithNonPostfixOperator(TokenList tokenList)
         {
             Token last = tokenList.last();
@@ -1153,6 +1704,22 @@ public class Equation
         //  - There are tokens before and after the run.
         //  - All tokens in the run of operator tokens it's in before it may be postfix operators
         //  - All tokens in the run of operator tokens it's in after it may be prefix operators
+
+        /**
+         * <p>Checks whether or not the token at a given index in a given tokenlist can be an infix operator, considering
+         * the state of the cluster of operator tokens the token at the given index is in.</p>
+         *
+         * <p>Tokens are considered to possibly be an infix operator where all of the following are true:</p>
+         * <ul>
+         *     <li>There are tokens before and after the cluster of operator tokens it's in.</li>
+         *     <li>All tokens in the cluster before the index may be postfix operators.</li>
+         *     <li>All tokens in the cluster after the index may be prefix operators.</li>
+         * </ul>
+         * @param tokens The tokenlist to check in.
+         * @param tokenIndex The index of the token in the given tokenlist to check.
+         * @return True if the token at the given index in the tokenlist can theoretically be an infix operator.
+         * Otherwise, false.
+         */
         boolean canBeInfixOperatorToken(List<Token> tokens, int tokenIndex)
         {
             if(tokenIndex == 0 || tokenIndex == tokens.size() - 1)
@@ -1175,6 +1742,13 @@ public class Equation
         }
 
         // idk, I'm bad at naming things.
+
+        /**
+         * Gets the cluster of operator tokens the token at the given index is in in the given token list.
+         * @param tokens The token list to check in.
+         * @param indexToGetOpRunThatContainsIt The index of the token.
+         * @return An OperatorTokenRun object, instantiated with the appropriate information.
+         */
         OperatorTokenRun getOpRun(List<Token> tokens, int indexToGetOpRunThatContainsIt)
         {
             int min = -1, max = -1;
@@ -1212,6 +1786,12 @@ public class Equation
         //endregion
 
         //region variable parsing
+
+        /**
+         * Checks to see if the given tokenlist matches an available variable.
+         * @param tokenList The tokenlist to check.
+         * @return If the given tokenlist does not match a variable, null. Otherwise, a reference to that variable.
+         */
         VariableReference tryParseVariable(TokenList tokenList)
         {
             String varName = tokenList.equationAsString.trim();
@@ -1221,6 +1801,15 @@ public class Equation
         //endregion
 
         //region function parsing
+
+        /**
+         * Checks to see if the given tokenlist is identifiable as a function and matches an available one.
+         * @param tokenList The tokenlist to check.
+         * @return Null if the given tokenlist does not match a function. Otherwise, a reference to that function and
+         * the arguments passed into it.
+         * @throws UnrecognisedFunctionException Where the given tokenlist can only be a function call, but there is
+         *                                       no function by the given name available.
+         */
         FunctionCall tryParseFunctionCall(TokenList tokenList)
         {
             if(tokenList.size() < 3) // Needs at least 3 tokens: a name, "(", and ")".
@@ -1285,6 +1874,13 @@ public class Equation
         //endregion
 
         //region operation parsing
+
+        /**
+         * Attempts to parse the given tokenlist as an operator.
+         * @param tokenList The tokenlist to check.
+         * @return Null if the given tokenlist is not an operation. Otherwise, an operator object, tying the operator
+         *         being invoked with the operands passed into it.
+         */
         Operation tryParseOperation(TokenList tokenList)
         {
             /*
@@ -1308,6 +1904,14 @@ public class Equation
             return null;
         }
 
+        /**
+         * Attempts to parse a given tokenlist as an operator, in the context of an operator group.
+         * @param tokenList The tokenlist to check.
+         * @param opGroup The operator group containing the operators to be checked for.
+         * @param opGroupIndex The index of the operator group in the ordered operator groups.
+         * @return Null if the given tokenlist is not an operation available within the given operator group. Otherwise,
+         *         an operator object, tying the operator being invoked with the operands passed into it.
+         */
         Operation tryParseOperation(TokenList tokenList, OperatorPriorityGroup opGroup, int opGroupIndex)
         {
             return nullCoalesce(() -> tryParseInfixOperation_rightAssociative(tokenList, opGroup, opGroupIndex),
@@ -1317,6 +1921,15 @@ public class Equation
                                 () -> null);
         }
 
+        /**
+         * Attempts to parse a given tokenlist as right-associative infix operator, in the context of an operator group.
+         * @param tokenList The tokenlist to check.
+         * @param opGroup The operator group containing the operators to be checked for.
+         * @param opGroupIndex The index of the operator group in the ordered operator groups.
+         * @return Null if the given tokenlist is not a right-assocative operation available within the given operator,
+         *         group. Otherwise, an operator object, tying the operator being invoked with the operands passed into
+         *         it.
+         */
         Operation tryParseInfixOperation_rightAssociative(TokenList tokenList,
                                                           OperatorPriorityGroup opGroup,
                                                           int opGroupIndex)
@@ -1399,6 +2012,15 @@ public class Equation
             return null;
         }
 
+        /**
+         * Attempts to parse a given tokenlist as left-associative infix operator, in the context of an operator group.
+         * @param tokenList The tokenlist to check.
+         * @param opGroup The operator group containing the operators to be checked for.
+         * @param opGroupIndex The index of the operator group in the ordered operator groups.
+         * @return Null if the given tokenlist is not a left-assocative operation available within the given operator,
+         *         group. Otherwise, an operator object, tying the operator being invoked with the operands passed into
+         *         it.
+         */
         Operation tryParseInfixOperation_leftAssociative(TokenList tokenList,
                                                          OperatorPriorityGroup opGroup,
                                                          int opGroupIndex)
@@ -1482,6 +2104,18 @@ public class Equation
             return null;
         }
 
+        /**
+         * Checks whether or not an operation is nested within another of higher priority.
+         * @param tokenList The tokenlist to check in.
+         * @param potentiallyInnerOpTokenPoints The list of indices of the identified operator tokens within the given
+         *                                      token list.
+         * @param opPriorityGroupIndex The index of the operator's operator group within the ordered list of operator
+         *                             groups.
+         * @param checkLeftAssociativeOfSameGroup Whether or not to check the left associative operators of the same
+         *                                        operator group. This should generally be true for right-associative
+         *                                        operators, and false for left-associative operators.
+         * @return True if the identified operator is nested within another, higher priority operator. Otherwise, false.
+         */
         boolean operationIsNestedInHigherPriorityInfixOperation(TokenList tokenList,
                                                                 List<Integer> potentiallyInnerOpTokenPoints,
                                                                 int opPriorityGroupIndex,
@@ -1547,6 +2181,13 @@ public class Equation
             return false;
         }
 
+        /**
+         * Attempts to parse a tokenlist as a prefix operation, within the context of an operator group.
+         * @param tokenList The tokenlist to check.
+         * @param opGroup The The operator group containing the prefix operations to check for.
+         * @return If the given tokenlist is not a prefix operation, returns null. Otherwise, returns an operation
+         * object tying the operator to the operand.
+         */
         Operation tryParsePrefixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
         {
             PrefixOperator op = opGroup.prefixOperators.get(tokenList.first());
@@ -1557,6 +2198,13 @@ public class Equation
             return op.tryParse(tokenList, this);
         }
 
+        /**
+         * Attempts to parse a tokenlist as a postfix operation, within the context of an operator group.
+         * @param tokenList The tokenlist to check.
+         * @param opGroup The The operator group containing the postfix operations to check for.
+         * @return If the given tokenlist is not a postfix operation, returns null. Otherwise, returns an operation
+         * object tying the operator to the operand.
+         */
         Operation tryParsePostfixOperation(TokenList tokenList, OperatorPriorityGroup opGroup)
         {
             PostfixOperator op = opGroup.postfixOperators.get(tokenList.last());
@@ -1569,6 +2217,13 @@ public class Equation
         //endregion
 
         //region number parsing
+
+        /**
+         * Attempts to parse the given tokenlist as a number.
+         * @param tokenList The tokenlist to check.
+         * @return Null if the given tokenlist is not parseable as a number. Otherwise, a LiteralNumber, containing the
+         *         number it was parsed as.
+         */
         LiteralNumber tryParseNumber(TokenList tokenList)
         {
             try
