@@ -722,7 +722,6 @@ public class Equation
          */
         void addDefaultOperators()
         {
-            withOperator        ("?", ":", false, -100, (a, b, c) -> a >= 0.5 ? b : c);
             withOperator        ("-",             100,  (l, r)    -> l - r);
             withOperator        ("+",             100,  (l, r)    -> l + r);
             withOperator        ("/",             200,  (l, r)    -> l / r);
@@ -736,6 +735,48 @@ public class Equation
             withPrefixOperator  ("√",             700,  x         -> Math.sqrt(x));
             withOperator        ("^",      false, 800,  (l, r)    -> Math.pow(l, r));
             withPostfixOperator ("%",             900,  x         -> x / 100);
+        }
+
+        /**
+         * Adds conditional operators to this builder.
+         */
+        void addConditionalOperators()
+        {
+            withPrefixOperator  ("!",          -100, x      -> x >= 0.5 ? 0 : 1);
+            withOperator        ("<",   true,  -100, (l, r) -> l < r ? 1 : 0);
+            withOperator        (">",   true,  -100, (l, r) -> l > r ? 1 : 0);
+            withOperator        ("<=",  true,  -100, (l, r) -> l <= r ? 1 : 0);
+            withOperator        ("≤",   true,  -100, (l, r) -> l <= r ? 1 : 0);
+            withOperator        (">=",  true,  -100, (l, r) -> l >= r ? 1 : 0);
+            withOperator        ("≥",   true,  -100, (l, r) -> l >= r ? 1 : 0);
+
+            withOperator        ("=",   true,  -200, (l, r) ->
+            {
+                double delta = Math.ulp(l) * 2;
+                return (r > l - delta) && (r < l + delta) ? 1 : 0;
+            });
+
+            BinaryOperatorAction notEqualTo = (l, r) ->
+            {
+                double delta = Math.ulp(l) * 2;
+                return (r < l - delta) || (r > l + delta) ? 1 : 0;
+            };
+
+            withOperator        ("!=",  true,  -200, notEqualTo);
+            withOperator        ("≠",   true,  -200, notEqualTo);
+            withOperator        ("=/=", true,  -200, notEqualTo);
+
+            withOperator        ("&&",  false, -300, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
+            withOperator        ("∧",   false, -300, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
+            withOperator        ("⋀",   false, -300, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
+            withOperator        ("⋏",   false, -300, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
+
+            withOperator        ("||",  false, -400, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
+            withOperator        ("∨",   false, -400, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
+            withOperator        ("⋁",   false, -400, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
+            withOperator        ("⋎",   false, -400, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
+
+            withOperator("?", ":", false, -500, (a, b, c) -> a >= 0.5 ? b : c);
         }
 
         /**
