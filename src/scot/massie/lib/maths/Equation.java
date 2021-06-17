@@ -731,26 +731,27 @@ public class Equation
             withOperator        ("%",             300,  (l, r)    -> l % r);
             withPrefixOperator  ("-",             500,  x         -> -x);
             withPrefixOperator  ("+",             500,  x         -> +x);
-            withOperator        ("√",             600,  (l, r)    -> Math.pow(r, 1.0 / l));
+            withOperator        ("√",      false, 600,  (l, r)    -> Math.pow(r, 1.0 / l));
             withPrefixOperator  ("√",             700,  x         -> Math.sqrt(x));
             withOperator        ("^",      false, 800,  (l, r)    -> Math.pow(l, r));
             withPostfixOperator ("%",             900,  x         -> x / 100);
         }
 
         /**
-         * Adds conditional operators to this builder.
+         * Adds comparative and conditional operators to this builder.
          */
-        void addConditionalOperators()
+        void addComparativeOperators()
         {
             withPrefixOperator  ("!",          -100, x      -> x >= 0.5 ? 0 : 1);
-            withOperator        ("<",   true,  -100, (l, r) -> l < r ? 1 : 0);
-            withOperator        (">",   true,  -100, (l, r) -> l > r ? 1 : 0);
-            withOperator        ("<=",  true,  -100, (l, r) -> l <= r ? 1 : 0);
-            withOperator        ("≤",   true,  -100, (l, r) -> l <= r ? 1 : 0);
-            withOperator        (">=",  true,  -100, (l, r) -> l >= r ? 1 : 0);
-            withOperator        ("≥",   true,  -100, (l, r) -> l >= r ? 1 : 0);
 
-            withOperator        ("=",   true,  -200, (l, r) ->
+            withOperator        ("<",   true,  -200, (l, r) -> l < r ? 1 : 0);
+            withOperator        (">",   true,  -200, (l, r) -> l > r ? 1 : 0);
+            withOperator        ("<=",  true,  -200, (l, r) -> l <= r ? 1 : 0);
+            withOperator        ("≤",   true,  -200, (l, r) -> l <= r ? 1 : 0);
+            withOperator        (">=",  true,  -200, (l, r) -> l >= r ? 1 : 0);
+            withOperator        ("≥",   true,  -200, (l, r) -> l >= r ? 1 : 0);
+
+            withOperator        ("=",   true,  -300, (l, r) ->
             {
                 double delta = Math.ulp(l) * 2;
                 return (r > l - delta) && (r < l + delta) ? 1 : 0;
@@ -762,21 +763,21 @@ public class Equation
                 return (r < l - delta) || (r > l + delta) ? 1 : 0;
             };
 
-            withOperator        ("!=",  true,  -200, notEqualTo);
-            withOperator        ("≠",   true,  -200, notEqualTo);
-            withOperator        ("=/=", true,  -200, notEqualTo);
+            withOperator        ("!=",  true,  -300, notEqualTo);
+            withOperator        ("≠",   true,  -300, notEqualTo);
+            withOperator        ("=/=", true,  -300, notEqualTo);
 
-            withOperator        ("&&",  false, -300, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
-            withOperator        ("∧",   false, -300, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
-            withOperator        ("⋀",   false, -300, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
-            withOperator        ("⋏",   false, -300, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
+            withOperator        ("&&",  true,  -400, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
+            withOperator        ("∧",   true,  -400, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
+            withOperator        ("⋀",   true,  -400, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
+            withOperator        ("⋏",   true,  -400, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
 
-            withOperator        ("||",  false, -400, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
-            withOperator        ("∨",   false, -400, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
-            withOperator        ("⋁",   false, -400, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
-            withOperator        ("⋎",   false, -400, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
+            withOperator        ("||",  true,  -500, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
+            withOperator        ("∨",   true,  -500, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
+            withOperator        ("⋁",   true,  -500, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
+            withOperator        ("⋎",   true,  -500, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
 
-            withOperator("?", ":", false, -500, (a, b, c) -> a >= 0.5 ? b : c);
+            withOperator("?", ":", false, -600, (a, b, c) -> a >= 0.5 ? b : c);
         }
 
         /**
@@ -990,6 +991,28 @@ public class Equation
         //endregion
 
         //region add variables
+        //region add groups of variables
+
+        /**
+         * <p>Defines all default variables for equations made by this builder.</p>
+         *
+         * <p>Adds the following variables:</p>
+         * <ul>
+         *     <li>π or pi</li>
+         *     <li>e</li>
+         *     <li>ϕ or φ or phi</li>
+         *     <li>∞ or inf</li>
+         * </ul>
+         * @return This
+         */
+        public Builder withDefaultVariables()
+        {
+            addDefaultVariables();
+            return this;
+        }
+        //endregion
+
+        //region add single variables
         /**
          * Defines a variable for equations made by this builder. Variables may be accessed by addressing them by name.
          * @param name The name of the variable.
@@ -1002,8 +1025,44 @@ public class Equation
             return this;
         }
         //endregion
+        //endregion
 
         //region add functions
+        //region add groups of functions
+        /**
+         * <p>Defines all default functions for equations made by this builder.</p>
+         *
+         * <p>Adds the following functions:</p>
+         * <ul>
+         *     <li>cos</li>
+         *     <li>sin</li>
+         *     <li>tan</li>
+         *     <li>sqrt</li>
+         *     <li>cbrt</li>
+         *     <li>log</li>
+         *     <li>log10</li>
+         *     <li>fib</li>
+         *     <li>floor</li>
+         *     <li>ceiling</li>
+         *     <li>ceil</li>
+         *     <li>truncate</li>
+         *     <li>trunc</li>
+         *     <li>round</li>
+         *     <li>min</li>
+         *     <li>max</li>
+         *     <li>avg</li>
+         *     <li>median</li>
+         * </ul>
+         * @return This
+         */
+        public Builder withDefaultFunctions()
+        {
+            addDefaultFunctions();
+            return this;
+        }
+        //endregion
+
+        //region add single functions
         /**
          * Defines a function for equations made by this builder. Functions may be invoked by addressing them by name,
          * followed by a comma-separated list of arguments (equations) enclosed in (brackets).
@@ -1091,9 +1150,71 @@ public class Equation
             });
         }
         //endregion
+        //endregion
 
         //region add operators
+        //region add groups of operators
 
+        /**
+         * <p>Defines all default operators for equations made by this builder.</p>
+         *
+         * <p>Adds the following operators: </p>
+         * <pre>
+         *     |     Name     | Operator |   Type   | Precedence | Associativity |
+         *     -------------------------------------------------------------------
+         *     | Percent      | %        | Postfix  |    900     |               |
+         *     | Exponent     | ^        | Binary   |    800     |     Right     |
+         *     | Square root  | √        | Prefix   |    700     |               |
+         *     | Nth root     | √        | Binary   |    600     |     Right     |
+         *     | Positive     | +        | Prefix   |    500     |               |
+         *     | Negative     | -        | Prefix   |    500     |               |
+         *     | Modulo       | %        | Binary   |    300     |     Left      |
+         *     | Multiply     | * or ×   | Binary   |    200     |     Left      |
+         *     | Divide       | / or ÷   | Binary   |    200     |     Left      |
+         *     | Add          | +        | Binary   |    100     |     Left      |
+         *     | Subtract     | -        | Binary   |    100     |     Left      |
+         *     -------------------------------------------------------------------
+         * </pre>
+         * @return This
+         */
+        public Builder withDefaultOperators()
+        {
+            addDefaultOperators();
+            return this;
+        }
+
+        /**
+         * <p>Defines comparative operators for equations made by this builder.</p>
+         *
+         * <p>Note that these operators treat 0 as false and 1 as true. Or more specifically, any number greater than or
+         * equal to 0.5 as true and all other values as false.</p>
+         *
+         * <p>Adds the following operators: </p>
+         * <pre>
+         *     |          Name            |      Operator      |   Type   | Precedence | Associativity |
+         *     -----------------------------------------------------------------------------------------
+         *     | Not                      | !                  | Prefix   |    -100    |               |
+         *     | Less than                | <                  | Binary   |    -200    |     Left      |
+         *     | Greater than             | >                  | Binary   |    -200    |     Left      |
+         *     | Less than or equal to    | <= or ≤            | Binary   |    -200    |     Left      |
+         *     | Greater than or equal to | >= or ≥            | Binary   |    -200    |     Left      |
+         *     | Equal to                 | =                  | Binary   |    -300    |     Left      |
+         *     | Not equal to             | != or ≠ or =/=     | Binary   |    -300    |     Left      |
+         *     | And                      | && or ∧ or ⋀ or ⋏  | Binary   |    -400    |     Left      |
+         *     | Or                       | || or ∨ or ⋁ or ⋎  | Binary   |    -500    |     Left      |
+         *     | Conditional              | ? :                | Ternary  |    -600    |     Right     |
+         *     -----------------------------------------------------------------------------------------
+         * </pre>
+         * @return This
+         */
+        public Builder withComparativeOperators()
+        {
+            addComparativeOperators();
+            return this;
+        }
+        //endregion
+
+        //region add single operators
         /**
          * <p>Defines a prefix operator for equations made by this builder.</p>
          *
@@ -1581,6 +1702,7 @@ public class Equation
             addOperator(new InfixOperator(ts, isLeftAssociative, priority, action));
             return this;
         }
+        //endregion
         //endregion
         //endregion
         //endregion
