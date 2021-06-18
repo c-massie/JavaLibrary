@@ -699,9 +699,22 @@ public class Equation
         //endregion
 
         //region initialisation
+
+        /**
+         * Creates a new equation builder, initialised with the default operators, functions, and variables.
+         * @see #withDefaultOperators()
+         * @see #withDefaultFunctions() 
+         * @see #withDefaultVariables()
+         */
         public Builder()
         { this(true); }
 
+        /**
+         * Creates a new equation builder.
+         * @param includeDefaults Whether or not to include the default operators, functions, and variables. See
+         *                        {@link #withDefaultOperators()}, {@link #withDefaultFunctions()}, and
+         *                        {@link #withDefaultVariables()}.
+         */
         public Builder(boolean includeDefaults)
         {
             if(includeDefaults)
