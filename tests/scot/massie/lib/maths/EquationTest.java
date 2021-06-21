@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class EquationTest
 {
     void assertEquation(double expected, String equation)
-    { assertEquals(expected, new Equation(equation).evaluate()); }
+    { assertEquals(expected, new Equation.Builder().withComparativeOperators().build(equation).evaluate()); }
 
     void assertEquation(double expected, String equation, double delta)
     { assertEquals(expected, new Equation(equation).evaluate(), delta); }

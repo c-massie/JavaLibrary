@@ -1,6 +1,7 @@
 package scot.massie.lib.maths;
 
 import com.sun.istack.internal.NotNull;
+import scot.massie.lib.collections.maps.FallbackMap;
 import scot.massie.lib.collections.tree.RecursiveTree;
 import scot.massie.lib.collections.tree.Tree;
 
@@ -17,6 +18,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleBiFunction;
 import java.util.function.ToDoubleFunction;
@@ -698,6 +700,12 @@ public class Equation
         List<OperatorPriorityGroup>        operatorGroupsInOrder = null;
         //endregion
 
+        /**
+         * Instances of {@link Equation} created by this builder not yet picked up by the garbage collector. This allows
+         * updates to be pushed to these objects.
+         */
+        Set<Equation> instances = Collections.newSetFromMap(new WeakHashMap<>());
+
         //region initialisation
 
         /**
@@ -1035,6 +1043,26 @@ public class Equation
         public Builder withVariable(String name, double value)
         {
             variables.put(name, value);
+            return this;
+        }
+
+        /**
+         * <p>Defines a variable for equations made by this builder as in {@link #withVariable(String, double)}, but
+         * also pushes this change to instances of {@link Equation} created by this builder.</p>
+         *
+         * <p>Note that this won't override variables redefined on the equation itself. This also won't allow the use of
+         * new variables in already compiled equations - this would require a new equation object to be created.</p>
+         * @param name The name of the variable.
+         * @param value The value of the variable.
+         * @return This.
+         */
+        public Builder pushVariable(String name, double value)
+        {
+            variables.put(name, value);
+
+            for(Equation e : instances)
+                e.initialVariableValues.put(name, value);
+
             return this;
         }
         //endregion
@@ -3863,8 +3891,19 @@ public class Equation
     final EquationComponent topLevelComponent;
 
     /**
-     * <p>The variables available to this equation, and their values. This is independent from the variables map of the
-     * builder used to create this equation object, allowing variables to be reässigned.</p>
+     * The variable values provided to this equation by its builder. This may be updated by its builder if the builder
+     * is requested to push a new variable value.
+     */
+    final Map<String, Double> initialVariableValues;
+
+    /**
+     * The variable values explicitly redefined on this equation. These override variable values provided to the
+     * equation by its builder.
+     */
+    final Map<String, Double> overwrittenVariableValues;
+
+    /**
+     * <p>The variables available to this equation, and their values.</p>
      */
     final Map<String, Double> variableValues;
 
@@ -3883,10 +3922,12 @@ public class Equation
      */
     public Equation(String equationAsString)
     {
-        Equation parsedEquation = defaultBuilder.build(equationAsString);
-        this.topLevelComponent  = parsedEquation.topLevelComponent;
-        this.variableValues     = parsedEquation.variableValues;
-        this.functions          = parsedEquation.functions;
+        Equation parsedEquation         = defaultBuilder.build(equationAsString);
+        this.topLevelComponent          = parsedEquation.topLevelComponent;
+        this.initialVariableValues      = parsedEquation.initialVariableValues;
+        this.overwrittenVariableValues  = parsedEquation.overwrittenVariableValues;
+        this.variableValues             = parsedEquation.variableValues;
+        this.functions                  = parsedEquation.functions;
     }
 
     /**
@@ -3901,9 +3942,11 @@ public class Equation
              Map<String, Double> variableValues,
              Map<String, ToDoubleFunction<double[]>> functions)
     {
-        this.topLevelComponent = topLevelComponent;
-        this.variableValues = variableValues;
-        this.functions = functions;
+        this.topLevelComponent          = topLevelComponent;
+        this.initialVariableValues      = variableValues;
+        this.overwrittenVariableValues  = new HashMap<>();
+        this.variableValues             = new FallbackMap<>(overwrittenVariableValues, initialVariableValues);
+        this.functions                  = functions;
     }
     //endregion
 
@@ -3929,7 +3972,7 @@ public class Equation
         if(!variableValues.containsKey(variableName))
             return false;
 
-        variableValues.put(variableName, newValue);
+        overwrittenVariableValues.put(variableName, newValue);
         return true;
     }
 
