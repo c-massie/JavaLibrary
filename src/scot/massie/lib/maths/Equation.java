@@ -1190,6 +1190,28 @@ public class Equation
                 return f.applyAsDouble(args[0], args[1]);
             });
         }
+
+        /**
+         * <p>Defines a function for equations made by this builder as in
+         * {@link #withFunction(String, ToDoubleFunction)}, but also pushes this change to instances of {@link Equation}
+         * created by this builder.</p>
+         *
+         * <p>Note that this won't override variables redefined on the equation itself. This also won't allow the use of
+         * new functions in already compiled equations - this would require a new equation object to be created.</p>
+         * @param name The name of the function.
+         * @param f The implementation of a function. Arguments to the function are passed into the implementation as an
+         *          array of doubles.
+         * @return This.
+         */
+        public Builder pushFunction(String name, ToDoubleFunction<double[]> f)
+        {
+            functions.put(name, f);
+
+            for(Equation e : instances)
+                e.initialFunctions.put(name, f);
+
+            return this;
+        }
         //endregion
         //endregion
 
@@ -3908,6 +3930,18 @@ public class Equation
     final Map<String, Double> variableValues;
 
     /**
+     * The functions and their implementations provided to this equation by its builder. This may be updated by its
+     * builder if the builder is requested to push a new function implementation.
+     */
+    final Map<String, ToDoubleFunction<double[]>> initialFunctions;
+
+    /**
+     * The functions and their implementations explicitly redefined by this equation. These override function
+     * implementations provided to the equation by its builder.
+     */
+    final Map<String, ToDoubleFunction<double[]>> overwrittenFunctions;
+
+    /**
      * <p>The functions available to this equation, and their implementations. This is independent from the functions
      * map of the builder used to create this equation object, allowing functions to be redefined.</p>
      */
@@ -3927,6 +3961,8 @@ public class Equation
         this.initialVariableValues      = parsedEquation.initialVariableValues;
         this.overwrittenVariableValues  = parsedEquation.overwrittenVariableValues;
         this.variableValues             = parsedEquation.variableValues;
+        this.initialFunctions           = parsedEquation.functions;
+        this.overwrittenFunctions       = parsedEquation.overwrittenFunctions;
         this.functions                  = parsedEquation.functions;
     }
 
@@ -3946,7 +3982,9 @@ public class Equation
         this.initialVariableValues      = variableValues;
         this.overwrittenVariableValues  = new HashMap<>();
         this.variableValues             = new FallbackMap<>(overwrittenVariableValues, initialVariableValues);
-        this.functions                  = functions;
+        this.initialFunctions           = functions;
+        this.overwrittenFunctions       = new HashMap<>();
+        this.functions                  = new FallbackMap<>(overwrittenFunctions, initialFunctions);
     }
     //endregion
 
@@ -3989,7 +4027,7 @@ public class Equation
         if(!functions.containsKey(functionName))
             return false;
 
-        functions.put(functionName, function);
+        overwrittenFunctions.put(functionName, function);
         return true;
     }
     //endregion
