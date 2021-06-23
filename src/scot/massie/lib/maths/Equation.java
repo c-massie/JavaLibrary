@@ -1212,6 +1212,93 @@ public class Equation
 
             return this;
         }
+
+        /**
+         * <p>Defines a function for equations made by this builder as in
+         * {@link #withFunction(String, DoubleSupplier)}, but also pushes this change to instances of {@link Equation}
+         * created by this builder.</p>
+         *
+         * <p>Note that this won't override variables redefined on the equation itself. This also won't allow the use of
+         * new functions in already compiled equations - this would require a new equation object to be created.</p>
+         * @param name The name of the function.
+         * @param f The implementation of a function, not taking any arguments.
+         * @return This.
+         */
+        public Builder pushFunction(String name, DoubleSupplier f)
+        { return pushFunction(name, x -> f.getAsDouble()); }
+
+        /**
+         * <p>Defines a function for equations made by this builder as in
+         * {@link #withFunction(String, int, ToDoubleFunction)}, but also pushes this change to instances of
+         * {@link Equation} created by this builder.</p>
+         *
+         * <p>Note that this won't override variables redefined on the equation itself. This also won't allow the use of
+         * new functions in already compiled equations - this would require a new equation object to be created.</p>
+         * @param name The name of the function.
+         * @param requiredArgCount The number of arguments required to be passed into this function. Where the equation
+         *                         invokes the function without this number of arguments passed in, a
+         *                         {@link MissingFunctionArgumentsException} is thrown.
+         * @param f The implementation of a function. Arguments to the function are passed into the implementation as an
+         *          array of doubles.
+         * @return This.
+         */
+        public Builder pushFunction(String name, int requiredArgCount, ToDoubleFunction<double[]> f)
+        {
+            return pushFunction(name, args ->
+            {
+                if(args.length < requiredArgCount)
+                    throw new MissingFunctionArgumentsException(name, requiredArgCount, args.length);
+
+                return f.applyAsDouble(args);
+            });
+        }
+
+        /**
+         * <p>Defines a function for equations made by this builder as in
+         * {@link #withFunction(String, ToDoubleFunction)}, but also pushes this change to instances of {@link Equation}
+         * created by this builder.</p>
+         *
+         * <p>Note that this won't override variables redefined on the equation itself. This also won't allow the use of
+         * new functions in already compiled equations - this would require a new equation object to be created.</p>
+         * @param name The name of the function.
+         * @param f The implementation of the function. The first argument to the function is passed into the
+         *          implementation as the first argument. (All others are discarded)
+         * @return This.
+         */
+        public Builder pushMonoFunction(String name, ToDoubleFunction<Double> f)
+        {
+            return pushFunction(name, args ->
+            {
+                if(args.length < 1)
+                    throw new MissingFunctionArgumentsException(name, 1, args.length);
+
+                return f.applyAsDouble(args[0]);
+            });
+        }
+
+        /**
+         * <p>Defines a function for equations made by this builder as in
+         * {@link #withFunction(String, ToDoubleFunction)}, but also pushes this change to instances of {@link Equation}
+         * created by this builder.</p>
+         *
+         * <p>Note that this won't override variables redefined on the equation itself. This also won't allow the use of
+         * new functions in already compiled equations - this would require a new equation object to be created.</p>
+         * @param name The name of the function.
+         * @param f The implementation of the function. The first argument to the function is passed into the
+         *          implementation as the first argument, and the second argument to the function is passed into the
+         *          implementation as the second argument. (All others are discarded)
+         * @return This.
+         */
+        public Builder pushBiFunction(String name, ToDoubleBiFunction<Double, Double> f)
+        {
+            return pushFunction(name, args ->
+            {
+                if(args.length < 2)
+                    throw new MissingFunctionArgumentsException(name, 2, args.length);
+
+                return f.applyAsDouble(args[0], args[1]);
+            });
+        }
         //endregion
         //endregion
 
