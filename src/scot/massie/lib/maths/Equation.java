@@ -4101,21 +4101,113 @@ public class Equation
         return true;
     }
 
+    //region redefine functions
     /**
      * <p>Provides a new implementation of function in this equation. If the equation does not have a function
      * available to it by the given function name, does nothing.</p>
-     * @param functionName The name of the function to redefine.
-     * @param function The new implementation of the function.
+     * @param name The name of the function to redefine.
+     * @param f The new implementation of the function.
      * @return True if the function was redefined successfully. False if it was not, as a result of the function not
      *         being available to this equation.
      */
-    public boolean redefineFunction(String functionName, ToDoubleFunction<double[]> function)
+    public boolean redefineFunction(String name, ToDoubleFunction<double[]> f)
     {
-        if(!functions.containsKey(functionName))
+        if(!functions.containsKey(name))
             return false;
 
-        overwrittenFunctions.put(functionName, function);
+        overwrittenFunctions.put(name, f);
         return true;
     }
+
+    /**
+     * <p>Provides a new implementation of function in this equation. If the equation does not have a function
+     * available to it by the given function name, does nothing.</p>
+     * @param name The name of the function to redefine.
+     * @param f The new implementation of the function, taking no arguments.
+     * @return True if the function was redefined successfully. False if it was not, as a result of the function not
+     *         being available to this equation.
+     */
+    public boolean redefineFunction(String name, DoubleSupplier f)
+    {
+        if(!functions.containsKey(name))
+            return false;
+
+        overwrittenFunctions.put(name, x -> f.getAsDouble());
+        return true;
+    }
+
+    /**
+     * <p>Provides a new implementation of function in this equation. If the equation does not have a function
+     * available to it by the given function name, does nothing.</p>
+     * @param name The name of the function to redefine.
+     * @param requiredArgCount The number of arguments required to be passed into the function.
+     * @param f The new implementation of the function, taking at least the given number of arguments.
+     * @return True if the function was redefined successfully. False if it was not, as a result of the function not
+     *         being available to this equation.
+     */
+    public boolean redefineFunction(String name, int requiredArgCount, ToDoubleFunction<double[]> f)
+    {
+        if(!functions.containsKey(name))
+            return false;
+
+        overwrittenFunctions.put(name, args ->
+        {
+            if(args.length < requiredArgCount)
+                throw new MissingFunctionArgumentsException(name, requiredArgCount, args.length);
+
+            return f.applyAsDouble(args);
+        });
+
+        return true;
+    }
+
+    /**
+     * <p>Provides a new implementation of function in this equation. If the equation does not have a function
+     * available to it by the given function name, does nothing.</p>
+     * @param name The name of the function to redefine.
+     * @param f The new implementation of the function, taking one argument.
+     * @return True if the function was redefined successfully. False if it was not, as a result of the function not
+     *         being available to this equation.
+     */
+    public boolean redefineMonoFunction(String name, ToDoubleFunction<Double> f)
+    {
+        if(!functions.containsKey(name))
+            return false;
+
+        overwrittenFunctions.put(name, args ->
+        {
+            if(args.length < 1)
+                throw new MissingFunctionArgumentsException(name, 1, args.length);
+
+            return f.applyAsDouble(args[0]);
+        });
+
+        return true;
+    }
+
+    /**
+     * <p>Provides a new implementation of function in this equation. If the equation does not have a function
+     * available to it by the given function name, does nothing.</p>
+     * @param name The name of the function to redefine.
+     * @param f The new implementation of the function, taking two arguments.
+     * @return True if the function was redefined successfully. False if it was not, as a result of the function not
+     *         being available to this equation.
+     */
+    public boolean redefineBiFunction(String name, ToDoubleBiFunction<Double, Double> f)
+    {
+        if(!functions.containsKey(name))
+            return false;
+
+        overwrittenFunctions.put(name, args ->
+        {
+            if(args.length < 2)
+                throw new MissingFunctionArgumentsException(name, 2, args.length);
+
+            return f.applyAsDouble(args[0], args[1]);
+        });
+
+        return true;
+    }
+    //endregion
     //endregion
 }
