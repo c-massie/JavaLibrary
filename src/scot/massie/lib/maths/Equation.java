@@ -1886,7 +1886,10 @@ public class Equation
             catch(EquationParseException e)
             { throw e.withFullEquation(tokenisation); }
 
-            return new Equation(topLevelComponent, new HashMap<>(variables), new HashMap<>(functions));
+
+            Equation equation = new Equation(topLevelComponent, new HashMap<>(variables), new HashMap<>(functions));
+            instances.add(equation);
+            return equation;
         }
 
         /**

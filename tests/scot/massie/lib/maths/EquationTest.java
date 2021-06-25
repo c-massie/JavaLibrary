@@ -2,6 +2,7 @@ package scot.massie.lib.maths;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.ToDoubleFunction;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -271,6 +272,57 @@ class EquationTest
     { assertEquals(5.0, new Equation.Builder().withVariable("x", 5).build("x").evaluate()); }
     //endregion
 
+    //region pushing
+    //region variables
+    @Test
+    void push_variable()
+    {
+        Equation.Builder builder = new Equation.Builder().withVariable("doot", 7);
+        Equation eq = builder.build("doot");
+        assertEquals(7.0, eq.evaluate());
+        builder.pushVariable("doot", 8);
+        assertEquals(8.0, eq.evaluate());
+    }
+
+    @Test
+    void push_variable_overwritten()
+    {
+        Equation.Builder builder = new Equation.Builder().withVariable("doot", 7);
+        Equation eq = builder.build("doot");
+        assertEquals(7.0, eq.evaluate());
+        eq.setVariable("doot", 8.0);
+        assertEquals(8.0, eq.evaluate());
+        builder.pushVariable("doot", 9.0);
+        assertEquals(8.0, eq.evaluate());
+    }
+    //endregion
+    //region functions
+
+    @Test
+    void push_function()
+    {
+        Equation.Builder builder = new Equation.Builder().withFunction("doot", () -> 7);
+        Equation eq = builder.build("doot()");
+        assertEquals(7.0, eq.evaluate());
+        builder.pushFunction("doot", () -> 8.0);
+        assertEquals(8.0, eq.evaluate());
+    }
+
+    @Test
+    void push_function_overwritten()
+    {
+        Equation.Builder builder = new Equation.Builder().withFunction("doot", () -> 7);
+        Equation eq = builder.build("doot()");
+        assertEquals(7.0, eq.evaluate());
+        eq.redefineFunction("doot", () -> 8);
+        assertEquals(8.0, eq.evaluate());
+        builder.pushFunction("doot", () -> 9);
+        assertEquals(8.0, eq.evaluate());
+    }
+
+    //endregion
+    //endregion
+
     //region functions
     @Test
     void functions_premade()
@@ -398,4 +450,6 @@ class EquationTest
     { assertFalse(new Equation("5 + 7").redefineFunction("doot", x -> 9)); }
 
     //endregion
+
+
 }
