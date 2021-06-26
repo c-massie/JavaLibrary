@@ -4211,6 +4211,26 @@ public class Equation
 
         return true;
     }
+
+    /**
+     * <p>Reverts an equation's variable to the variable value provided by its builder.</p>
+     *
+     * <p>Note that this may be different to the variable's value before being overwritten, where the equation's builder
+     * pushed out a new value for the variable after it was overwritten.</p>
+     * @param name The name of the variable.
+     */
+    public void revertVariable(String name)
+    { overwrittenVariableValues.remove(name); }
+
+    /**
+     * <p>Reverts an equation's function implementation to the implementation provided by its builder.</p>
+     *
+     * <p>Note that this may be different to the implementation before being overwritten, where the equation's builder
+     * pushed out a new implementation for the function after it was overwritten.</p>
+     * @param name The name of the function.
+     */
+    public void revertFunction(String name)
+    { overwrittenFunctions.remove(name); }
     //endregion
     //endregion
 }
