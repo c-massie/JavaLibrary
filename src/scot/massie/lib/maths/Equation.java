@@ -3852,9 +3852,6 @@ public class Equation
         {
             ToDoubleFunction<double[]> f = equationBeingEvaluated.functions.get(functionName);
 
-            if(f == null)
-                throw new EquationEvaluation.MissingFunctionException(functionName);
-
             double[] results = new double[arguments.length];
 
             for(int i = 0; i < results.length; i++)
@@ -3888,14 +3885,7 @@ public class Equation
          */
         @Override
         public double evaluate(Equation equationBeingEvaluated)
-        {
-            Double result = equationBeingEvaluated.variableValues.get(name);
-
-            if(result == null)
-                throw new EquationEvaluation.MissingVariableException(name);
-
-            return result;
-        }
+        { return equationBeingEvaluated.variableValues.get(name); }
     }
 
     /**
