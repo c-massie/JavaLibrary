@@ -295,6 +295,26 @@ class EquationTest
         builder.pushVariable("doot", 9.0);
         assertEquals(8.0, eq.evaluate());
     }
+
+    @Test
+    void push_variable_overwritten_reverted()
+    {
+        Equation.Builder builder = new Equation.Builder().withVariable("doot", 7);
+        Equation eq = builder.build("doot");
+        assertEquals(7.0, eq.evaluate());
+        eq.setVariable("doot", 8.0);
+        assertEquals(8.0, eq.evaluate());
+        eq.revertVariable("doot");
+        assertEquals(7.0, eq.evaluate());
+
+        // Then test where it's changed while overwritten
+        eq.setVariable("doot", 9.0);
+        assertEquals(9.0, eq.evaluate());
+        builder.pushVariable("doot", 10.0);
+        assertEquals(9.0, eq.evaluate());
+        eq.revertVariable("doot");
+        assertEquals(10.0, eq.evaluate());
+    }
     //endregion
     //region functions
 
@@ -318,6 +338,26 @@ class EquationTest
         assertEquals(8.0, eq.evaluate());
         builder.pushFunction("doot", () -> 9);
         assertEquals(8.0, eq.evaluate());
+    }
+
+    @Test
+    void push_function_overwritten_reverted()
+    {
+        Equation.Builder builder = new Equation.Builder().withFunction("doot", () -> 7);
+        Equation eq = builder.build("doot()");
+        assertEquals(7.0, eq.evaluate());
+        eq.redefineFunction("doot", () -> 8.0);
+        assertEquals(8.0, eq.evaluate());
+        eq.revertFunction("doot");
+        assertEquals(7.0, eq.evaluate());
+
+        // Then test where it's changed while overwritten
+        eq.redefineFunction("doot", () -> 9.0);
+        assertEquals(9.0, eq.evaluate());
+        builder.pushFunction("doot", () -> 10.0);
+        assertEquals(9.0, eq.evaluate());
+        eq.revertFunction("doot");
+        assertEquals(10.0, eq.evaluate());
     }
 
     //endregion
