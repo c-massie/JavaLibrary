@@ -1,7 +1,7 @@
 package scot.massie.lib.collections.maps;
 
 import java.util.*;
-import java.util.function.BinaryOperator;
+import java.util.function.BiFunction;
 
 public final class MapUtils
 {
@@ -18,7 +18,7 @@ public final class MapUtils
      * @return A new map object where the item assigned to each key is the result of performing the provided operation
      */
     @SafeVarargs
-    public static <K, V> Map<K, V> accumulateValues(BinaryOperator<V> op, Map<K, V>... maps)
+    public static <K, V> Map<K, V> accumulateValues(BiFunction<V, V, V> op, Map<K, V>... maps)
     {
         Map<K, V> result = new HashMap<>();
 
@@ -38,7 +38,7 @@ public final class MapUtils
      * @param <V> The value of the keys of the maps.
      * @return A new map object where the item assigned to each key is the result of performing the provided operation
      */
-    public static <K, V> Map<K, V> accumulateValues(BinaryOperator<V> op, Iterable<Map<K, V>> maps)
+    public static <K, V> Map<K, V> accumulateValues(BiFunction<V, V, V> op, Iterable<Map<K, V>> maps)
     {
         Map<K, V> result = new HashMap<>();
 
