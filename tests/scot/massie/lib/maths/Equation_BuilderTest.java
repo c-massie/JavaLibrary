@@ -195,7 +195,7 @@ public class Equation_BuilderTest
     }
 
     Equation newDummyEquation(Equation.Builder builder)
-    { return new Equation(null, builder.variables, builder.functions); }
+    { return new Equation(builder, null, builder.variables, builder.functions); }
 
     //region verifyTokenisationBrackets
     @Test

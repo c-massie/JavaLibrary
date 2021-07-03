@@ -1887,7 +1887,7 @@ public class Equation
             { throw e.withFullEquation(tokenisation); }
 
 
-            Equation equation = new Equation(topLevelComponent, new HashMap<>(variables), new HashMap<>(functions));
+            Equation equation = new Equation(this, topLevelComponent, new HashMap<>(variables), new HashMap<>(functions));
             instances.add(equation);
             return equation;
         }
@@ -3987,6 +3987,11 @@ public class Equation
 
     //region variables
     /**
+     * The equation builder that's responsible for building this equation object.
+     */
+    final Builder sourceBuilder;
+
+    /**
      * <p>The equation component representing the first/root evaluatable component of the equation. This component holds
      * references to other components in the equation, in a tree topology.</p>
      */
@@ -4037,6 +4042,7 @@ public class Equation
     public Equation(String equationAsString)
     {
         Equation parsedEquation         = defaultBuilder.build(equationAsString);
+        this.sourceBuilder              = defaultBuilder;
         this.topLevelComponent          = parsedEquation.topLevelComponent;
         this.initialVariableValues      = parsedEquation.initialVariableValues;
         this.overwrittenVariableValues  = parsedEquation.overwrittenVariableValues;
@@ -4047,24 +4053,47 @@ public class Equation
     }
 
     /**
+     * Creates a new equation object by copying an existing one. The resulting equation object will initially have all
+     * of the same variable values and function implementations as the copied one, but changes made in one won't be
+     * reflected in the other.
+     * @param original The original equation object to make a copy of.
+     */
+    public Equation(Equation original)
+    {
+        this.sourceBuilder              = original.sourceBuilder;
+        this.topLevelComponent          = original.topLevelComponent;
+        this.initialVariableValues      = new HashMap<>(original.initialVariableValues);
+        this.overwrittenVariableValues  = new HashMap<>(original.overwrittenVariableValues);
+        this.variableValues             = new FallbackMap<>(this.overwrittenVariableValues, this.initialVariableValues);
+        this.initialFunctions           = new HashMap<>(original.initialFunctions);
+        this.overwrittenFunctions       = new HashMap<>(original.overwrittenFunctions);
+        this.functions                  = new FallbackMap<>(this.overwrittenFunctions, this.initialFunctions);
+
+        this.sourceBuilder.instances.add(this);
+    }
+
+    /**
      * Creates a new equation object with the given top level component, variable map, and function map.
+     * @param sourceBuilder The builder responsible for building this equation object.
      * @param topLevelComponent The top level component.
      * @param variableValues The variable map. This should be a copy of the one used by the equation builder at the time
      *                       of building.
      * @param functions The function map. This should be a copy of the one used by the equation builder at the time of
      *                  building.
      */
-    Equation(EquationComponent topLevelComponent,
+    Equation(Builder sourceBuilder,
+             EquationComponent topLevelComponent,
              Map<String, Double> variableValues,
              Map<String, ToDoubleFunction<double[]>> functions)
     {
+        this.sourceBuilder              = sourceBuilder;
         this.topLevelComponent          = topLevelComponent;
         this.initialVariableValues      = variableValues;
         this.overwrittenVariableValues  = new HashMap<>();
-        this.variableValues             = new FallbackMap<>(overwrittenVariableValues, initialVariableValues);
+        this.variableValues             = new FallbackMap<>(this.overwrittenVariableValues, this.initialVariableValues);
         this.initialFunctions           = functions;
         this.overwrittenFunctions       = new HashMap<>();
-        this.functions                  = new FallbackMap<>(overwrittenFunctions, initialFunctions);
+        this.functions                  = new FallbackMap<>(this.overwrittenFunctions, this.initialFunctions);
     }
     //endregion
 
