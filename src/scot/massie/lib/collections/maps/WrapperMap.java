@@ -1,18 +1,38 @@
 package scot.massie.lib.collections.maps;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * A map that routes all standard {@link Map} interface calls to it to an internally stored map. This type exists
+ * primarily to serve as the base class for other map types that defer to an internally stored map.
+ * @param <K> The type of the keys of the map.
+ * @param <V> The type of the values of the map.
+ */
 public class WrapperMap<K, V> implements Map<K, V>
 {
+    /**
+     * The internally stored map to which all {@link Map} calls defer.
+     */
     protected Map<K, V> internal;
 
+    /**
+     * Creates a new WrapperMap, routing calls to the given map.
+     * @param wrappedMap The map to route calls to.
+     */
     public WrapperMap(Map<K, V> wrappedMap)
     { this.internal = wrappedMap; }
+
+    /**
+     * Creates a new WrapperMap, routing calls to an internally stored hashmap.
+     */
+    public WrapperMap()
+    { this(new HashMap<>()); }
 
     @Override
     public int size()
