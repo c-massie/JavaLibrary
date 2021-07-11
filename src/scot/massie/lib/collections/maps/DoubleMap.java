@@ -1,7 +1,14 @@
 package scot.massie.lib.collections.maps;
 
+/**
+ * A {@link NumberMap} with double-typed values.
+ * @param <K> The type of the keys of this map.
+ */
 public class DoubleMap<K> extends NumberMap<K, Double>
 {
+    /**
+     * Creates a new DoubleMap.
+     */
     public DoubleMap()
     { super(0d); }
 

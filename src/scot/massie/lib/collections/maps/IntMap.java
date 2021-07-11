@@ -1,8 +1,15 @@
 package scot.massie.lib.collections.maps;
 
+/**
+ * A {@link NumberMap} with integer-typed values.
+ * @param <K> The type of the keys of this map.
+ */
 public class IntMap<K> extends NumberMap<K, Integer>
 {
-    public IntMap(Integer zeroValue)
+    /**
+     * Creates a new IntMap.
+     */
+    public IntMap()
     { super(0); }
 
     @Override
