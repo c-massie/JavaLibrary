@@ -19,6 +19,53 @@ public final class StringUtils
     {}
 
     /**
+     * Indents a given string with four spaces.
+     * @param s The string to indent.
+     * @return The initially given string, with each line preceded by "    ".
+     */
+    public static String indent(String s)
+    { return indentWith(s, "    ", 1); }
+
+    /**
+     * Indents a given string with four spaces a given number of times.
+     * @param s The string to indent.
+     * @param levels The number of levels to indent. This is how many times four spaces are repeated.
+     * @return The initially given string, with each line preceded by "    " a given number of times.
+     */
+    public static String indent(String s, int levels)
+    { return indentWith(s, "    ", levels); }
+
+    /**
+     * Indents a given string with another given string.
+     * @param s The string to indent.
+     * @param with The string to indent with. This is what will precede each line in the resulting string.
+     * @return The initially given string, with each line preceded by "with".
+     */
+    public static String indentWith(String s, String with)
+    { return indentWith(s, with, 1); }
+
+    /**
+     * Indents a given string with another given string a given number of times.
+     * @param s The string to indent.
+     * @param with The string to indent with. This is what will precede each line in the resulting string.
+     * @param levels The level to indent. This is how many times "with" is repeated.
+     * @return The initially given string, with each line preceded by "with" the given number of times.
+     */
+    public static String indentWith(String s, String with, int levels)
+    {
+        if(s == null)
+            throw new IllegalArgumentException("s cannot null.");
+
+        if(with == null)
+            throw new IllegalArgumentException("with cannot be null.");
+
+        if(levels < 0)
+            throw new IllegalArgumentException("levels cannot be negative.");
+
+        return s.replaceAll("(?m)^", repeat(with, levels));
+    }
+
+    /**
      * Gets a copy of the provided string with preceding whitespace removed.
      * @param s The string to get with preceding whitespace removed.
      * @return A copy of the string provided with whitespace removed from the start.
