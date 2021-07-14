@@ -1,5 +1,7 @@
 package scot.massie.lib.collections.maps;
 
+import java.util.Map;
+
 /**
  * A {@link NumberMap} with double-typed values.
  * @param <K> The type of the keys of this map.
@@ -59,4 +61,32 @@ public class DoubleMap<K> extends NumberMap<K, Double>
     @Override
     public Double divideByReturningOldValue(K key, Double numberToDivideBy)
     { return put(key, get(key) / numberToDivideBy); }
+
+    @Override
+    public void addMap(Map<? extends K, ? extends Double> other)
+    {
+        for(Map.Entry<? extends K, ? extends Double> e : other.entrySet())
+            put(e.getKey(), get(e.getKey()) + e.getValue());
+    }
+
+    @Override
+    public void subtractMap(Map<? extends K, ? extends Double> other)
+    {
+        for(Map.Entry<? extends K, ? extends Double> e : other.entrySet())
+            put(e.getKey(), get(e.getKey()) - e.getValue());
+    }
+
+    @Override
+    public void multiplyMap(Map<? extends K, ? extends Double> other)
+    {
+        for(Map.Entry<? extends K, ? extends Double> e : other.entrySet())
+            put(e.getKey(), get(e.getKey()) * e.getValue());
+    }
+
+    @Override
+    public void divideByMap(Map<? extends K, ? extends Double> other)
+    {
+        for(Map.Entry<? extends K, ? extends Double> e : other.entrySet())
+            put(e.getKey(), get(e.getKey()) / e.getValue());
+    }
 }

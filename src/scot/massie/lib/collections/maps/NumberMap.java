@@ -1,5 +1,7 @@
 package scot.massie.lib.collections.maps;
 
+import java.util.Map;
+
 /**
  * A numerically-valued map with additional arithmetic methods, where all values default to 0.
  * @param <K> The type of the keys of this map.
@@ -77,4 +79,30 @@ public abstract class NumberMap<K, V extends Number> extends DefaultingMap<K, V>
      * @return The previous value associated with the given key.
      */
     public abstract V divideByReturningOldValue(K key, V numberToDivideBy);
+
+
+    /**
+     * Adds all values in the given map to the values at the matching keys in this map.
+     * @param other The map with values to add to the values of this map.
+     */
+    public abstract void addMap(Map<? extends K, ? extends V> other);
+
+    /**
+     * Subtracts all values in the given map from the values at the matching keys in this map.
+     * @param other The map with values to subtract from the values of this map.
+     */
+    public abstract void subtractMap(Map<? extends K, ? extends V> other);
+
+    /**
+     * Multiplies all values in the given map by the values at the matching keys in this map.
+     * @param other The map with values to multiply the values of this map by.
+     */
+    public abstract void multiplyMap(Map<? extends K, ? extends V> other);
+
+    /**
+     * Divides values in this map where an existing explicitly set value exists in the given map at the same key, by the
+     * values at the same key in the given map.
+     * @param other The map with values to divide the values of this map by.
+     */
+    public abstract void divideByMap(Map<? extends K, ? extends V> other);
 }

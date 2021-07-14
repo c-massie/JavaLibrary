@@ -1,5 +1,7 @@
 package scot.massie.lib.collections.maps;
 
+import java.util.Map;
+
 /**
  * A {@link NumberMap} with integer-typed values.
  * @param <K> The type of the keys of this map.
@@ -59,4 +61,32 @@ public class IntMap<K> extends NumberMap<K, Integer>
     @Override
     public Integer divideByReturningOldValue(K key, Integer numberToDivideBy)
     { return put(key, get(key) / numberToDivideBy); }
+
+    @Override
+    public void addMap(Map<? extends K, ? extends Integer> other)
+    {
+        for(Map.Entry<? extends K, ? extends Integer> e : other.entrySet())
+            put(e.getKey(), get(e.getKey()) + e.getValue());
+    }
+
+    @Override
+    public void subtractMap(Map<? extends K, ? extends Integer> other)
+    {
+        for(Map.Entry<? extends K, ? extends Integer> e : other.entrySet())
+            put(e.getKey(), get(e.getKey()) - e.getValue());
+    }
+
+    @Override
+    public void multiplyMap(Map<? extends K, ? extends Integer> other)
+    {
+        for(Map.Entry<? extends K, ? extends Integer> e : other.entrySet())
+            put(e.getKey(), get(e.getKey()) * e.getValue());
+    }
+
+    @Override
+    public void divideByMap(Map<? extends K, ? extends Integer> other)
+    {
+        for(Map.Entry<? extends K, ? extends Integer> e : other.entrySet())
+            put(e.getKey(), get(e.getKey()) / e.getValue());
+    }
 }
