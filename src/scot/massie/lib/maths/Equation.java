@@ -3512,7 +3512,7 @@ public class Equation
          * @param action The implementation of this operator.
          */
         public UnaryOperator(Token token, double priority, UnaryOperatorAction action)
-        { super(Arrays.asList(token), priority, operands -> action.performOperation(operands[0])); }
+        { super(Collections.singletonList(token), priority, operands -> action.performOperation(operands[0])); }
 
         /**
          * Gets the token affixed to an operand to invoke this operator.
@@ -3671,7 +3671,7 @@ public class Equation
          */
         public BinaryOperator(Token token, boolean isLeftAssociative, double priority, BinaryOperatorAction action)
         {
-            super(Arrays.asList(token),
+            super(Collections.singletonList(token),
                   isLeftAssociative,
                   priority,
                   operands -> action.performOperation(operands[0], operands[1]));
@@ -3764,7 +3764,7 @@ public class Equation
          * @param action The operator implementation.
          */
         public Operation(EquationComponent component, OperatorAction action)
-        { this(Arrays.asList(component), action); }
+        { this(Collections.singletonList(component), action); }
 
         /**
          * Creates a new binary operation from a pair of equation components and an operator implementation.

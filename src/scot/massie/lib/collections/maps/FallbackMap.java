@@ -567,7 +567,8 @@ public class FallbackMap<K, V> implements Map<K, V>
      * Gets the first value mapping in the chain for the given key, or the given default value is no mapping is found.
      * @param key The key whose associated value is to be returned.
      * @param defaultValue The value to return if there is no mapping for the given key.
-     * @return
+     * @return The first value mapping in the chain for the given key, or the given default value if no such mapping
+     *         exists.
      */
     @Override
     public V getOrDefault(Object key, V defaultValue)

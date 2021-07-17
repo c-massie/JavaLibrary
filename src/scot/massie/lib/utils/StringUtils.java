@@ -2,6 +2,7 @@ package scot.massie.lib.utils;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -396,6 +397,17 @@ public final class StringUtils
      */
     public static <T> String toCSVRow(List<T> fields)
     { return toCSVRow(fields, false); }
+
+    /**
+     * Converts an array of items into a CSV-formatted string representation as a single row. Items are converted to
+     * strings with {@link String#valueOf(Object)} and enclosed in quotes if required to produce a valid CSV table and
+     * preserve it as a string.
+     * @param fields The fields of the CSV row.
+     * @param <T> The type of the items in the list.
+     * @return An RFC-4180 CSV-formatted string representation of the provided list of items.
+     */
+    public static <T> String toCSVRow(T... fields)
+    { return toCSVRow(Arrays.asList(fields), false); }
 
     /**
      * Converts a list of lists of items into a CSV-formatted string representation, where each list of items is a row
