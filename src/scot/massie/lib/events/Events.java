@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 /**
  * Static methods pertaining to generic events.
  */
-public class Events
+public final class Events
 {
     private Events()
     {}

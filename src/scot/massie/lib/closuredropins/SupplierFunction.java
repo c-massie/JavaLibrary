@@ -13,7 +13,7 @@ public class SupplierFunction<T, R> implements Function<T, R>
     /**
      * The supplier used to provide results.
      */
-    final Supplier<R> storedSupplier;
+    protected final Supplier<R> storedSupplier;
 
     /**
      * Creates a new SupplierFunction, using the given supplier as a source of results when {@link #apply(Object)} is

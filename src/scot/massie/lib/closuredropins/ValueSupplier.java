@@ -23,7 +23,7 @@ public class ValueSupplier<T> implements Supplier<T>
     /**
      * The value this supplier supplies.
      */
-    T valueToSupply;
+    protected final T valueToSupply;
 
     /**
      * Creates a new ValueSupplier.

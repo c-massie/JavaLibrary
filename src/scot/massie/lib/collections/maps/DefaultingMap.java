@@ -20,14 +20,14 @@ public class DefaultingMap<K, V> extends WrapperMap<K, V>
     /**
      * The function providing default values for the map.
      */
-    Function<K, V> defaultValueFunction;
+    protected final Function<? super K, ? extends V> defaultValueFunction;
 
     /**
      * Creates a new DefaultingMap.
      * @param wrappedMap The map this map is backed by.
      * @param defaultValueFunction The function that derives a default value from a key.
      */
-    public DefaultingMap(Map<K, V> wrappedMap, Function<K, V> defaultValueFunction)
+    public DefaultingMap(Map<K, V> wrappedMap, Function<? super K, ? extends V> defaultValueFunction)
     {
         super(wrappedMap);
         this.defaultValueFunction = defaultValueFunction;
@@ -38,7 +38,7 @@ public class DefaultingMap<K, V> extends WrapperMap<K, V>
      * @param wrappedMap The map this map is backed by.
      * @param defaultValueSupplier The supplier that provides default values.
      */
-    public DefaultingMap(Map<K, V> wrappedMap, Supplier<V> defaultValueSupplier)
+    public DefaultingMap(Map<K, V> wrappedMap, Supplier<? extends V> defaultValueSupplier)
     { this(wrappedMap, new SupplierFunction<>(defaultValueSupplier)); }
 
     /**
@@ -60,14 +60,14 @@ public class DefaultingMap<K, V> extends WrapperMap<K, V>
      * Creates a new DefaultingMap backed by a {@link HashMap}.
      * @param defaultValueFunction The function that derives a default value from a key.
      */
-    public DefaultingMap(Function<K, V> defaultValueFunction)
+    public DefaultingMap(Function<? super K, ? extends V> defaultValueFunction)
     { this(new HashMap<>(), defaultValueFunction); }
 
     /**
      * Creates a new DefaultingMap backed by a {@link HashMap}.
      * @param defaultValueSupplier The supplier that provides default values.
      */
-    public DefaultingMap(Supplier<V> defaultValueSupplier)
+    public DefaultingMap(Supplier<? extends V> defaultValueSupplier)
     { this(new HashMap<>(), defaultValueSupplier); }
 
     /**
@@ -92,8 +92,11 @@ public class DefaultingMap<K, V> extends WrapperMap<K, V>
     @Override
     public V get(Object key)
     {
-        if(!internal.containsKey(key))
-            return defaultValueFunction.apply((K)key);
+        @SuppressWarnings("unchecked") // .get should be passed an object of type K.
+        K kKey = (K)key;
+
+        if(!internal.containsKey(kKey))
+            return defaultValueFunction.apply(kKey);
 
         return internal.get(key);
     }
@@ -126,7 +129,12 @@ public class DefaultingMap<K, V> extends WrapperMap<K, V>
      */
     @Override
     public V remove(Object key)
-    { return internal.containsKey(key) ? internal.remove(key) : defaultValueFunction.apply((K)key); }
+    {
+        @SuppressWarnings("unchecked") // .remove should be passed an object of type K.
+        K kKey = (K)key;
+
+        return internal.containsKey(kKey) ? internal.remove(key) : defaultValueFunction.apply(kKey);
+    }
 
     /**
      * Associates a given value with a given key only if there is no current value associated with the given key.

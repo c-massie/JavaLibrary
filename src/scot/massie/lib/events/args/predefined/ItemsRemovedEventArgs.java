@@ -26,6 +26,7 @@ public class ItemsRemovedEventArgs<T> implements EventArgs
      * Creates a new event args for items being removed from something.
      * @param itemsRemoved The items being removed.
      */
+    @SafeVarargs
     public ItemsRemovedEventArgs(T... itemsRemoved)
     { this(Arrays.asList(itemsRemoved)); }
 

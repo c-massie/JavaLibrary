@@ -37,4 +37,17 @@ public final class EventListenerPriorityPair<TArgs extends EventArgs> implements
     @Override
     public int compareTo(EventListenerPriorityPair<TArgs> o)
     { return Double.compare(this.priority, o.priority); }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if(!(obj instanceof EventListenerPriorityPair))
+            return false;
+
+        @SuppressWarnings("rawtypes") // Can't tell type parameter - at this point, it doesn't matter.
+        EventListenerPriorityPair other = (EventListenerPriorityPair)obj;
+
+        //noinspection unchecked
+        return (this.listener == other.listener) && (compareTo(other) == 0);
+    }
 }

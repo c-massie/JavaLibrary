@@ -1,6 +1,5 @@
 package scot.massie.lib.collections.maps;
 
-import com.sun.xml.internal.xsom.impl.scd.Iterators;
 import scot.massie.lib.utils.wrappers.Wrapper;
 
 import java.util.*;
@@ -50,7 +49,10 @@ public class FallbackMap<K, V> implements Map<K, V>
 
         @Override
         public <T> T[] toArray(T[] a)
-        { return toFixedSet().toArray(a); }
+        {
+            //noinspection SuspiciousToArrayCall
+            return toFixedSet().toArray(a);
+        }
 
         public Set<K> toFixedSet()
         {
@@ -65,7 +67,7 @@ public class FallbackMap<K, V> implements Map<K, V>
 
         @Override
         public boolean add(K k)
-        { throw new UnsupportedOperationException("Keysets do not implement .add(...)."); }
+        { throw new UnsupportedOperationException("KeySets do not implement .add(...)."); }
 
         @Override
         public boolean remove(Object o)
@@ -87,7 +89,7 @@ public class FallbackMap<K, V> implements Map<K, V>
 
         @Override
         public boolean addAll(Collection<? extends K> c)
-        { throw new UnsupportedOperationException("Keysets do not implement .addAll(...)"); }
+        { throw new UnsupportedOperationException("KeySets do not implement .addAll(...)"); }
 
         @Override
         public boolean retainAll(Collection<?> c)
@@ -140,11 +142,14 @@ public class FallbackMap<K, V> implements Map<K, V>
 
         @Override
         public <T> T[] toArray(T[] a)
-        { return toFixedCollection().toArray(a); }
+        {
+            //noinspection SuspiciousToArrayCall
+            return toFixedCollection().toArray(a);
+        }
 
         public Collection<V> toFixedCollection()
         {
-            Set<K> keysChecked = new HashSet<>();
+            Collection<K> keysChecked = new HashSet<>();
             Collection<V> result = new ArrayList<>();
 
             for(Map<K, V> map : chain)
@@ -176,8 +181,11 @@ public class FallbackMap<K, V> implements Map<K, V>
             if(!foundKeyToRemove)
                 return false;
 
+            @SuppressWarnings("unchecked") // .remove should be passed an object of type V
+            V vO = (V)o;
+
             for(Map<K, V> map : chain)
-                if(map.remove(keyToRemove, o))
+                if(map.remove(keyToRemove, vO))
                     return true;
 
             throw new RuntimeException("This exception should not be reachable.");
@@ -240,8 +248,9 @@ public class FallbackMap<K, V> implements Map<K, V>
             if(!(o instanceof Map.Entry))
                 return false;
 
-            Map.Entry<Object, Object> e = (Map.Entry<Object, Object>)o;
-            Wrapper<V> vInWrapper = FallbackMap.this.getInWrapper((K)e.getKey());
+            @SuppressWarnings("unchecked") // .contains should be passed an object of type Map.Entry<K, V>
+            Map.Entry<K, V> e = (Map.Entry<K, V>)o;
+            Wrapper<V> vInWrapper = FallbackMap.this.getInWrapper(e.getKey());
 
             if(vInWrapper == null)
                 return false;
@@ -262,14 +271,17 @@ public class FallbackMap<K, V> implements Map<K, V>
 
         @Override
         public <T> T[] toArray(T[] a)
-        { return toFixedSet().toArray(a); }
+        {
+            //noinspection SuspiciousToArrayCall
+            return toFixedSet().toArray(a);
+        }
 
         public Set<Map.Entry<K, V>> toFixedSet()
         { return FallbackMap.this.flatten().entrySet(); }
 
         @Override
         public boolean add(Entry<K, V> kvEntry)
-        { throw new UnsupportedOperationException("Entrysets do not implement .add(...)."); }
+        { throw new UnsupportedOperationException("EntrySets do not implement .add(...)."); }
 
         @Override
         public boolean remove(Object o)
@@ -285,20 +297,27 @@ public class FallbackMap<K, V> implements Map<K, V>
         @Override
         public boolean containsAll(Collection<?> c)
         {
-            for(Object o : c)
+            @SuppressWarnings({"unchecked", "TypeMayBeWeakened"})
+            // .containsAll should be passed a Collection<Map.Entry<K, V>>
+            // KvC is just c with generic args, doesn't make sense to weaken without also weakening the parameter type.
+            Collection<Map.Entry<K, V>> kvC = (Collection<Map.Entry<K, V>>)c;
+
+            for(Map.Entry<K, V> o : kvC)
             {
-                if(!(o instanceof Entry))
-                    return false;
+                Wrapper<V> vInWrapper = FallbackMap.this.getInWrapper(o.getKey());
 
-                Wrapper<V> vInWrapper = FallbackMap.this.getInWrapper((K)(((Entry<?, ?>)o).getKey()));
+                if((o.getValue() == null) && (vInWrapper.get() == null))
+                    continue;
 
-                if(vInWrapper == null)
-                    return false;
+                if(o.getValue() == null)
+                {
+                    if(vInWrapper.get() == null)
+                        continue;
+                    else
+                        return false;
+                }
 
-                if(o == null && vInWrapper.get() != null)
-                    return false;
-
-                if(!o.equals(vInWrapper.get()))
+                if(!o.getValue().equals(vInWrapper.get()))
                     return false;
             }
 
@@ -307,7 +326,7 @@ public class FallbackMap<K, V> implements Map<K, V>
 
         @Override
         public boolean addAll(Collection<? extends Entry<K, V>> c)
-        { throw new UnsupportedOperationException("Entrysets do not implement .addAll(...)"); }
+        { throw new UnsupportedOperationException("EntrySets do not implement .addAll(...)"); }
 
         @Override
         public boolean retainAll(Collection<?> c)
@@ -339,16 +358,17 @@ public class FallbackMap<K, V> implements Map<K, V>
     /**
      * The list of maps that calls to this go through.
      */
-    List<Map<K, V>> chain;
+    protected List<Map<K, V>> chain;
 
-    final EntrySet entrySet = new EntrySet();
-    final KeySet keySet = new KeySet();
-    final ValueCollection valueCollection = new ValueCollection();
+    protected final EntrySet entrySet = new EntrySet();
+    protected final KeySet keySet = new KeySet();
+    protected final ValueCollection valueCollection = new ValueCollection();
 
     /**
      * Creates a new FallbackMap, which references the given maps in order until it finds a value.
      * @param maps The maps this should be backed by.
      */
+    @SafeVarargs
     public FallbackMap(Map<K, V>... maps)
     { chain = new ArrayList<>(Arrays.asList(maps)); }
 
@@ -417,7 +437,7 @@ public class FallbackMap<K, V> implements Map<K, V>
     @Override
     public boolean containsValue(Object value)
     {
-        Set<K> keysChecked = new HashSet<>();
+        Collection<K> keysChecked = new HashSet<>();
 
         for(Map<K, V> map : chain)
         {
@@ -497,12 +517,15 @@ public class FallbackMap<K, V> implements Map<K, V>
     @Override
     public V remove(Object key)
     {
+        @SuppressWarnings("unchecked") // .remove should be passed an instance of K
+        K kKey = (K)key;
+
         boolean valueFound = false;
         V value = null;
 
         for(Map<K, V> map : chain)
         {
-            if(!valueFound && map.containsKey(key))
+            if(!valueFound && map.containsKey(kKey))
             {
                 valueFound = true;
                 value = map.remove(key);
@@ -573,9 +596,12 @@ public class FallbackMap<K, V> implements Map<K, V>
     @Override
     public V getOrDefault(Object key, V defaultValue)
     {
+        @SuppressWarnings("unchecked") // .getOrDefault should be passed an object of type K
+        K kKey = (K)key;
+
         for(Map<K, V> map : chain)
-            if(map.containsKey(key))
-                return map.get(key);
+            if(map.containsKey(kKey))
+                return map.get(kKey);
 
         return defaultValue;
     }
@@ -588,7 +614,7 @@ public class FallbackMap<K, V> implements Map<K, V>
     @Override
     public void forEach(BiConsumer<? super K, ? super V> action)
     {
-        Set<K> keysDone = new HashSet<>();
+        Collection<K> keysDone = new HashSet<>();
 
         for(Map<K, V> map : chain)
             for(Map.Entry<K, V> e : map.entrySet())

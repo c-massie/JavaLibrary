@@ -2,7 +2,7 @@ package scot.massie.lib.utils;
 
 import java.util.function.Supplier;
 
-public class ControlFlowUtils
+public final class ControlFlowUtils
 {
     private ControlFlowUtils()
     {}
@@ -14,11 +14,12 @@ public class ControlFlowUtils
      * @param <T> The type of the arguments being coalesced.
      * @return The first passed argument in a supplier no equal to null, or null if all arguments evaluate to null.
      */
+    @SafeVarargs
     public static <T> T nullCoalesce(Supplier<T>... operands)
     {
-        for(int i = 0; i < operands.length; i++)
+        for(Supplier<T> operand : operands)
         {
-            T result = operands[i].get();
+            T result = operand.get();
 
             if(result != null)
                 return result;

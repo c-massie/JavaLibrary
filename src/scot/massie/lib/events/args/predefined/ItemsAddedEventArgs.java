@@ -26,6 +26,7 @@ public class ItemsAddedEventArgs<T> implements EventArgs
      * Creates a new event args for items being added to something.
      * @param itemsAdded The items being added.
      */
+    @SafeVarargs
     public ItemsAddedEventArgs(T... itemsAdded)
     { this(Arrays.asList(itemsAdded)); }
 

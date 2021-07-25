@@ -373,7 +373,10 @@ public final class StringUtils
      * @return A CSV-formatted string representation of the provided list of items. If not allowing spaces after commas,
      *         the resulting CSV text will be compatible with RFC-4180.
      */
-    public static <T> String toCSVRow(List<T> fields, boolean spaceAfterCommas)
+    public static <T> String toCSVRow(@SuppressWarnings("TypeMayBeWeakened")
+                                              // May not be, order of items affects output.
+                                              List<T> fields,
+                                      boolean spaceAfterCommas)
     {
         if(fields.isEmpty())
             return "";
@@ -406,6 +409,7 @@ public final class StringUtils
      * @param <T> The type of the items in the list.
      * @return An RFC-4180 CSV-formatted string representation of the provided list of items.
      */
+    @SafeVarargs
     public static <T> String toCSVRow(T... fields)
     { return toCSVRow(Arrays.asList(fields), false); }
 
@@ -421,7 +425,10 @@ public final class StringUtils
      * @return A CSV-formatted string representation of the provided list of lists of items. If not allowing spaces
      * after commas, the resulting CSV text will be compatible with RFC-4180.
      */
-    public static <T> String toCSV(List<List<T>> rows, boolean spaceAfterCommas)
+    public static <T> String toCSV(@SuppressWarnings({"BoundedWildcard", "TypeMayBeWeakened"})
+                                           // May not be weakened, order of items affects output
+                                           List<List<T>> rows,
+                                   boolean spaceAfterCommas)
     {
         if(rows.isEmpty())
             return "";
@@ -504,7 +511,8 @@ public final class StringUtils
      * @return A CSV-formatted string representation of the provided map. If not allowing spaces after commas, the
      *         resulting CSV text will be compatible with RFC-4180.
      */
-    public static <k, v> String toCSV(Map<k, v> map, boolean spaceAfterCommas, Comparator<Map.Entry<k, v>> comparator)
+    public static <k, v> String toCSV(Map<k, v> map, boolean spaceAfterCommas,
+                                      Comparator<? super Map.Entry<k, v>> comparator)
     {
         if(map.isEmpty())
             return "";

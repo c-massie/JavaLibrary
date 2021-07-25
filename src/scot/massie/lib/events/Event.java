@@ -25,6 +25,8 @@ public interface Event<TArgs extends EventArgs>
      * Passes the same EventArgs object to the listeners of the dependent event as to this one.
      * @param dependentEvent The event to register as a dependent event of this one.
      */
+    @SuppressWarnings("ClassReferencesSubclass")
+    // Events should not be able to invoke dependent events that aren't invokable.
     void register(InvokableEvent<TArgs> dependentEvent);
 
     /**
@@ -38,6 +40,8 @@ public interface Event<TArgs extends EventArgs>
      *                   accesses and mutations are translated back to the original EventArgs object where applicable.
      * @param <TDependentArgs> The EventArgs type of the event to be registered as a dependent event.
      */
+    @SuppressWarnings("ClassReferencesSubclass")
+    // Events should not be able to invoke dependent events that aren't invokable.
     <TDependentArgs extends EventArgs> void register(InvokableEvent<TDependentArgs> dependentEvent, Function<TArgs, TDependentArgs> argWrapper);
 
     /**
@@ -50,6 +54,8 @@ public interface Event<TArgs extends EventArgs>
      * Deregisters another event as a dependent event from this event.
      * @param event The event to deregister as a dependent event.
      */
+    @SuppressWarnings("ClassReferencesSubclass")
+    // Events should not be able to invoke dependent events that aren't invokable.
     void deregister(InvokableEvent<?> event);
 
     /**
