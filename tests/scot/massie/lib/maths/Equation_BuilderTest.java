@@ -186,16 +186,16 @@ public class Equation_BuilderTest
 
     void assertOpRun(Builder.OperatorTokenRun opRun, List<Token> tokens, int lowerBound, int at, int upperBound)
     {
-        assertEquals(tokens.subList(lowerBound, upperBound + 1), opRun.tokens);
-        assertEquals(lowerBound, opRun.startIndexInSource);
-        assertEquals(upperBound, opRun.endIndexInSource);
-        assertEquals(at - opRun.startIndexInSource, opRun.indexOfPivotInRun);
-        assertEquals(tokens.subList(lowerBound, at), opRun.tokensBeforePivot);
-        assertEquals(tokens.subList(at + 1, upperBound + 1), opRun.tokensAfterPivot);
+        assertEquals(tokens.subList(lowerBound, upperBound + 1), opRun.getTokens());
+        assertEquals(lowerBound, opRun.getStartIndexInSource());
+        assertEquals(upperBound, opRun.getEndIndexInSource());
+        assertEquals(at - opRun.getStartIndexInSource(), opRun.getIndexOfPivotInRun());
+        assertEquals(tokens.subList(lowerBound, at), opRun.getTokensBeforePivot());
+        assertEquals(tokens.subList(at + 1, upperBound + 1), opRun.getTokensAfterPivot());
     }
 
     Equation newDummyEquation(Equation.Builder builder)
-    { return new Equation(builder, null, builder.variables, builder.functions); }
+    { return new Equation(builder, null, builder.getVariables(), builder.getFunctions()); }
 
     //region verifyTokenisationBrackets
     @Test
@@ -494,8 +494,8 @@ public class Equation_BuilderTest
     {
         Builder b = new Builder(false);
         b.buildOperatorGroups();
-        assertThat(b.operatorGroups).isEmpty();
-        assertThat(b.operatorGroupsInOrder).isEmpty();
+        assertThat(b.getOpGroups()).isEmpty();
+        assertThat(b.getOpGroupsInOrder()).isEmpty();
     }
 
     @Test
@@ -506,12 +506,12 @@ public class Equation_BuilderTest
         b.addOperator(op);
         b.buildOperatorGroups();
 
-        assertThat(b.operatorGroups).hasSize(1);
-        assertThat(b.operatorGroups).containsKey(1.3);
-        assertOpGroupHasOpsExactly(b.operatorGroups.get(1.3), op);
+        assertThat(b.getOpGroups()).hasSize(1);
+        assertThat(b.getOpGroups()).containsKey(1.3);
+        assertOpGroupHasOpsExactly(b.getOpGroups().get(1.3), op);
 
-        assertThat(b.operatorGroupsInOrder).hasSize(1);
-        assertSame(b.operatorGroups.get(1.3), b.operatorGroupsInOrder.get(0));
+        assertThat(b.getOpGroupsInOrder()).hasSize(1);
+        assertSame(b.getOpGroups().get(1.3), b.getOpGroupsInOrder().get(0));
     }
 
     @Test
@@ -524,14 +524,14 @@ public class Equation_BuilderTest
         b.addOperator(op2);
         b.buildOperatorGroups();
 
-        assertThat(b.operatorGroups).hasSize(2);
-        assertThat(b.operatorGroups).containsKeys(1.3, 3.4);
-        assertOpGroupHasOpsExactly(b.operatorGroups.get(1.3), op1);
-        assertOpGroupHasOpsExactly(b.operatorGroups.get(3.4), op2);
+        assertThat(b.getOpGroups()).hasSize(2);
+        assertThat(b.getOpGroups()).containsKeys(1.3, 3.4);
+        assertOpGroupHasOpsExactly(b.getOpGroups().get(1.3), op1);
+        assertOpGroupHasOpsExactly(b.getOpGroups().get(3.4), op2);
 
-        assertThat(b.operatorGroupsInOrder).hasSize(2);
-        assertSame(b.operatorGroups.get(1.3), b.operatorGroupsInOrder.get(0));
-        assertSame(b.operatorGroups.get(3.4), b.operatorGroupsInOrder.get(1));
+        assertThat(b.getOpGroupsInOrder()).hasSize(2);
+        assertSame(b.getOpGroups().get(1.3), b.getOpGroupsInOrder().get(0));
+        assertSame(b.getOpGroups().get(3.4), b.getOpGroupsInOrder().get(1));
     }
 
     @Test
@@ -544,12 +544,12 @@ public class Equation_BuilderTest
         b.addOperator(op2);
         b.buildOperatorGroups();
 
-        assertThat(b.operatorGroups).hasSize(1);
-        assertThat(b.operatorGroups).containsKeys(1.3);
-        assertOpGroupHasOpsExactly(b.operatorGroups.get(1.3), op1, op2);
+        assertThat(b.getOpGroups()).hasSize(1);
+        assertThat(b.getOpGroups()).containsKeys(1.3);
+        assertOpGroupHasOpsExactly(b.getOpGroups().get(1.3), op1, op2);
 
-        assertThat(b.operatorGroupsInOrder).hasSize(1);
-        assertSame(b.operatorGroups.get(1.3), b.operatorGroupsInOrder.get(0));
+        assertThat(b.getOpGroupsInOrder()).hasSize(1);
+        assertSame(b.getOpGroups().get(1.3), b.getOpGroupsInOrder().get(0));
     }
 
     @Test
@@ -562,12 +562,12 @@ public class Equation_BuilderTest
         b.addOperator(op2);
         b.buildOperatorGroups();
 
-        assertThat(b.operatorGroups).hasSize(1);
-        assertThat(b.operatorGroups).containsKeys(1.3);
-        assertOpGroupHasOpsExactly(b.operatorGroups.get(1.3), op1, op2);
+        assertThat(b.getOpGroups()).hasSize(1);
+        assertThat(b.getOpGroups()).containsKeys(1.3);
+        assertOpGroupHasOpsExactly(b.getOpGroups().get(1.3), op1, op2);
 
-        assertThat(b.operatorGroupsInOrder).hasSize(1);
-        assertSame(b.operatorGroups.get(1.3), b.operatorGroupsInOrder.get(0));
+        assertThat(b.getOpGroupsInOrder()).hasSize(1);
+        assertSame(b.getOpGroups().get(1.3), b.getOpGroupsInOrder().get(0));
     }
     //endregion
 
@@ -583,7 +583,7 @@ public class Equation_BuilderTest
         VariableReference v = b.tryParseVariable(newTokenList("doot"));
 
         assertNotNull(v);
-        assertEquals("doot", v.name);
+        assertEquals("doot", v.getName());
         assertEquals(5, v.evaluate(newDummyEquation(b)));
     }
 
@@ -594,7 +594,7 @@ public class Equation_BuilderTest
         VariableReference v = b.tryParseVariable(newTokenList("a doot"));
 
         assertNotNull(v);
-        assertEquals("a doot", v.name);
+        assertEquals("a doot", v.getName());
         assertEquals(5, v.evaluate(newDummyEquation(b)));
     }
 
@@ -605,7 +605,7 @@ public class Equation_BuilderTest
         VariableReference v = b.tryParseVariable(newTokenList("a", "doot"));
 
         assertNotNull(v);
-        assertEquals("a  doot", v.name);
+        assertEquals("a  doot", v.getName());
         assertEquals(5, v.evaluate(newDummyEquation(b)));
     }
     //endregion
@@ -623,8 +623,8 @@ public class Equation_BuilderTest
         FunctionCall f = b.tryParseFunctionCall(newTokenList("doot", Token.OPEN_BRACKET, Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).isEmpty();
-        assertEquals("doot", f.functionName);
+        assertThat(f.getArguments()).isEmpty();
+        assertEquals("doot", f.getFunctionName());
         assertEquals(3, f.evaluate(newDummyEquation(b)));
     }
 
@@ -635,8 +635,8 @@ public class Equation_BuilderTest
         FunctionCall f = b.tryParseFunctionCall(newTokenList("a doot", Token.OPEN_BRACKET,  Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).isEmpty();
-        assertEquals("a doot", f.functionName);
+        assertThat(f.getArguments()).isEmpty();
+        assertEquals("a doot", f.getFunctionName());
         assertEquals(3, f.evaluate(newDummyEquation(b)));
     }
 
@@ -651,8 +651,8 @@ public class Equation_BuilderTest
                                                               Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).isEmpty();
-        assertEquals("doot  +   dat", f.functionName);
+        assertThat(f.getArguments()).isEmpty();
+        assertEquals("doot  +   dat", f.getFunctionName());
         assertEquals(3, f.evaluate(newDummyEquation(b)));
     }
 
@@ -663,10 +663,10 @@ public class Equation_BuilderTest
         FunctionCall f = b.tryParseFunctionCall(newTokenList("doot", Token.OPEN_BRACKET, "x", Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).hasSize(1);
-        assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
-        assertEquals(5, f.arguments[0].evaluate(newDummyEquation(b)));
-        assertEquals("doot", f.functionName);
+        assertThat(f.getArguments()).hasSize(1);
+        assertThat(f.getArguments()[0]).isInstanceOf(VariableReference.class);
+        assertEquals(5, f.getArguments()[0].evaluate(newDummyEquation(b)));
+        assertEquals("doot", f.getFunctionName());
         assertEquals(3, f.evaluate(newDummyEquation(b)));
     }
 
@@ -686,14 +686,14 @@ public class Equation_BuilderTest
                                                              Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).hasSize(3);
-        assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
-        assertThat(f.arguments[1]).isInstanceOf(VariableReference.class);
-        assertThat(f.arguments[2]).isInstanceOf(VariableReference.class);
-        assertEquals(5, f.arguments[0].evaluate(dummy));
-        assertEquals(5, f.arguments[1].evaluate(dummy));
-        assertEquals(5, f.arguments[2].evaluate(dummy));
-        assertEquals("doot", f.functionName);
+        assertThat(f.getArguments()).hasSize(3);
+        assertThat(f.getArguments()[0]).isInstanceOf(VariableReference.class);
+        assertThat(f.getArguments()[1]).isInstanceOf(VariableReference.class);
+        assertThat(f.getArguments()[2]).isInstanceOf(VariableReference.class);
+        assertEquals(5, f.getArguments()[0].evaluate(dummy));
+        assertEquals(5, f.getArguments()[1].evaluate(dummy));
+        assertEquals(5, f.getArguments()[2].evaluate(dummy));
+        assertEquals("doot", f.getFunctionName());
         assertEquals(3, f.evaluate(dummy));
     }
 
@@ -715,14 +715,14 @@ public class Equation_BuilderTest
                                                              Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).hasSize(3);
-        assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
-        assertThat(f.arguments[1]).isInstanceOf(FunctionCall.class);
-        assertThat(f.arguments[2]).isInstanceOf(VariableReference.class);
-        assertEquals(5, f.arguments[0].evaluate(dummy));
-        assertEquals(3, f.arguments[1].evaluate(dummy));
-        assertEquals(5, f.arguments[2].evaluate(dummy));
-        assertEquals("doot", f.functionName);
+        assertThat(f.getArguments()).hasSize(3);
+        assertThat(f.getArguments()[0]).isInstanceOf(VariableReference.class);
+        assertThat(f.getArguments()[1]).isInstanceOf(FunctionCall.class);
+        assertThat(f.getArguments()[2]).isInstanceOf(VariableReference.class);
+        assertEquals(5, f.getArguments()[0].evaluate(dummy));
+        assertEquals(3, f.getArguments()[1].evaluate(dummy));
+        assertEquals(5, f.getArguments()[2].evaluate(dummy));
+        assertEquals("doot", f.getFunctionName());
         assertEquals(3, f.evaluate(dummy));
     }
 
@@ -744,14 +744,14 @@ public class Equation_BuilderTest
                                                              Token.CLOSE_BRACKET));
 
         assertNotNull(f);
-        assertThat(f.arguments).hasSize(3);
-        assertThat(f.arguments[0]).isInstanceOf(VariableReference.class);
-        assertThat(f.arguments[1]).isInstanceOf(VariableReference.class);
-        assertThat(f.arguments[2]).isInstanceOf(VariableReference.class);
-        assertEquals(5, f.arguments[0].evaluate(dummy));
-        assertEquals(5, f.arguments[1].evaluate(dummy));
-        assertEquals(5, f.arguments[2].evaluate(dummy));
-        assertEquals("doot", f.functionName);
+        assertThat(f.getArguments()).hasSize(3);
+        assertThat(f.getArguments()[0]).isInstanceOf(VariableReference.class);
+        assertThat(f.getArguments()[1]).isInstanceOf(VariableReference.class);
+        assertThat(f.getArguments()[2]).isInstanceOf(VariableReference.class);
+        assertEquals(5, f.getArguments()[0].evaluate(dummy));
+        assertEquals(5, f.getArguments()[1].evaluate(dummy));
+        assertEquals(5, f.getArguments()[2].evaluate(dummy));
+        assertEquals("doot", f.getFunctionName());
         assertEquals(3, f.evaluate(dummy));
     }
 
@@ -820,7 +820,7 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_rightAssociative_notAnInfixOperation()
     {
         Builder b = newBuilderWithInfixOp(false);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("^"), "b", new Token("*"), "c", new Token("&"), "d");
 
         Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
@@ -831,7 +831,7 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_rightAssociative_notAnInfixOperationButHasFirstFewTokensOfIt()
     {
         Builder b = newBuilderWithInfixOp(false);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("&"), "d");
 
         Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
@@ -843,7 +843,7 @@ public class Equation_BuilderTest
     {
         Builder b = newBuilderWithInfixOp(false).withOperator("+", (l, r) -> l + r);
         b.buildOperatorGroups();
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("+"), new Token("€"), "c", new Token("¢"), "d");
 
         Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
@@ -854,7 +854,7 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_rightAssociative_notAnInfixOperationBecauseOneOfTheTokensIsInBrackets()
     {
         Builder b = newBuilderWithInfixOp(false);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("£"), Token.OPEN_BRACKET, "b", new Token("€"), "c",
                                     Token.CLOSE_BRACKET, new Token("¢"), "d");
 
@@ -866,22 +866,23 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_rightAssociative_isAnInfixOperation()
     {
         Builder b = newBuilderWithInfixOp(false);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"), "d");
 
         Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.rightAssociativeInfixOperators.getItems().stream().findFirst().get().action;
-        assertEquals(expectedA, op.action);
-        assertThat(op.components).hasSize(4);
-        assertThat(op.components.get(0)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(2)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(3)).isInstanceOf(VariableReference.class);
-        assertEquals("a", ((VariableReference)op.components.get(0)).name);
-        assertEquals("b", ((VariableReference)op.components.get(1)).name);
-        assertEquals("c", ((VariableReference)op.components.get(2)).name);
-        assertEquals("d", ((VariableReference)op.components.get(3)).name);
+        assertEquals(expectedA, op.getAction());
+        List<EquationComponent> components = op.getComponents();
+        assertThat(components).hasSize(4);
+        assertThat(components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("a", ((VariableReference)components.get(0)).getName());
+        assertEquals("b", ((VariableReference)components.get(1)).getName());
+        assertEquals("c", ((VariableReference)components.get(2)).getName());
+        assertEquals("d", ((VariableReference)components.get(3)).getName());
         assertEquals(114.0, op.evaluate(newDummyEquation(b)));
     }
 
@@ -889,34 +890,36 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_rightAssociative_isAnInfixOperationFollowedBySameOne()
     {
         Builder b = newBuilderWithInfixOp(false);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"),
                                     "d", new Token("£"), "c", new Token("€"), "b", new Token("¢"), "a");
 
         Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.rightAssociativeInfixOperators.getItems().stream().findFirst().get().action;
-        assertEquals(expectedA, op.action);
-        assertThat(op.components).hasSize(4);
-        assertThat(op.components.get(0)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(2)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(3)).isInstanceOf(Operation.class);
-        assertEquals("a", ((VariableReference)op.components.get(0)).name);
-        assertEquals("b", ((VariableReference)op.components.get(1)).name);
-        assertEquals("c", ((VariableReference)op.components.get(2)).name);
+        assertEquals(expectedA, op.getAction());
+        List<EquationComponent> components = op.getComponents();
+        assertThat(components).hasSize(4);
+        assertThat(components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(3)).isInstanceOf(Operation.class);
+        assertEquals("a", ((VariableReference)components.get(0)).getName());
+        assertEquals("b", ((VariableReference)components.get(1)).getName());
+        assertEquals("c", ((VariableReference)components.get(2)).getName());
 
-        Operation innerOp = (Operation)op.components.get(3);
-        assertEquals(expectedA, innerOp.action);
-        assertThat(innerOp.components).hasSize(4);
-        assertThat(innerOp.components.get(0)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(2)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(3)).isInstanceOf(VariableReference.class);
-        assertEquals("d", ((VariableReference)innerOp.components.get(0)).name);
-        assertEquals("c", ((VariableReference)innerOp.components.get(1)).name);
-        assertEquals("b", ((VariableReference)innerOp.components.get(2)).name);
-        assertEquals("a", ((VariableReference)innerOp.components.get(3)).name);
+        Operation innerOp = (Operation)components.get(3);
+        List<EquationComponent> innerOpComponents = innerOp.getComponents();
+        assertEquals(expectedA, innerOp.getAction());
+        assertThat(innerOpComponents).hasSize(4);
+        assertThat(innerOpComponents.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("d", ((VariableReference)innerOpComponents.get(0)).getName());
+        assertEquals("c", ((VariableReference)innerOpComponents.get(1)).getName());
+        assertEquals("b", ((VariableReference)innerOpComponents.get(2)).getName());
+        assertEquals("a", ((VariableReference)innerOpComponents.get(3)).getName());
 
         assertEquals(94.0, innerOp.evaluate(newDummyEquation(b)));
         assertEquals(716.0, op.evaluate(newDummyEquation(b)));
@@ -926,7 +929,7 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_rightAssociative_isAnInfixOperationContainingSameOneAsAnOperand()
     {
         Builder b = newBuilderWithInfixOp(false);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a",
                                     new Token("£"),
                                     "b",
@@ -938,27 +941,29 @@ public class Equation_BuilderTest
         Operation op = b.tryParseInfixOperation_rightAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.rightAssociativeInfixOperators.getItems().stream().findFirst().get().action;
-        assertEquals(expectedA, op.action);
-        assertThat(op.components).hasSize(4);
-        assertThat(op.components.get(0)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(2)).isInstanceOf(Operation.class);
-        assertThat(op.components.get(3)).isInstanceOf(VariableReference.class);
-        assertEquals("a", ((VariableReference)op.components.get(0)).name);
-        assertEquals("b", ((VariableReference)op.components.get(1)).name);
-        assertEquals("a", ((VariableReference)op.components.get(3)).name);
+        assertEquals(expectedA, op.getAction());
+        List<EquationComponent> components = op.getComponents();
+        assertThat(components).hasSize(4);
+        assertThat(components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(2)).isInstanceOf(Operation.class);
+        assertThat(components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("a", ((VariableReference)components.get(0)).getName());
+        assertEquals("b", ((VariableReference)components.get(1)).getName());
+        assertEquals("a", ((VariableReference)components.get(3)).getName());
 
-        Operation innerOp = (Operation)op.components.get(2);
-        assertEquals(expectedA, innerOp.action);
-        assertThat(innerOp.components).hasSize(4);
-        assertThat(innerOp.components.get(0)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(2)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(3)).isInstanceOf(VariableReference.class);
-        assertEquals("c", ((VariableReference)innerOp.components.get(0)).name);
-        assertEquals("d", ((VariableReference)innerOp.components.get(1)).name);
-        assertEquals("c", ((VariableReference)innerOp.components.get(2)).name);
-        assertEquals("b", ((VariableReference)innerOp.components.get(3)).name);
+        Operation innerOp = (Operation)components.get(2);
+        List<EquationComponent> innerOpComponents = innerOp.getComponents();
+        assertEquals(expectedA, innerOp.getAction());
+        assertThat(innerOpComponents).hasSize(4);
+        assertThat(innerOpComponents.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("c", ((VariableReference)innerOpComponents.get(0)).getName());
+        assertEquals("d", ((VariableReference)innerOpComponents.get(1)).getName());
+        assertEquals("c", ((VariableReference)innerOpComponents.get(2)).getName());
+        assertEquals("b", ((VariableReference)innerOpComponents.get(3)).getName());
 
         assertEquals(108.0, innerOp.evaluate(newDummyEquation(b)));
         assertEquals(598.0, op.evaluate(newDummyEquation(b)));
@@ -970,7 +975,7 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_leftAssociative_notAnInfixOperation()
     {
         Builder b = newBuilderWithInfixOp(true);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("^"), "b", new Token("*"), "c", new Token("&"), "d");
 
         Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
@@ -981,7 +986,7 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_leftAssociative_notAnInfixOperationButHasLastFewTokensOfIt()
     {
         Builder b = newBuilderWithInfixOp(true);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("^"), "b", new Token("€"), "c", new Token("¢"), "d");
 
         Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
@@ -993,7 +998,7 @@ public class Equation_BuilderTest
     {
         Builder b = newBuilderWithInfixOp(true).withOperator("+", (l, r) -> l + r);
         b.buildOperatorGroups();
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("+"), new Token("€"), "c", new Token("¢"), "d");
 
         Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
@@ -1004,7 +1009,7 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_leftAssociative_notAnInfixOperationBecauseOneOfTheTokensIsInBrackets()
     {
         Builder b = newBuilderWithInfixOp(true);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("£"), Token.OPEN_BRACKET, "b", new Token("€"), "c",
                                     Token.CLOSE_BRACKET, new Token("¢"), "d");
 
@@ -1016,22 +1021,23 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_leftAssociative_isAnInfixOperation()
     {
         Builder b = newBuilderWithInfixOp(true);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"), "d");
 
         Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.leftAssociativeInfixOperators.getItems().stream().findFirst().get().action;
-        assertEquals(expectedA, op.action);
-        assertThat(op.components).hasSize(4);
-        assertThat(op.components.get(0)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(2)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(3)).isInstanceOf(VariableReference.class);
-        assertEquals("a", ((VariableReference)op.components.get(0)).name);
-        assertEquals("b", ((VariableReference)op.components.get(1)).name);
-        assertEquals("c", ((VariableReference)op.components.get(2)).name);
-        assertEquals("d", ((VariableReference)op.components.get(3)).name);
+        assertEquals(expectedA, op.getAction());
+        List<EquationComponent> components = op.getComponents();
+        assertThat(components).hasSize(4);
+        assertThat(components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("a", ((VariableReference)components.get(0)).getName());
+        assertEquals("b", ((VariableReference)components.get(1)).getName());
+        assertEquals("c", ((VariableReference)components.get(2)).getName());
+        assertEquals("d", ((VariableReference)components.get(3)).getName());
         assertEquals(114.0, op.evaluate(newDummyEquation(b)));
     }
 
@@ -1039,34 +1045,36 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_leftAssociative_isAnInfixOperationFollowingSameOne()
     {
         Builder b = newBuilderWithInfixOp(true);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a", new Token("£"), "b", new Token("€"), "c", new Token("¢"),
                                     "d", new Token("£"), "c", new Token("€"), "b", new Token("¢"), "a");
 
         Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.leftAssociativeInfixOperators.getItems().stream().findFirst().get().action;
-        assertEquals(expectedA, op.action);
-        assertThat(op.components).hasSize(4);
-        assertThat(op.components.get(0)).isInstanceOf(Operation.class);
-        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(2)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(3)).isInstanceOf(VariableReference.class);
-        assertEquals("c", ((VariableReference)op.components.get(1)).name);
-        assertEquals("b", ((VariableReference)op.components.get(2)).name);
-        assertEquals("a", ((VariableReference)op.components.get(3)).name);
+        assertEquals(expectedA, op.getAction());
+        List<EquationComponent> components = op.getComponents();
+        assertThat(components).hasSize(4);
+        assertThat(components.get(0)).isInstanceOf(Operation.class);
+        assertThat(components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("c", ((VariableReference)components.get(1)).getName());
+        assertEquals("b", ((VariableReference)components.get(2)).getName());
+        assertEquals("a", ((VariableReference)components.get(3)).getName());
 
-        Operation innerOp = (Operation)op.components.get(0);
-        assertEquals(expectedA, innerOp.action);
-        assertThat(innerOp.components).hasSize(4);
-        assertThat(innerOp.components.get(0)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(2)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(3)).isInstanceOf(VariableReference.class);
-        assertEquals("a", ((VariableReference)innerOp.components.get(0)).name);
-        assertEquals("b", ((VariableReference)innerOp.components.get(1)).name);
-        assertEquals("c", ((VariableReference)innerOp.components.get(2)).name);
-        assertEquals("d", ((VariableReference)innerOp.components.get(3)).name);
+        Operation innerOp = (Operation)components.get(0);
+        List<EquationComponent> innerOpComponents = innerOp.getComponents();
+        assertEquals(expectedA, innerOp.getAction());
+        assertThat(innerOpComponents).hasSize(4);
+        assertThat(innerOpComponents.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("a", ((VariableReference)innerOpComponents.get(0)).getName());
+        assertEquals("b", ((VariableReference)innerOpComponents.get(1)).getName());
+        assertEquals("c", ((VariableReference)innerOpComponents.get(2)).getName());
+        assertEquals("d", ((VariableReference)innerOpComponents.get(3)).getName());
 
         assertEquals(114.0, innerOp.evaluate(newDummyEquation(b)));
         assertEquals(200.0, op.evaluate(newDummyEquation(b)));
@@ -1076,7 +1084,7 @@ public class Equation_BuilderTest
     void tryParseInfixOperation_leftAssociative_isAnInfixOperationContainingSameOneAsAnOperand()
     {
         Builder b = newBuilderWithInfixOp(true);
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("a",
                                     new Token("£"),
                                     "b",
@@ -1088,27 +1096,29 @@ public class Equation_BuilderTest
         Operation op = b.tryParseInfixOperation_leftAssociative(tl, opGroup, 0);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.leftAssociativeInfixOperators.getItems().stream().findFirst().get().action;
-        assertEquals(expectedA, op.action);
-        assertThat(op.components).hasSize(4);
-        assertThat(op.components.get(0)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(op.components.get(2)).isInstanceOf(Operation.class);
-        assertThat(op.components.get(3)).isInstanceOf(VariableReference.class);
-        assertEquals("a", ((VariableReference)op.components.get(0)).name);
-        assertEquals("b", ((VariableReference)op.components.get(1)).name);
-        assertEquals("a", ((VariableReference)op.components.get(3)).name);
+        assertEquals(expectedA, op.getAction());
+        List<EquationComponent> components = op.getComponents();
+        assertThat(components).hasSize(4);
+        assertThat(components.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(components.get(2)).isInstanceOf(Operation.class);
+        assertThat(components.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("a", ((VariableReference)components.get(0)).getName());
+        assertEquals("b", ((VariableReference)components.get(1)).getName());
+        assertEquals("a", ((VariableReference)components.get(3)).getName());
 
-        Operation innerOp = (Operation)op.components.get(2);
-        assertEquals(expectedA, innerOp.action);
-        assertThat(innerOp.components).hasSize(4);
-        assertThat(innerOp.components.get(0)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(1)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(2)).isInstanceOf(VariableReference.class);
-        assertThat(innerOp.components.get(3)).isInstanceOf(VariableReference.class);
-        assertEquals("c", ((VariableReference)innerOp.components.get(0)).name);
-        assertEquals("d", ((VariableReference)innerOp.components.get(1)).name);
-        assertEquals("c", ((VariableReference)innerOp.components.get(2)).name);
-        assertEquals("b", ((VariableReference)innerOp.components.get(3)).name);
+        Operation innerOp = (Operation)components.get(2);
+        List<EquationComponent> innerOpComponents = innerOp.getComponents();
+        assertEquals(expectedA, innerOp.getAction());
+        assertThat(innerOpComponents).hasSize(4);
+        assertThat(innerOpComponents.get(0)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(1)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(2)).isInstanceOf(VariableReference.class);
+        assertThat(innerOpComponents.get(3)).isInstanceOf(VariableReference.class);
+        assertEquals("c", ((VariableReference)innerOpComponents.get(0)).getName());
+        assertEquals("d", ((VariableReference)innerOpComponents.get(1)).getName());
+        assertEquals("c", ((VariableReference)innerOpComponents.get(2)).getName());
+        assertEquals("b", ((VariableReference)innerOpComponents.get(3)).getName());
 
         assertEquals(108.0, innerOp.evaluate(newDummyEquation(b)));
         assertEquals(598.0, op.evaluate(newDummyEquation(b)));
@@ -1121,7 +1131,7 @@ public class Equation_BuilderTest
     {
         Builder b = new Builder(false).withPrefixOperator("£", o -> o * 3);
         b.buildOperatorGroups();
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("x", new Token("£"), new NumberToken("7", 7.0));
 
         Operation op = b.tryParsePrefixOperation(tl, opGroup);
@@ -1133,17 +1143,18 @@ public class Equation_BuilderTest
     {
         Builder b = new Builder(false).withPrefixOperator("£", o -> o * 3);
         b.buildOperatorGroups();
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList(new Token("£"), new NumberToken("7", 7.0));
 
         Operation op = b.tryParsePrefixOperation(tl, opGroup);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.prefixOperators.values().stream().findFirst().get().action;
-        assertEquals(expectedA, op.action);
-        assertThat(op.components).hasSize(1);
-        EquationComponent operand = op.components.get(0);
+        assertEquals(expectedA, op.getAction());
+        List<EquationComponent> components = op.getComponents();
+        assertThat(components).hasSize(1);
+        EquationComponent operand = components.get(0);
         assertThat(operand).isInstanceOf(LiteralNumber.class);
-        assertEquals(7.0, ((LiteralNumber)operand).value);
+        assertEquals(7.0, ((LiteralNumber)operand).getValue());
         assertEquals(21.0, op.evaluate(newDummyEquation(b)));
     }
     //endregion
@@ -1154,7 +1165,7 @@ public class Equation_BuilderTest
     {
         Builder b = new Builder(false).withPostfixOperator("£", o -> o * 3);
         b.buildOperatorGroups();
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList("x", new Token("£"), new NumberToken("7", 7.0));
 
         Operation op = b.tryParsePrefixOperation(tl, opGroup);
@@ -1166,17 +1177,18 @@ public class Equation_BuilderTest
     {
         Builder b = new Builder(false).withPostfixOperator("£", o -> o * 3);
         b.buildOperatorGroups();
-        Builder.OperatorPriorityGroup opGroup = b.operatorGroupsInOrder.get(0);
+        Builder.OperatorPriorityGroup opGroup = b.getOpGroupsInOrder().get(0);
         TokenList tl = newTokenList(new NumberToken("7", 7.0), new Token("£"));
 
         Operation op = b.tryParsePostfixOperation(tl, opGroup);
         assertNotNull(op);
         OperatorAction expectedA = opGroup.postfixOperators.values().stream().findFirst().get().action;
-        assertEquals(expectedA, op.action);
-        assertThat(op.components).hasSize(1);
-        EquationComponent operand = op.components.get(0);
+        assertEquals(expectedA, op.getAction());
+        List<EquationComponent> components = op.getComponents();
+        assertThat(components).hasSize(1);
+        EquationComponent operand = components.get(0);
         assertThat(operand).isInstanceOf(LiteralNumber.class);
-        assertEquals(7.0, ((LiteralNumber)operand).value);
+        assertEquals(7.0, ((LiteralNumber)operand).getValue());
         assertEquals(21.0, op.evaluate(newDummyEquation(b)));
     }
     //endregion

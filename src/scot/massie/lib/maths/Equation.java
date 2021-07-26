@@ -1,6 +1,5 @@
 package scot.massie.lib.maths;
 
-import com.sun.istack.internal.NotNull;
 import scot.massie.lib.collections.maps.FallbackMap;
 import scot.massie.lib.collections.tree.RecursiveTree;
 import scot.massie.lib.collections.tree.Tree;
@@ -67,17 +66,17 @@ public class Equation
         /**
          * The name of the function that requires more arguments.
          */
-        final String functionName;
+        private final String functionName;
 
         /**
          * The number of arguments that are required to be passed to the function.
          */
-        final int numberOfArgsRequired;
+        private final int numberOfArgsRequired;
 
         /**
          * The number of arguments that actually were passed to the function.
          */
-        final int numberOfArgsProvided;
+        private final int numberOfArgsProvided;
 
         /**
          * Gets the name of the function requiring more arguments.
@@ -119,12 +118,12 @@ public class Equation
             /**
              * The specific section of the equation causing this exception.
              */
-            final TokenList equationSection;
+            protected final TokenList equationSection;
 
             /**
              * The full equation causing this equation.
              */
-            final TokenList fullEquation;
+            protected final TokenList fullEquation;
 
             /**
              * Creates a new EquationParseException.
@@ -519,7 +518,7 @@ public class Equation
             /**
              * The name of the function that was called without being defined.
              */
-            String functionName;
+            protected final String functionName;
 
             /**
              * Gets the name of the function that was called without being defined.
@@ -537,7 +536,8 @@ public class Equation
         /**
          * A store of operators with the same priority level.
          */
-        static class OperatorPriorityGroup
+        @SuppressWarnings("PackageVisibleField") // Is a POD class
+        static final class OperatorPriorityGroup
         {
             final Map<Token, PrefixOperator> prefixOperators = new HashMap<>();
             final Map<Token, PostfixOperator> postfixOperators = new HashMap<>();
@@ -549,37 +549,37 @@ public class Equation
          * A token list and information about how it was derived. This represents a token list being derived from
          * getting tokens before and after a particular token in another {@link TokenList}.
          */
-        static class OperatorTokenRun
+        static final class OperatorTokenRun
         {
             /**
              * The index in the original token list at which this token run starts.
              */
-            int startIndexInSource;
+            private final int startIndexInSource;
 
             /**
              * The index in the original token list at which this token run ends. (inclusive)
              */
-            int endIndexInSource;
+            private final int endIndexInSource;
 
             /**
-             * The indext in this token run of the token around which this token run was formed.
+             * The index in this token run of the token around which this token run was formed.
              */
-            int indexOfPivotInRun;
+            private final int indexOfPivotInRun;
 
             /**
              * The tokens in this token run.
              */
-            List<Token> tokens;
+            private final List<Token> tokens;
 
             /**
              * The tokens in this token run before the pivot.
              */
-            List<Token> tokensBeforePivot;
+            private final List<Token> tokensBeforePivot;
 
             /**
              * The tokens in this token run after the pivot.
              */
-            List<Token> tokensAfterPivot;
+            private final List<Token> tokensAfterPivot;
 
             /**
              * Creates a new OperatorTokenRun.
@@ -597,6 +597,60 @@ public class Equation
                 this.tokens = source.subList(runStartIndex, runEndIndex + 1);
                 this.tokensBeforePivot = source.subList(runStartIndex, pivotIndexInSource);
                 this.tokensAfterPivot = source.subList(pivotIndexInSource + 1, runEndIndex + 1);
+            }
+
+            /**
+             * Gets the index in the original token list at which this token run starts.
+             * @return The index in the original token list at which this token run starts.
+             */
+            public int getStartIndexInSource()
+            {
+                return startIndexInSource;
+            }
+
+            /**
+             * Gets the index in the original token list at which this token run ends. (inclusive)
+             * @return The index in the original token list at which this token run ends. (inclusive)
+             */
+            public int getEndIndexInSource()
+            {
+                return endIndexInSource;
+            }
+
+            /**
+             * Gets the index in this token run of the token around which this token run was formed.
+             * @return The index in this token run of the token around which this token run was formed.
+             */
+            public int getIndexOfPivotInRun()
+            {
+                return indexOfPivotInRun;
+            }
+
+            /**
+             * Gets the tokens in this token run.
+             * @return The tokens in this token run, in order.
+             */
+            public List<Token> getTokens()
+            {
+                return tokens;
+            }
+
+            /**
+             * Gets the tokens in this token run before the pivot.
+             * @return The tokens in this token run before the pivot.
+             */
+            public List<Token> getTokensBeforePivot()
+            {
+                return tokensBeforePivot;
+            }
+
+            /**
+             * Gets the tokens in this token run after the pivot.
+             * @return The tokens in this token run after the pivot.
+             */
+            public List<Token> getTokensAfterPivot()
+            {
+                return tokensAfterPivot;
             }
         }
         //endregion
@@ -624,7 +678,8 @@ public class Equation
          * Fixed string tokens that may appear in an equation. Does not include variable names, function names,
          * numbers, or unparsable portions of equation.
          */
-        Set<Token> possibleTokens = new HashSet<>();
+        @SuppressWarnings("TypeMayBeWeakened") // May not be weakened, value uniqueness is used.
+        private final Set<Token> possibleTokens = new HashSet<>();
         {
             possibleTokens.add(Token.OPEN_BRACKET);
             possibleTokens.add(Token.CLOSE_BRACKET);
@@ -637,7 +692,7 @@ public class Equation
          * other tokens is registered earlier (and thus tokenised later), matching strings will be parsed as the smaller
          * tokens rather than the larger ones, as the smaller ones will be considered first.
          */
-        List<Token> possibleTokensInOrder = new ArrayList<>();
+        private final List<Token> possibleTokensInOrder = new ArrayList<>();
         {
             possibleTokensInOrder.add(Token.OPEN_BRACKET);
             possibleTokensInOrder.add(Token.CLOSE_BRACKET);
@@ -647,42 +702,44 @@ public class Equation
         /**
          * Tokens used by operators registered to this builder.
          */
-        Set<Token> operatorTokens = new HashSet<>();
+        @SuppressWarnings("TypeMayBeWeakened") // May not be weakened, value uniqueness is used.
+        private final Set<Token> operatorTokens = new HashSet<>();
 
         /**
          * Tokens used by infix operators registered to this builder.
          */
-        Set<Token> infixOperatorTokens = new HashSet<>();
+        @SuppressWarnings("TypeMayBeWeakened") // May not be weakened, value uniqueness is used.
+        private final Set<Token> infixOperatorTokens = new HashSet<>();
 
         /**
          * Infix operators. The operator definitions themselves, using the list of tokens used to invoke them in order
          * in a list as the key.
          */
-        Map<List<Token>, InfixOperator>         infixOperators      = new HashMap<>();
+        private final Map<List<Token>, InfixOperator>         infixOperators      = new HashMap<>();
 
         /**
          * Prefix operators. The operator definitions themselves, using the tokens used to prefix an operand to invoke
          * them.
          */
-        Map<Token, PrefixOperator>              prefixOperators     = new HashMap<>();
+        private final Map<Token, PrefixOperator>              prefixOperators     = new HashMap<>();
 
         /**
          * Postfix operators. The operator definitions themselves, using the tokens used to postfix an operand to invoke
          * them.
          */
-        Map<Token, PostfixOperator>             postfixOperators    = new HashMap<>();
+        private final Map<Token, PostfixOperator>             postfixOperators    = new HashMap<>();
 
         /**
          * Functions available to equations. The function that is called when the function is invoked in an equation,
          * mapped against the name of the equation which may be used to invoke them.
          */
-        Map<String, ToDoubleFunction<double[]>> functions           = new HashMap<>();
+        private final Map<String, ToDoubleFunction<double[]>> functions           = new HashMap<>();
 
         /**
          * Variables available to equations. The variable's value mapped against the name of the variable as it may be
          * referred to as in an equation.
          */
-        Map<String, Double>                     variables           = new HashMap<>();
+        private final Map<String, Double>                     variables           = new HashMap<>();
 
 
         /**
@@ -690,21 +747,21 @@ public class Equation
          * This is initialised when an equation needs to be built (if it isn't already), and is invalidated when a new
          * operator is registered.
          */
-        Map<Double, OperatorPriorityGroup> operatorGroups        = null;
+        private Map<Double, OperatorPriorityGroup> operatorGroups        = null;
 
         /**
          * The operators in this builder, arranged into groups by priority, in order of priority from lowest to highest.
          * This is initialised when an equation needs to be built (if it isn't already), and is invalidated when a new
          * operator is registered.
          */
-        List<OperatorPriorityGroup>        operatorGroupsInOrder = null;
+        private List<OperatorPriorityGroup>        operatorGroupsInOrder = null;
         //endregion
 
         /**
          * Instances of {@link Equation} created by this builder not yet picked up by the garbage collector. This allows
          * updates to be pushed to these objects.
          */
-        Set<Equation> instances = Collections.newSetFromMap(new WeakHashMap<>());
+        private final Set<Equation> instances = Collections.newSetFromMap(new WeakHashMap<>());
 
         //region initialisation
 
@@ -735,12 +792,31 @@ public class Equation
         //endregion
 
         //region methods
+        //region read state
+        Map<String, ToDoubleFunction<double[]>> getFunctions()
+        { return new HashMap<>(functions); }
+
+        Map<String, Double> getVariables()
+        { return new HashMap<>(variables); }
+
+        //region purely for testing
+        Map<Double, OperatorPriorityGroup> getOpGroups()
+        { return operatorGroups; }
+
+        List<OperatorPriorityGroup> getOpGroupsInOrder()
+        { return operatorGroupsInOrder; }
+        //endregion
+        //endregion
+
         //region add functionality
         //region internal
         //region add groups of functionality
         /**
          * Adds the default operators to this builder.
          */
+        @SuppressWarnings({"MagicNumber", "Convert2MethodRef"})
+        // The magic numbers are the operator precedences, and here is as good a place to declare them as anywhere.
+        // Having the implementations be full-formed rather than method references makes more sense in this context.
         void addDefaultOperators()
         {
             withOperator        ("-",             100,  (l, r)    -> l - r);
@@ -761,9 +837,14 @@ public class Equation
         /**
          * Adds comparative and conditional operators to this builder.
          */
+        @SuppressWarnings("MagicNumber")
+        // The magic numbers are the operator precedences, and here is as good a place to declare them as anywhere.
         void addComparativeOperators()
         {
-            withPrefixOperator  ("!",          -100, x      -> x >= 0.5 ? 0 : 1);
+            // >= 0.5 is considered to be "true" for anything conditional, < 0.5 is considered to be false.
+            final double trueThreshold = 0.5;
+
+            withPrefixOperator  ("!",          -100, x      -> x >= trueThreshold ? 0 : 1);
 
             withOperator        ("<",   true,  -200, (l, r) -> l < r ? 1 : 0);
             withOperator        (">",   true,  -200, (l, r) -> l > r ? 1 : 0);
@@ -788,17 +869,17 @@ public class Equation
             withOperator        ("≠",   true,  -300, notEqualTo);
             withOperator        ("=/=", true,  -300, notEqualTo);
 
-            withOperator        ("&&",  true,  -400, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
-            withOperator        ("∧",   true,  -400, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
-            withOperator        ("⋀",   true,  -400, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
-            withOperator        ("⋏",   true,  -400, (l, r) -> (l >= 0.5) && (r >= 0.5) ? 1 : 0);
+            withOperator        ("&&",  true,  -400, (l, r) -> (l >= trueThreshold) && (r >= trueThreshold) ? 1 : 0);
+            withOperator        ("∧",   true,  -400, (l, r) -> (l >= trueThreshold) && (r >= trueThreshold) ? 1 : 0);
+            withOperator        ("⋀",   true,  -400, (l, r) -> (l >= trueThreshold) && (r >= trueThreshold) ? 1 : 0);
+            withOperator        ("⋏",   true,  -400, (l, r) -> (l >= trueThreshold) && (r >= trueThreshold) ? 1 : 0);
 
-            withOperator        ("||",  true,  -500, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
-            withOperator        ("∨",   true,  -500, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
-            withOperator        ("⋁",   true,  -500, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
-            withOperator        ("⋎",   true,  -500, (l, r) -> (l >= 0.5) || (r >= 0.5) ? 1 : 0);
+            withOperator        ("||",  true,  -500, (l, r) -> (l >= trueThreshold) || (r >= trueThreshold) ? 1 : 0);
+            withOperator        ("∨",   true,  -500, (l, r) -> (l >= trueThreshold) || (r >= trueThreshold) ? 1 : 0);
+            withOperator        ("⋁",   true,  -500, (l, r) -> (l >= trueThreshold) || (r >= trueThreshold) ? 1 : 0);
+            withOperator        ("⋎",   true,  -500, (l, r) -> (l >= trueThreshold) || (r >= trueThreshold) ? 1 : 0);
 
-            withOperator("?", ":", false, -600, (a, b, c) -> a >= 0.5 ? b : c);
+            withOperator("?", ":", false, -600, (a, b, c) -> a >= trueThreshold ? b : c);
         }
 
         /**
@@ -976,7 +1057,9 @@ public class Equation
          * <p>Behaviour is undefined where a token is registered that is never used as part of any operator.</p>
          * @param tokens The tokens to be registered, in the order to register them.
          */
-        void addOperatorTokens(List<Token> tokens)
+        void addOperatorTokens(@SuppressWarnings("TypeMayBeWeakened")
+                                       // May not be weakened, order affects result
+                                       List<? extends Token> tokens)
         {
             for(Token token : tokens)
                 if(possibleTokens.add(token))
@@ -1159,7 +1242,7 @@ public class Equation
          *          implementation as the first argument. (All others are discarded)
          * @return This.
          */
-        public Builder withMonoFunction(String name, ToDoubleFunction<Double> f)
+        public Builder withMonoFunction(String name, ToDoubleFunction<? super Double> f)
         {
             return withFunction(name, args ->
             {
@@ -1180,7 +1263,7 @@ public class Equation
          *          implementation as the second argument. (All others are discarded)
          * @return This.
          */
-        public Builder withBiFunction(String name, ToDoubleBiFunction<Double, Double> f)
+        public Builder withBiFunction(String name, ToDoubleBiFunction<? super Double, ? super Double> f)
         {
             return withFunction(name, args ->
             {
@@ -1265,7 +1348,7 @@ public class Equation
          *          implementation as the first argument. (All others are discarded)
          * @return This.
          */
-        public Builder pushMonoFunction(String name, ToDoubleFunction<Double> f)
+        public Builder pushMonoFunction(String name, ToDoubleFunction<? super Double> f)
         {
             return pushFunction(name, args ->
             {
@@ -1289,7 +1372,7 @@ public class Equation
          *          implementation as the second argument. (All others are discarded)
          * @return This.
          */
-        public Builder pushBiFunction(String name, ToDoubleBiFunction<Double, Double> f)
+        public Builder pushBiFunction(String name, ToDoubleBiFunction<? super Double, ? super Double> f)
         {
             return pushFunction(name, args ->
             {
@@ -1839,7 +1922,9 @@ public class Equation
          * @param action The implementation of the operator. The operands are passed in as an array of doubles.
          * @return This.
          */
-        public Builder withOperator(List<String> tokens,
+        public Builder withOperator(@SuppressWarnings("TypeMayBeWeakened")
+                                            // May not be weakened, order affects output.
+                                            List<String> tokens,
                                     boolean isLeftAssociative,
                                     double priority,
                                     OperatorAction action)
@@ -2043,14 +2128,14 @@ public class Equation
 
             OperatorTokenRun run = getOpRun(tokens, tokenIndex);
 
-            if((run.startIndexInSource == 0) || (run.endIndexInSource == tokens.size() - 1))
+            if((run.getStartIndexInSource() == 0) || (run.getEndIndexInSource() == tokens.size() - 1))
                 return false;
 
-            for(Token i : run.tokensBeforePivot)
+            for(Token i : run.getTokensBeforePivot())
                 if(!postfixOperators.containsKey(i))
                     return false;
 
-            for(Token i : run.tokensAfterPivot)
+            for(Token i : run.getTokensAfterPivot())
                 if(!prefixOperators.containsKey(i))
                     return false;
 
@@ -2131,6 +2216,7 @@ public class Equation
             if(tokenList.size() < 3) // Needs at least 3 tokens: a name, "(", and ")".
                 return null;
 
+            //noinspection ConstantConditions Cannot be null where .size() >= 1
             if(!tokenList.last().equals(Token.CLOSE_BRACKET))
                 return null;
 
@@ -2440,8 +2526,8 @@ public class Equation
             int firstOpTokenPoint = potentiallyInnerOpTokenPoints.get(0);
             int lastOpTokenPoint = potentiallyInnerOpTokenPoints.get(potentiallyInnerOpTokenPoints.size() - 1);
 
-            int skipFromInclusive = getOpRun(tokenList.tokens, firstOpTokenPoint).startIndexInSource;
-            int skipToExclusive   = getOpRun(tokenList.tokens, lastOpTokenPoint ).endIndexInSource + 1;
+            int skipFromInclusive = getOpRun(tokenList.tokens, firstOpTokenPoint).getStartIndexInSource();
+            int skipToExclusive   = getOpRun(tokenList.tokens, lastOpTokenPoint).getEndIndexInSource() + 1;
 
             // Don't need to check the same associativity of the same priority group, as in a nested arrangement of
             // infix operators of the same associativity and priority group, the outer infix operator will always be
@@ -2562,18 +2648,18 @@ public class Equation
      * into the text around and between the tokens, (including the tokens themselves in the results) and doing the same
      * to the split off parts. (That aren't tokens themselves)</p>
      */
-    static class Tokeniser
+    static final class Tokeniser
     {
         /**
          * The defined tokens this tokeniser should look for, in the order it should look for them in.
          */
-        List<Token> tokens;
+        private final List<? extends Token> tokens;
 
         /**
          * Creates a new tokeniser, considering the given tokens.
          * @param tokens The tokens for the tokeniser to consider.
          */
-        public Tokeniser(List<Token> tokens)
+        public Tokeniser(List<? extends Token> tokens)
         { this.tokens = tokens; }
 
         /**
@@ -2685,7 +2771,7 @@ public class Equation
          * with {@link NumberToken number tokens}.
          * @param tokens The list of tokens to parse the numbers in.
          */
-        static void tokeniseNumbers(LinkedList<Token> tokens)
+        static void tokeniseNumbers(List<Token> tokens)
         {
             ListIterator<Token> tokenIterator = tokens.listIterator();
 
@@ -2713,7 +2799,7 @@ public class Equation
          * @param s The string to count the leading spaces of.
          * @return The number of spaces at the start of the given string.
          */
-        static int countSpacesAtStart(@NotNull String s)
+        static int countSpacesAtStart(String s)
         {
             for(int i = 0; i < s.length(); i++)
                 if(s.charAt(i) != ' ')
@@ -2727,7 +2813,7 @@ public class Equation
          * @param s The string to count the trailing spaces of.
          * @return The number of spaces at the end of the given string.
          */
-        static int countSpacesAtEnd(@NotNull String s)
+        static int countSpacesAtEnd(String s)
         {
             for(int i = 0, r = s.length() - 1; r >= 0; i++, r--)
                 if(s.charAt(r) != ' ')
@@ -2741,25 +2827,25 @@ public class Equation
      * A pseudo-list containing tokens in order at specific indices. This retains the text representation of the tokens
      * within for quick access, and the spacings (number of spaces) between each token.
      */
-    static class TokenList
+    static final class TokenList
     {
         //region variables
         /**
          * The string representation of this token list.
          */
-        public final String equationAsString;
+        private final String equationAsString;
 
         /**
          * The tokens in this token list.
          */
-        public final List<Token> tokens;
+        private final List<Token> tokens;
 
         /**
          * The spacings between each token in this token list. Each integer stored is the number of spaces immediately
          * before the token in {@link #tokens} at the same index. This list contains one more element than
          * {@link #tokens}, where the final element is the number of trailing spaces.
          */
-        public final List<Integer> spacings;
+        private final List<Integer> spacings;
         //endregion
 
         //region initialisation
@@ -2874,8 +2960,8 @@ public class Equation
          */
         public boolean containsAnyOf(Collection<Token> ts)
         {
-            for(int i = 0; i < tokens.size(); i++)
-                if(ts.contains(tokens.get(i)))
+            for(Token token : tokens)
+                if(ts.contains(token))
                     return true;
 
             return false;
@@ -3157,7 +3243,7 @@ public class Equation
          *         <p>Tokens within the given sequence are not matched where they're within brackets. Specifically,
          *         where the tokens preceding it in this tokenlist contains at least one unamtched open bracket.</p>
          */
-        public List<TokenList> splitBySequence(List<Token> sequence)
+        public List<TokenList> splitBySequence(List<? extends Token> sequence)
         {
             List<TokenList> result = new ArrayList<>();
             int sequenceIndex = 0;
@@ -3218,7 +3304,7 @@ public class Equation
          *         <p>Tokens within the given sequence are not matched where they're within brackets. Specifically,
          *         where the tokens preceding it in this tokenlist contains at least one unamtched open bracket.</p>
          */
-        public List<TokenList> splitBySequenceInReverse(List<Token> sequence)
+        public List<TokenList> splitBySequenceInReverse(List<? extends Token> sequence)
         {
             List<TokenList> result = new ArrayList<>();
             int sequenceIndex = sequence.size() - 1;
@@ -3303,6 +3389,18 @@ public class Equation
         }
         //endregion
         //endregion
+
+        //region conversion
+        public List<Token> toListOfTokens()
+        { return Collections.unmodifiableList(tokens); }
+
+        public List<Integer> toListOfSpacingSizes()
+        { return Collections.unmodifiableList(spacings); }
+
+        @Override
+        public String toString()
+        { return equationAsString; }
+        //endregion
         //endregion
     }
 
@@ -3331,13 +3429,13 @@ public class Equation
         /**
          * The actual test this token was created from.
          */
-        final String text;
+        protected final String text;
 
         /**
          * Creates a new token from the given text.
          * @param asText The text this token should represent.
          */
-        public Token(@NotNull String asText)
+        public Token(String asText)
         { this.text = asText; }
 
         /**
@@ -3375,7 +3473,7 @@ public class Equation
      * A representation of a chunk of text that has yet to be tokenised. These may appear around or inbetween identified
      * tokens.
      */
-    static class UntokenisedString extends Token
+    static final class UntokenisedString extends Token
     {
         /**
          * Creates a new untokenised string token.
@@ -3388,12 +3486,12 @@ public class Equation
     /**
      * A representation of a number in text.
      */
-    static class NumberToken extends Token
+    static final class NumberToken extends Token
     {
         /**
          * This token's value as a number.
          */
-        final double value;
+        private final double value;
 
         /**
          * Creates a new number token, given its representation in text and the number it's been interpreted as.
@@ -3447,7 +3545,7 @@ public class Equation
          * The tokens affixed to operands to invoke this operator. Where an operator has more than 1 token, these are in
          * order as they appear when invoking the operator.
          */
-        final List<Token> tokens;
+        protected final List<Token> tokens;
 
         /**
          * The priority, or "stickiness", of this operator. Where multiple operators are used in conjunction, this
@@ -3455,12 +3553,12 @@ public class Equation
          * lower priority operator calls. E.g. in "a + b * c", the '*' operator has a higher priority than '+' operator,
          * so the equation could be rephrased as "a + (b * c)".
          */
-        final double priority;
+        protected final double priority;
 
         /**
          * The implementation of this operator.
          */
-        final OperatorAction action;
+        protected final OperatorAction action;
 
         /**
          * Creates a new operator object given a list of affix tokens, a priority, and an implementation.
@@ -3525,7 +3623,7 @@ public class Equation
     /**
      * A definition of a prefix unary operator (affixed to before an operand) for an equation.
      */
-    static class PrefixOperator extends UnaryOperator
+    static final class PrefixOperator extends UnaryOperator
     {
         /**
          * Creates a new prefix unary operator object given a token, priority, and implementation.
@@ -3539,6 +3637,7 @@ public class Equation
         @Override
         public Operation tryParse(TokenList tokenList, Builder builder)
         {
+            //noinspection ConstantConditions TokenList.first() won't return null where .size() >= 1
             if(tokenList.size() < 2 || !tokenList.first().equals(getToken()))
                 return null;
 
@@ -3549,7 +3648,7 @@ public class Equation
     /**
      * A definition of a postfix unary operator (affixed to after an operand) for an equation.
      */
-    static class PostfixOperator extends UnaryOperator
+    static final class PostfixOperator extends UnaryOperator
     {
         /**
          * Creates a new postfix unary operator object given a token, priority, and implementation.
@@ -3563,6 +3662,7 @@ public class Equation
         @Override
         public Operation tryParse(TokenList tokenList, Builder builder)
         {
+            //noinspection ConstantConditions TokenList.first() won't return null where .size() >= 1
             if(tokenList.size() < 2 || !tokenList.last().equals(getToken()))
                 return null;
 
@@ -3578,7 +3678,7 @@ public class Equation
         /**
          * Whether the operator is left associative. If false, the operator is right associative.
          */
-        final boolean isLeftAssociative;
+        protected final boolean isLeftAssociative;
 
         /**
          * Creates a new infix operator object given a list of tokens, whether or not the operator is left associative,
@@ -3645,7 +3745,10 @@ public class Equation
          * @param builder The builder to use to parse the operands.
          * @return A new infix operation of this operator.
          */
-        Operation compileFromOperandTokenLists(List<TokenList> tokenLists, Builder builder)
+        Operation compileFromOperandTokenLists(@SuppressWarnings("TypeMayBeWeakened")
+                                                       // May not be weakened, order affects output
+                                                       List<TokenList> tokenLists,
+                                               Builder builder)
         {
             List<EquationComponent> components = new ArrayList<>(tokenLists.size());
 
@@ -3659,7 +3762,7 @@ public class Equation
     /**
      * A definition of a binary infix operator (affixed to between two operands) for an equation.
      */
-    static class BinaryOperator extends InfixOperator
+    static final class BinaryOperator extends InfixOperator
     {
         /**
          * Creates a new infix binary operator from a given token, whether or not it's left associative, the priority,
@@ -3688,7 +3791,7 @@ public class Equation
     /**
      * A definition of a ternary infix operator (affixed to between three operands) for an equation.
      */
-    static class TernaryOperator extends InfixOperator
+    static final class TernaryOperator extends InfixOperator
     {
         /**
          * Creates a new infix ternary operator from given tokens, whether or not it's left associative, the priority,
@@ -3746,17 +3849,17 @@ public class Equation
      * it. The operands are other equation components to be evaluated to determine the actual values passed into this
      * operation.
      */
-    static class Operation extends EquationComponent
+    static final class Operation extends EquationComponent
     {
         /**
          * The unevaluated operands of this operation.
          */
-        List<EquationComponent> components;
+        private final List<? extends EquationComponent> components;
 
         /**
          * The implementation of the operator that will be performed on this operation's operands.
          */
-        OperatorAction action;
+        private final OperatorAction action;
 
         /**
          * Creates a new unary operation from an equation component and an operator implementation.
@@ -3788,11 +3891,17 @@ public class Equation
          * @param components The operands.
          * @param action The operator implementation.
          */
-        public Operation(List<EquationComponent> components, OperatorAction action)
+        public Operation(List<? extends EquationComponent> components, OperatorAction action)
         {
             this.components = components;
             this.action = action;
         }
+
+        public List<EquationComponent> getComponents()
+        { return new ArrayList<>(components); }
+
+        public OperatorAction getAction()
+        { return action; }
 
         /**
          * Evaluates the operation as a double. Evaluates each operand in this operation and passes the result into this
@@ -3817,17 +3926,17 @@ public class Equation
      * function arguments to be passed into it. The arguments are other equation components to be evaluated to determine
      * the actual values passed into this function call.
      */
-    static class FunctionCall extends EquationComponent
+    static final class FunctionCall extends EquationComponent
     {
         /**
          * Ths name of the function being called. This is used to look up the function implementation to run.
          */
-        String functionName;
+        private final String functionName;
 
         /**
          * The unevaluated arguments of this function call.
          */
-        EquationComponent[] arguments;
+        private final EquationComponent[] arguments;
 
         /**
          * Creates a new function call from a function name and a series of arguments.
@@ -3840,6 +3949,13 @@ public class Equation
             this.functionName = functionName;
             this.arguments = arguments;
         }
+
+        public String getFunctionName()
+        { return functionName; }
+
+        // purely for testing
+        EquationComponent[] getArguments()
+        { return arguments; }
 
         /**
          * Runs the function this corresponds to and returns the result as a double. Evaluates each argument in this
@@ -3864,12 +3980,12 @@ public class Equation
     /**
      * An equation component referencing a variable.
      */
-    static class VariableReference extends EquationComponent
+    static final class VariableReference extends EquationComponent
     {
         /**
          * The name of the variable being referenced. This is used to look up the actual value.
          */
-        String name;
+        private final String name;
 
         /**
          * Creates a new variable reference from a given name.
@@ -3877,6 +3993,9 @@ public class Equation
          */
         public VariableReference(String name)
         { this.name = name; }
+
+        public String getName()
+        { return name; }
 
         /**
          * Gets the value of the variable this corresponds to and returns it as a double.
@@ -3891,12 +4010,12 @@ public class Equation
     /**
      * An equation components referencing a fixed number.
      */
-    static class LiteralNumber extends EquationComponent
+    final static class LiteralNumber extends EquationComponent
     {
         /**
          * The number this references.
          */
-        double value;
+        private final double value;
 
         /**
          * Creates a new literal number referencing a given number.
@@ -3904,6 +4023,9 @@ public class Equation
          */
         public LiteralNumber(double value)
         { this.value = value; }
+
+        public double getValue()
+        { return value; }
 
         /**
          * Gets the number this references.
@@ -3989,48 +4111,48 @@ public class Equation
     /**
      * The equation builder that's responsible for building this equation object.
      */
-    final Builder sourceBuilder;
+    protected final Builder sourceBuilder;
 
     /**
      * <p>The equation component representing the first/root evaluatable component of the equation. This component holds
      * references to other components in the equation, in a tree topology.</p>
      */
-    final EquationComponent topLevelComponent;
+    protected final EquationComponent topLevelComponent;
 
     /**
      * The variable values provided to this equation by its builder. This may be updated by its builder if the builder
      * is requested to push a new variable value.
      */
-    final Map<String, Double> initialVariableValues;
+    protected final Map<String, Double> initialVariableValues;
 
     /**
      * The variable values explicitly redefined on this equation. These override variable values provided to the
      * equation by its builder.
      */
-    final Map<String, Double> overwrittenVariableValues;
+    protected final Map<String, Double> overwrittenVariableValues;
 
     /**
      * <p>The variables available to this equation, and their values.</p>
      */
-    final Map<String, Double> variableValues;
+    protected final Map<String, Double> variableValues;
 
     /**
      * The functions and their implementations provided to this equation by its builder. This may be updated by its
      * builder if the builder is requested to push a new function implementation.
      */
-    final Map<String, ToDoubleFunction<double[]>> initialFunctions;
+    protected final Map<String, ToDoubleFunction<double[]>> initialFunctions;
 
     /**
      * The functions and their implementations explicitly redefined by this equation. These override function
      * implementations provided to the equation by its builder.
      */
-    final Map<String, ToDoubleFunction<double[]>> overwrittenFunctions;
+    protected final Map<String, ToDoubleFunction<double[]>> overwrittenFunctions;
 
     /**
      * <p>The functions available to this equation, and their implementations. This is independent from the functions
      * map of the builder used to create this equation object, allowing functions to be redefined.</p>
      */
-    final Map<String, ToDoubleFunction<double[]>> functions;
+    protected final Map<String, ToDoubleFunction<double[]>> functions;
     //endregion
 
     //region initialisation
@@ -4069,6 +4191,8 @@ public class Equation
         this.overwrittenFunctions       = new HashMap<>(original.overwrittenFunctions);
         this.functions                  = new FallbackMap<>(this.overwrittenFunctions, this.initialFunctions);
 
+        // Equation is constructed by this point.
+        //noinspection ThisEscapedInObjectConstruction
         this.sourceBuilder.instances.add(this);
     }
 
@@ -4191,7 +4315,7 @@ public class Equation
      * @return True if the function was redefined successfully. False if it was not, as a result of the function not
      *         being available to this equation.
      */
-    public boolean redefineMonoFunction(String name, ToDoubleFunction<Double> f)
+    public boolean redefineMonoFunction(String name, ToDoubleFunction<? super Double> f)
     {
         if(!functions.containsKey(name))
             return false;
@@ -4215,7 +4339,7 @@ public class Equation
      * @return True if the function was redefined successfully. False if it was not, as a result of the function not
      *         being available to this equation.
      */
-    public boolean redefineBiFunction(String name, ToDoubleBiFunction<Double, Double> f)
+    public boolean redefineBiFunction(String name, ToDoubleBiFunction<? super Double, ? super Double> f)
     {
         if(!functions.containsKey(name))
             return false;

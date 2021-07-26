@@ -61,12 +61,12 @@ public class Equation_TokeniserTest
 
     void assertTokenList(TokenList t, String asString, List<Token> tokens, List<Integer> spacings)
     {
-        assertEquals(asString, t.equationAsString);
+        assertEquals(asString, t.toString());
 
-        assertThat(t.tokens).containsExactlyElementsOf(tokens);
+        assertThat(t.toListOfTokens()).containsExactlyElementsOf(tokens);
 
-        assertThat(t.spacings).usingElementComparator(Integer::compareTo)
-                              .containsExactlyElementsOf(spacings);
+        assertThat(t.toListOfSpacingSizes()).usingElementComparator(Integer::compareTo)
+                                            .containsExactlyElementsOf(spacings);
     }
 
     List<Token> dummyTokens = new ArrayList<>();

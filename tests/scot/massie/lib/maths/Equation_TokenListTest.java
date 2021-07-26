@@ -144,9 +144,9 @@ public class Equation_TokenListTest
 
     void assertTokenList(TokenList t, String asString, Object[] tokens, int[] spacings)
     {
-        assertEquals(asString, t.equationAsString);
-        assertThat(t.tokens).containsExactlyElementsOf(asListOfTokens(tokens));
-        assertThat(t.spacings).containsExactly(IntStream.of(spacings).boxed().toArray(Integer[]::new));
+        assertEquals(asString, t.toString());
+        assertThat(t.toListOfTokens()).containsExactlyElementsOf(asListOfTokens(tokens));
+        assertThat(t.toListOfSpacingSizes()).containsExactly(IntStream.of(spacings).boxed().toArray(Integer[]::new));
     }
 
     //region isInBrackets()
