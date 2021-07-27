@@ -3,6 +3,9 @@ package scot.massie.lib.collections.maps;
 import java.util.*;
 import java.util.function.BiFunction;
 
+/**
+ * Miscellaneous util methods relating to maps.
+ */
 public final class MapUtils
 {
     private MapUtils()

@@ -16,6 +16,10 @@ public final class Events
     private Events()
     {}
 
+    /**
+     * Comparator comparing instances of {@link EventListenerCallInfo} by priority, from lowest to highest, where
+     * listeners without specific priorities are considered to have the lowest possible priorities.
+     */
     public static final Comparator<EventListenerCallInfo<?>> listenerCallInfoComparator = (a, b) ->
     {
         if(!a.hasPriority())

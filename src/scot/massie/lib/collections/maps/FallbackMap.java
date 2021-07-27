@@ -25,6 +25,9 @@ import java.util.function.Function;
  */
 public class FallbackMap<K, V> implements Map<K, V>
 {
+    /**
+     * A set view of the keys of this map.
+     */
     class KeySet implements Set<K>
     {
         @Override
@@ -54,6 +57,10 @@ public class FallbackMap<K, V> implements Map<K, V>
             return toFixedSet().toArray(a);
         }
 
+        /**
+         * Creates a new set populated with the contents of this keyset. (rather than being a view of the map.)
+         * @return A new set, containing the contents of this keyset.
+         */
         public Set<K> toFixedSet()
         {
             Set<K> result = new HashSet<>();
@@ -118,6 +125,9 @@ public class FallbackMap<K, V> implements Map<K, V>
         { FallbackMap.this.clear(); }
     }
 
+    /**
+     * A collection view of the values of this map.
+     */
     class ValueCollection implements Collection<V>
     {
         @Override
@@ -147,6 +157,10 @@ public class FallbackMap<K, V> implements Map<K, V>
             return toFixedCollection().toArray(a);
         }
 
+        /**
+         * Creates a new collection populated with the contents of this value collection. (rather than being a view.)
+         * @return A new collection, containing the contents of this ValueCollection.
+         */
         public Collection<V> toFixedCollection()
         {
             Collection<K> keysChecked = new HashSet<>();
@@ -232,6 +246,9 @@ public class FallbackMap<K, V> implements Map<K, V>
         { FallbackMap.this.clear(); }
     }
 
+    /**
+     * A set view of the entries of this map.
+     */
     class EntrySet implements Set<Map.Entry<K, V>>
     {
         @Override
@@ -276,6 +293,10 @@ public class FallbackMap<K, V> implements Map<K, V>
             return toFixedSet().toArray(a);
         }
 
+        /**
+         * Creates a new set populated with the contents of this EntrySet. (rather than being a view of the map)
+         * @return A new set containing the contents of this EntrySet.
+         */
         public Set<Map.Entry<K, V>> toFixedSet()
         { return FallbackMap.this.flatten().entrySet(); }
 
@@ -360,8 +381,19 @@ public class FallbackMap<K, V> implements Map<K, V>
      */
     protected List<Map<K, V>> chain;
 
+    /**
+     * A {@link Set} view of the entries of this map.
+     */
     protected final EntrySet entrySet = new EntrySet();
+
+    /**
+     * A {@link Set} view of the keys of this map.
+     */
     protected final KeySet keySet = new KeySet();
+
+    /**
+     * A {@link Collection} view of the values of this map.
+     */
     protected final ValueCollection valueCollection = new ValueCollection();
 
     /**

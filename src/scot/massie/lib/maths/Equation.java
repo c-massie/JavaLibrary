@@ -793,16 +793,42 @@ public class Equation
 
         //region methods
         //region read state
+
+        /**
+         * Gets the functions currently available to this equation builder.
+         * @return A map of the functions available to this equation builder at the time of calling. Changes are not
+         *         reflected in the resulting map.
+         */
         Map<String, ToDoubleFunction<double[]>> getFunctions()
         { return new HashMap<>(functions); }
 
+        /**
+         * Gets the variables currently available to this equation builder.
+         * @return A map of the variables available to this equation builder at the time of calling. Changes are not
+         *         reflected in the resulting map.
+         */
         Map<String, Double> getVariables()
         { return new HashMap<>(variables); }
 
         //region purely for testing
+
+        /**
+         * <p>Gets the current operator groups object for this builder. This may be null if the operator groups for this
+         * builder have not yet been built.</p>
+         *
+         * <p>Note: This function exists purely for the purposes of unit testing.</p>
+         * @return The current operator groups map for this builder.
+         */
         Map<Double, OperatorPriorityGroup> getOpGroups()
         { return operatorGroups; }
 
+        /**
+         * <p>Gets the current ordered operator groups list for this builder. This may be null if the operator groups
+         * for this builder have not yet been built.</p>
+         *
+         * <p>Note: This function exists purely for the purposes of unit testing.</p>
+         * @return The current ordered operator groups list for this builder.
+         */
         List<OperatorPriorityGroup> getOpGroupsInOrder()
         { return operatorGroupsInOrder; }
         //endregion
@@ -811,6 +837,7 @@ public class Equation
         //region add functionality
         //region internal
         //region add groups of functionality
+
         /**
          * Adds the default operators to this builder.
          */
@@ -3391,12 +3418,28 @@ public class Equation
         //endregion
 
         //region conversion
+
+        /**
+         * Gets a list of the tokens in this token list, in order.
+         * @return A list of the tokens in this token list, retaining order.
+         */
         public List<Token> toListOfTokens()
         { return Collections.unmodifiableList(tokens); }
 
+        /**
+         * Gets a list of the number of spaces before each token in this token list, with one additional value at the
+         * end representing the number of trailing spaces.
+         * @return A list of the numbers of spaces before each token in this token list, with the number of trailing
+         *         spaces as an additional last value.
+         */
         public List<Integer> toListOfSpacingSizes()
         { return Collections.unmodifiableList(spacings); }
 
+        /**
+         * Gets the string representation of this token list. This is the tokens in this token list, each preceded by
+         * the number of spaces specified in this token list, with the specified number of trailing spaces at the end.
+         * @return The string representation of this token list.
+         */
         @Override
         public String toString()
         { return equationAsString; }
@@ -3897,9 +3940,17 @@ public class Equation
             this.action = action;
         }
 
+        /**
+         * Gets the equation components of this operation - that is, the unevaluated operands.
+         * @return This operation's unevaluated operands.
+         */
         public List<EquationComponent> getComponents()
         { return new ArrayList<>(components); }
 
+        /**
+         * Gets the operator action this operation invokes.
+         * @return This operation's operator action.
+         */
         public OperatorAction getAction()
         { return action; }
 
@@ -3950,10 +4001,19 @@ public class Equation
             this.arguments = arguments;
         }
 
+        /**
+         * Gets the name of the function this function call invokes.
+         * @return The name of the function being invoked.
+         */
         public String getFunctionName()
         { return functionName; }
 
-        // purely for testing
+        /**
+         * <p>Gets the unevaluated arguments to this function call.</p>
+         *
+         * <p>Note: This function exists purely for unit-testing purposes.</p>
+         * @return This function call's unevaluated arguments.
+         */
         EquationComponent[] getArguments()
         { return arguments; }
 
@@ -3994,6 +4054,10 @@ public class Equation
         public VariableReference(String name)
         { this.name = name; }
 
+        /**
+         * Gets the name of the variable this is a reference to.
+         * @return The name of the variable.
+         */
         public String getName()
         { return name; }
 
@@ -4024,6 +4088,10 @@ public class Equation
         public LiteralNumber(double value)
         { this.value = value; }
 
+        /**
+         * Gets the literal number this represents.
+         * @return The number this represents.
+         */
         public double getValue()
         { return value; }
 

@@ -28,10 +28,17 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
     public SetEvent()
     {}
 
+    /**
+     * This event's listeners.
+     * @implNote Synchronisation is on this, the listeners set, even when working with dependent events.
+     */
     protected final Set<EventListener<TArgs>> listeners = new HashSet<>();
-    protected final Map<InvokableEvent<?>, EventWithArgsConverter<TArgs, ?>> dependentEvents = new HashMap<>();
 
-    // Synchronised on the listeners set, even where working with dependentEvents
+    /**
+     * This event's dependants, with converters for instances of this event's eventargs objects to their eventargs
+     * objects.
+     */
+    protected final Map<InvokableEvent<?>, EventWithArgsConverter<TArgs, ?>> dependentEvents = new HashMap<>();
 
     @Override
     public void invoke(TArgs eventArgs)
@@ -45,7 +52,7 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
                 if(e.listenerOrderMatters())
                     listenerOrderMatters = true;
 
-            listenerStream = generateCallInfoAsStream_unthreadsafe(eventArgs);
+            listenerStream = generateCallInfoAsStream(eventArgs);
         }
 
         if(listenerOrderMatters)
@@ -131,13 +138,13 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
     public List<EventListenerCallInfo<?>> generateCallInfo(TArgs args)
     { return generateCallInfoAsStream(args).collect(Collectors.toList()); }
 
-    private Stream<EventListenerCallInfo<?>> generateCallInfoAsStream_unthreadsafe(TArgs args)
-    {
-        return Stream.concat(listeners.stream().map(x -> new EventListenerCallInfo<>(x, args)),
-                             dependentEvents.values().stream().flatMap(x -> x.generateCallInfoAsStream(args)));
-    }
-
     @Override
     public Stream<EventListenerCallInfo<?>> generateCallInfoAsStream(TArgs args)
-    { synchronized(listeners) { return generateCallInfoAsStream_unthreadsafe(args); } }
+    {
+        synchronized(listeners)
+        {
+            return Stream.concat(listeners.stream().map(x -> new EventListenerCallInfo<>(x, args)),
+                                 dependentEvents.values().stream().flatMap(x -> x.generateCallInfoAsStream(args)));
+        }
+    }
 }

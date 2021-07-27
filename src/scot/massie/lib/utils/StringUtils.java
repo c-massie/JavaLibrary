@@ -101,6 +101,7 @@ public final class StringUtils
 
     /**
      * Gets the position of the terminator matching the opener at the given position.
+     * @apiNote This assumes that the index given is that of an opener, it does not check if this is true.
      * @param s The string to look in.
      * @param opener The character to use as an opener.
      * @param terminator The character being used as a terminator.
@@ -132,15 +133,50 @@ public final class StringUtils
         return -1;
     }
 
+    /**
+     * Gets the position of the closing (round) bracket in a string given the position of an opening bracket.
+     * @apiNote This assumes that the index given is that of an opening bracket, it does not check if this is true.
+     * @param s The string to get the position of the matching closing bracket in.
+     * @param openingBracketPosition The position of the opening bracket.
+     * @return The position in the string of the matching closing bracket, or -1 if no matching closing bracket is
+     *         found.
+     */
     public static int getMatchingBracketPosition(String s, int openingBracketPosition)
     { return getMatchingTerminatorPosition(s, '(', ')', openingBracketPosition); }
 
+    /**
+     * Gets the position of the closing square bracket in a string given the position of an opening square bracket.
+     * @apiNote This assumes that the index given is that of an opening square bracket, it does not check if this is
+     *          true.
+     * @param s The string to get the position of the matching closing square bracket in.
+     * @param openingSquareBracketPosition The position of the opening square bracket.
+     * @return The position in the string of the matching closing square bracket, or -1 if no matching closing square
+     *         bracket is found.
+     */
     public static int getMatchingSquareBracketPosition(String s, int openingSquareBracketPosition)
     { return getMatchingTerminatorPosition(s, '[', ']', openingSquareBracketPosition); }
 
+    /**
+     * Gets the position of the closing curly bracket in a string given the position of an opening curly bracket.
+     * @apiNote This assumes that the index given is that of an opening curly bracket, it does not check if this is
+     *          true.
+     * @param s The string to get the position of the matching closing curly bracket in.
+     * @param openingCurlyBracketPosition The position of the opening curly bracket.
+     * @return The position in the string of the matching closing curly bracket, or -1 if no matching closing curly
+     *         bracket is found.
+     */
     public static int getMatchingCurlyBracketPosition(String s, int openingCurlyBracketPosition)
     { return getMatchingTerminatorPosition(s, '{', '}', openingCurlyBracketPosition); }
 
+    /**
+     * Gets the position of the closing pointy bracket in a string given the position of an opening pointy bracket.
+     * @apiNote This assumes that the index given is that of an opening pointy bracket, it does not check if this is
+     *          true.
+     * @param s The string to get the position of the matching closing pointy bracket in.
+     * @param openingPointyBracketPosition The position of the opening pointy bracket.
+     * @return The position in the string of the matching closing pointy bracket, or -1 if no matching closing curly
+     *         bracket is found.
+     */
     public static int getMatchingPointyBracketPosition(String s, int openingPointyBracketPosition)
     { return getMatchingTerminatorPosition(s, '<', '>', openingPointyBracketPosition); }
 

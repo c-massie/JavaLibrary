@@ -23,6 +23,9 @@ public class ProtectedEvent<TArgs extends EventArgs> implements Event<TArgs>
     public ProtectedEvent(InvokableEvent<TArgs> wrappedEvent)
     { this.wrappedEvent = wrappedEvent; }
 
+    /**
+     * The event this wraps, preventing direct invocation.
+     */
     protected final InvokableEvent<TArgs> wrappedEvent;
 
     @Override

@@ -2,6 +2,9 @@ package scot.massie.lib.utils;
 
 import java.util.function.Supplier;
 
+/**
+ * Utils and util functions for controlling the flow of code.
+ */
 public final class ControlFlowUtils
 {
     private ControlFlowUtils()

@@ -24,6 +24,9 @@ public class ProtectedPriorityEvent<TArgs extends EventArgs> extends ProtectedEv
         this.wrappedEvent = wrappedEvent;
     }
 
+    /**
+     * The event this wraps, preventing direct invocation.
+     */
     protected final InvokablePriorityEvent<TArgs> wrappedEvent;
 
     @Override

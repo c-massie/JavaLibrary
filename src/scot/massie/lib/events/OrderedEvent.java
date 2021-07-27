@@ -17,6 +17,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * <p>An event implementation that invokes its listeners in a particular order, as dictated by listener priorities.</p>
+ *
+ * <p>Listeners without priority are invoked before listeners with priority.</p>
+ *
+ * <p>Stores listeners without priority in a set, stores listeners with priority in an ordered list.</p>
+ * @param <TArgs> The event args type.
+ */
 public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityEvent<TArgs>
 {
     /**
@@ -25,8 +33,20 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
     public OrderedEvent()
     {}
 
+    /**
+     * The listeners to this event without a particular priority.
+     */
     protected final Set<EventListener<TArgs>> listenersWithoutPriority = new HashSet<>();
+
+    /**
+     * The listeners to this event with a given priority. Invoked after priority-less listeners.
+     */
     protected final List<EventListenerPriorityPair<TArgs>> listenersWithPriority = new ArrayList<>();
+
+    /**
+     * This event's dependants, along with converters for converting this event's eventargs objects to their own
+     * eventargs objects.
+     */
     protected final Map<InvokableEvent<?>, EventWithArgsConverter<TArgs, ?>> dependentEvents = new HashMap<>();
 
     // Synchronized on listenersWithoutPriority's lock, even where listenersWithPriority or dependentEvents is concerned
@@ -46,7 +66,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
                     if(e.listenerOrderMatters())
                         listenerOrderMatters = true;
 
-            listenerStream = generateCallInfoAsStream_unthreadsafe(eventArgs);
+            listenerStream = generateCallInfoAsStream(eventArgs);
         }
 
         if(listenerOrderMatters)
@@ -181,15 +201,15 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
     public List<EventListenerCallInfo<?>> generateCallInfo(TArgs args)
     { return generateCallInfoAsStream(args).collect(Collectors.toList()); }
 
-    private Stream<EventListenerCallInfo<?>> generateCallInfoAsStream_unthreadsafe(TArgs args)
-    {
-        return Stream.of(listenersWithoutPriority.stream().map(x -> new EventListenerCallInfo<>(x, args)),
-                         listenersWithPriority.stream().map(x -> x.toCallInfo(args)),
-                         dependentEvents.values().stream().flatMap(x -> x.generateCallInfoAsStream(args)))
-                     .flatMap(Function.identity());
-    }
-
     @Override
     public Stream<EventListenerCallInfo<?>> generateCallInfoAsStream(TArgs args)
-    { synchronized(listenersWithoutPriority) { return generateCallInfoAsStream_unthreadsafe(args); } }
+    {
+        synchronized(listenersWithoutPriority)
+        {
+            return Stream.of(listenersWithoutPriority.stream().map(x -> new EventListenerCallInfo<>(x, args)),
+                             listenersWithPriority   .stream().map(x -> x.toCallInfo(args)),
+                             dependentEvents.values().stream().flatMap(x -> x.generateCallInfoAsStream(args)))
+                         .flatMap(Function.identity());
+        }
+    }
 }
