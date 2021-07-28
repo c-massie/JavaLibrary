@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.*;
 
 abstract class TreeTest<T extends Tree<String, Integer>>
 {
+    @SuppressWarnings("PublicField") // Is a POD class
     private static class Triplet<T1, T2, T3>
     {
         // Only here for convenience, and because Java doesn't support tuples or have a standard tuple type.
@@ -29,30 +30,30 @@ abstract class TreeTest<T extends Tree<String, Integer>>
 
     public abstract T getNewEmptyTree();
 
-    private final String[] path_root                    = new String[] {  };
-    private final String[] path_root_child              = new String[] { "qoot" };
-    private final String[] path_lvl1                    = new String[] { "doot" };
-    private final String[] path_lvl1_child              = new String[] { "doot", "noot" };
-    private final String[] path_lvl1_sibling            = new String[] { "foot" };
-    private final String[] path_lvl1_nibling            = new String[] { "foot", "moot" };
-    private final String[] path_lvl1_otherSibling       = new String[] { "woot" };
-    private final String[] path_lvl1_otherSiblingChild  = new String[] { "woot", "boot" };
-    private final String[] path_lvl2                    = new String[] { "hoot", "yoot" };
-    private final String[] path_lvl2_parent             = new String[] { "hoot" };
-    private final String[] path_lvl2_child              = new String[] { "hoot", "yoot", "zoot" };
-    private final String[] path_lvl2_grandchild         = new String[] { "hoot", "yoot", "zoot", "toot" };
-    private final String[] path_lvl2_greatgrandchild    = new String[] { "hoot", "yoot", "zoot", "toot", "loot" };
-    private final String[] path_lvl2_sibling            = new String[] { "hoot", "soot" };
-    private final String[] path_lvl2_otherSibling       = new String[] { "hoot", "xoot" };
-    private final String[] path_lvl2_otherSiblingChild  = new String[] { "hoot", "xoot", "poot" };
-    private final String[] path_lvl2_uncle              = new String[] { "voot" };
-    private final String[] path_lvl2_cousin             = new String[] { "voot", "joot" };
-    private final String[] path_lvl2_otherUncle         = new String[] { "poot" };
+    private final String[] path_root                    = {  };
+    private final String[] path_root_child              = { "qoot" };
+    private final String[] path_lvl1                    = { "doot" };
+    private final String[] path_lvl1_child              = { "doot", "noot" };
+    private final String[] path_lvl1_sibling            = { "foot" };
+    private final String[] path_lvl1_nibling            = { "foot", "moot" };
+    private final String[] path_lvl1_otherSibling       = { "woot" };
+    private final String[] path_lvl1_otherSiblingChild  = { "woot", "boot" };
+    private final String[] path_lvl2                    = { "hoot", "yoot" };
+    private final String[] path_lvl2_parent             = { "hoot" };
+    private final String[] path_lvl2_child              = { "hoot", "yoot", "zoot" };
+    private final String[] path_lvl2_grandchild         = { "hoot", "yoot", "zoot", "toot" };
+    private final String[] path_lvl2_greatgrandchild    = { "hoot", "yoot", "zoot", "toot", "loot" };
+    private final String[] path_lvl2_sibling            = { "hoot", "soot" };
+    private final String[] path_lvl2_otherSibling       = { "hoot", "xoot" };
+    private final String[] path_lvl2_otherSiblingChild  = { "hoot", "xoot", "poot" };
+    private final String[] path_lvl2_uncle              = { "voot" };
+    private final String[] path_lvl2_cousin             = { "voot", "joot" };
+    private final String[] path_lvl2_otherUncle         = { "poot" };
 
     private final List<String[]> pathList_empty = new ArrayList<>();
-    private final List<String[]> pathList_root = Arrays.<String[]>asList(path_root);
-    private final List<String[]> pathList_lvl1 = Arrays.<String[]>asList(path_lvl1);
-    private final List<String[]> pathList_lvl2 = Arrays.<String[]>asList(path_lvl2);
+    private final List<String[]> pathList_root = Collections.singletonList(path_root);
+    private final List<String[]> pathList_lvl1 = Collections.singletonList(path_lvl1);
+    private final List<String[]> pathList_lvl2 = Collections.singletonList(path_lvl2);
 
     private final Tree.TreePath<String> tpath_root                      = new Tree.TreePath<>(path_root);
     private final Tree.TreePath<String> tpath_root_child                = new Tree.TreePath<>(path_root_child);
@@ -75,9 +76,9 @@ abstract class TreeTest<T extends Tree<String, Integer>>
     private final Tree.TreePath<String> tpath_lvl2_otherUncle           = new Tree.TreePath<>(path_lvl2_otherUncle);
 
     private final List<Tree.TreePath<String>> tpathList_empty = new ArrayList<>();
-    private final List<Tree.TreePath<String>> tpathList_root = Arrays.asList(tpath_root);
-    private final List<Tree.TreePath<String>> tpathList_lvl1 = Arrays.asList(tpath_lvl1);
-    private final List<Tree.TreePath<String>> tpathList_lvl2 = Arrays.asList(tpath_lvl2);
+    private final List<Tree.TreePath<String>> tpathList_root = Collections.singletonList(tpath_root);
+    private final List<Tree.TreePath<String>> tpathList_lvl1 = Collections.singletonList(tpath_lvl1);
+    private final List<Tree.TreePath<String>> tpathList_lvl2 = Collections.singletonList(tpath_lvl2);
 
     private final List<Integer> listOfJustNull;
     {
@@ -110,7 +111,7 @@ abstract class TreeTest<T extends Tree<String, Integer>>
         return result;
     };
 
-    private Comparator<Tree.Entry<String, Integer>> treeEntryEquator = (a, b) ->
+    private final Comparator<Tree.Entry<String, Integer>> treeEntryEquator = (a, b) ->
     {
         return (a.getPath().equals(b.getPath()))
             && (Objects.equals(a.getItem(), b.getItem()))
@@ -2865,11 +2866,11 @@ abstract class TreeTest<T extends Tree<String, Integer>>
         Tree.ValueWithPresence<Integer> fromTree1 = tree.getAtSafely(path);
 
         assertTrue(fromTree1.valueWasPresent(), () -> "Didn't set an item at the path when there was no item.\n"
-                                                      + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                                      + "\nPath: " + new Tree.TreePath<>(path)
                                                       + "\nExpected: " + expected1);
 
         assertEquals(expected1, fromTree1.getValue(), () -> "Didn't set the correct item at the path when there was no item.\n"
-                                                            + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                                            + "\nPath: " + new Tree.TreePath<>(path)
                                                             + "\nExpected: " + expected1
                                                             + "\nActual: " + fromTree1.getValue());
 
@@ -2878,11 +2879,11 @@ abstract class TreeTest<T extends Tree<String, Integer>>
         Tree.ValueWithPresence<Integer> fromTree2 = tree.getAtSafely(path);
 
         assertTrue(fromTree2.valueWasPresent(), () -> "Didn't set null at the path when there was no item.\n"
-                                                      + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                                      + "\nPath: " + new Tree.TreePath<>(path)
                                                       + "\nExpected: (null)");
 
         assertEquals(null, fromTree2.getValue(), () -> "Didn't set the correct item at the path when there was no item.\n"
-                                                       + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                                       + "\nPath: " + new Tree.TreePath<>(path)
                                                        + "\nExpected: (null)"
                                                        + "\nActual: " + fromTree2.getValue());
 
@@ -2894,13 +2895,13 @@ abstract class TreeTest<T extends Tree<String, Integer>>
         Tree.ValueWithPresence<Integer> fromTree3 = tree.getAtSafely(path);
 
         assertTrue(fromTree3.valueWasPresent(), () -> "Just cleared the path in the tree when there was already an item there, without setting it to the new item.\n"
-                                                      + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                                      + "\nPath: " + new Tree.TreePath<>(path)
                                                       + "\nExpected: " + expected3);
 
         assertEquals(expected3, fromTree3.getValue(), () -> (notExpected3.equals(fromTree3.getValue())
                                                                      ? "Overwrote the item at the path with the item provided despite an item already being present."
                                                                      : "Overwrote the item at the path with an item despite an item already being present.\n")
-                                                            + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                                            + "\nPath: " + new Tree.TreePath<>(path)
                                                             + "\nExpected: " + expected3
                                                             + "\nActual: " + fromTree3.getValue());
 
@@ -2911,13 +2912,13 @@ abstract class TreeTest<T extends Tree<String, Integer>>
         Tree.ValueWithPresence<Integer> fromTree4 = tree.getAtSafely(path);
 
         assertTrue(fromTree4.valueWasPresent(), () -> "Just cleared the path in the tree when there was already an item there, without setting it to the new item.\n"
-                                                      + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                                      + "\nPath: " + new Tree.TreePath<>(path)
                                                       + "\nExpected: " + expected4);
 
         assertEquals(expected4, fromTree4.getValue(), () -> (fromTree4.getValue() == null
                                                                      ? "Overwrote the item at the path with the item provided despite an item already being present."
                                                                      : "Overwrote the item at the path with an item despite an item already being present.\n")
-                                                            + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                                            + "\nPath: " + new Tree.TreePath<>(path)
                                                             + "\nExpected: " + expected4
                                                             + "\nActual: " + fromTree4.getValue());
 
@@ -2928,15 +2929,15 @@ abstract class TreeTest<T extends Tree<String, Integer>>
         Tree.ValueWithPresence<Integer> fromTree5 = tree.getAtSafely(path);
 
         assertTrue(fromTree5.valueWasPresent(), () -> "Just cleared the path in the tree when there was null there, without setting it to the new item.\n"
-                                                      + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                                      + "\nPath: " + new Tree.TreePath<>(path)
                                                       + "\nExpected: (null)");
 
         assertEquals(null, fromTree5.getValue(), () -> (notExpected5.equals(fromTree5.getValue())
                                                                      ? "Overwrote the item at the path with the item provided despite an item already being present."
                                                                      : "Overwrote the item at the path with an item despite an item already being present.\n")
-                                                            + "\nPath: " + new Tree.TreePath<>(path).toString()
-                                                            + "\nExpected: (null)"
-                                                            + "\nActual: " + fromTree5.getValue());
+                                                       + "\nPath: " + new Tree.TreePath<>(path)
+                                                       + "\nExpected: (null)"
+                                                       + "\nActual: " + fromTree5.getValue());
 
         tree = getNewEmptyTree();
         tree.setAtIfAbsent(null, path);
@@ -2944,10 +2945,10 @@ abstract class TreeTest<T extends Tree<String, Integer>>
         Tree.ValueWithPresence<Integer> fromTree6 = tree.getAtSafely(path);
 
         assertTrue(fromTree6.valueWasPresent(), () -> "Overwriting null at null cleared the item from the path.\n"
-                                                      + "\nPath: " + new Tree.TreePath<>(path).toString());
+                                                      + "\nPath: " + new Tree.TreePath<>(path));
 
         assertNull(fromTree6.getValue(), () -> "Trying to overwrite null with another null at the path set it to something else.\n"
-                                               + "\nPath: " + new Tree.TreePath<>(path).toString()
+                                               + "\nPath: " + new Tree.TreePath<>(path)
                                                + "\nExpected: (null)"
                                                + "\nActual: " + fromTree6.getValue());
     }
