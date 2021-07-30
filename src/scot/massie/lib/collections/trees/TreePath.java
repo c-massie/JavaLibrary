@@ -138,6 +138,34 @@ public class TreePath<TNode>
         return new TreePath<>(nodes.subList(0, nodes.size() - numberOfNodesToDrop));
     }
 
+    public TreePath<TNode> appendedWith(TreePath<? extends TNode> other)
+    {
+        List<TNode> resultNodes = new ArrayList<>(nodes);
+        resultNodes.addAll(other.nodes);
+        return new TreePath<>(resultNodes);
+    }
+
+    public TreePath<TNode> appendedWith(TNode node)
+    {
+        List<TNode> resultNodes = new ArrayList<>(nodes);
+        resultNodes.add(node);
+        return new TreePath<>(resultNodes);
+    }
+
+    public TreePath<TNode> prependedWith(TreePath<? extends TNode> other)
+    {
+        List<TNode> resultNodes = new ArrayList<>(other.nodes);
+        resultNodes.addAll(nodes);
+        return new TreePath<>(resultNodes);
+    }
+
+    public TreePath<TNode> prependedWith(TNode node)
+    {
+        List<TNode> resultNodes = new ArrayList<>(nodes);
+        resultNodes.add(0, node);
+        return new TreePath<>(resultNodes);
+    }
+
     public TreePath<TNode> reversed()
     {
         List<TNode> resultNodes = new ArrayList<>(nodes);
