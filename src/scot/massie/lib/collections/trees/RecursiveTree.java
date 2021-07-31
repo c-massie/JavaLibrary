@@ -2,12 +2,14 @@ package scot.massie.lib.collections.trees;
 
 import scot.massie.lib.collections.trees.exceptions.NoItemAtPathException;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
@@ -34,6 +36,44 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         }
 
         return current;
+    }
+
+    RecursiveTree<TNode, TLeaf> getOrCreateInternalBranch(TreePath<TNode> path)
+    {
+        RecursiveTree<TNode, TLeaf> current = this;
+
+        for(TNode node : path.getNodes())
+            current = current.branches.computeIfAbsent(node, tNode -> new RecursiveTree<>());
+
+        return current;
+    }
+
+    void trim(TreePath<TNode> path)
+    {
+        List<RecursiveTree<TNode, TLeaf>> branchesAlongPath = new ArrayList<>(path.size());
+        RecursiveTree<TNode, TLeaf> current = this;
+        branchesAlongPath.add(current);
+
+        for(TNode node : path.getNodes())
+        {
+            current = current.branches.get(node);
+
+            if(current == null)
+                break;
+
+            branchesAlongPath.add(current);
+        }
+
+        for(int i = branchesAlongPath.size() - 1; i > 0; i--)
+        {
+            RecursiveTree<TNode, TLeaf> iBranch = branchesAlongPath.get(i);
+
+            if(iBranch.hasItems())
+                break;
+
+            RecursiveTree<TNode, TLeaf> parentBranch = branchesAlongPath.get(i - 1);
+            parentBranch.branches.remove(path.getNode(i - 1));
+        }
     }
 
     @Override
@@ -394,7 +434,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     }
 
     @Override
-    public TLeaf setAtIf(TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test)
+    public TLeaf setAtIf(TreePath<TNode> path, TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test)
     {
         // TO DO: Write.
         throw new UnsupportedOperationException("Not yet implemented.");
@@ -416,6 +456,13 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 
     @Override
     public void clearWhere(BiPredicate<TreePath<TNode>, TLeaf> test)
+    {
+        // TO DO: Write.
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    @Override
+    public void clearWherePath(Predicate<TreePath<TNode>> test)
     {
         // TO DO: Write.
         throw new UnsupportedOperationException("Not yet implemented.");

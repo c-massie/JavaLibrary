@@ -89,6 +89,9 @@ public class TreePath<TNode>
     public List<TNode> getNodes()
     { return nodes; }
 
+    public TNode getNode(int index)
+    { return nodes.get(index); }
+
     public int size()
     { return nodes.size(); }
 
@@ -113,6 +116,9 @@ public class TreePath<TNode>
 
     public TNode lastOrNull()
     { return nodes.isEmpty() ? null : nodes.get(nodes.size() - 1); }
+
+    public TreePath<TNode> getParent()
+    { return (nodes.size() >= 1) ? (new TreePath<>(nodes.subList(0, nodes.size() - 1))) : (null); }
 
     public TreePath<TNode> withoutFirstNodes(int numberOfNodesToDrop)
     {

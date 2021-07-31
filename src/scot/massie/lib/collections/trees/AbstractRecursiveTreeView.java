@@ -1,5 +1,8 @@
 package scot.massie.lib.collections.trees;
 
+import scot.massie.lib.collections.trees.Tree;
+import scot.massie.lib.collections.trees.TreeEntry;
+import scot.massie.lib.collections.trees.TreePath;
 import scot.massie.lib.collections.trees.exceptions.NoItemAtPathException;
 
 import java.util.Collection;
@@ -8,74 +11,82 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tree<TNode, TLeaf>
+public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf>
+        implements Tree<TNode, TLeaf>
 {
     protected final T source;
 
     protected final TreePath<TNode> viewPath;
 
-    protected final BiFunction<T, TreePath<TNode>, T> internalBranchGetter;
+    protected final TreePath<TNode> viewPathParent;
 
-    public TreeView(T source, TreePath<TNode> viewPath, BiFunction<T, TreePath<TNode>, T> internalBranchGetter)
+    protected final TreePath<TNode> viewPathFromParent;
+
+    public AbstractRecursiveTreeView(T source, TreePath<TNode> viewPath)
     {
         this.source = source;
         this.viewPath = viewPath;
-        this.internalBranchGetter = internalBranchGetter;
+        this.viewPathParent = viewPath.getParent();
+        this.viewPathFromParent = new TreePath<>(viewPath.last());
     }
 
-    // TO DO: Change these implementations to take into account the view path.
+    public abstract T getInternalBranch(T sourceTree, TreePath<TNode> branchPath);
+
+    public abstract T getOrCreateInternalBranch(T sourceTree, TreePath<TNode> branchPath);
+
+    public abstract void trim(T sourceTree, TreePath<TNode> branchPath);
+
+    public abstract T getNewEmptyTree();
 
     @Override
     public boolean hasItems()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
         return sourceBranch != null && sourceBranch.hasItems();
     }
 
     @Override
     public boolean hasNonRootItems()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
         return sourceBranch != null && sourceBranch.hasNonRootItems();
     }
 
     @Override
     public boolean hasItemsAlong(TreePath<TNode> path)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
         return sourceBranch != null && sourceBranch.hasItemsAlong(path);
     }
 
     @Override
     public boolean hasNonRootItemsAlong(TreePath<TNode> path)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
         return sourceBranch != null && sourceBranch.hasNonRootItemsAlong(path);
     }
 
     @Override
     public boolean hasItemAt(TreePath<TNode> path)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
         return sourceBranch != null && sourceBranch.hasItemAt(path);
     }
 
     @Override
     public boolean hasRootItem()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
         return sourceBranch != null && sourceBranch.hasRootItem();
     }
 
     @Override
     public TLeaf getRootItem() throws NoItemAtPathException
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null || sourceBranch.isEmptyAtRoot())
             throw new NoItemAtPathException(source, viewPath);
@@ -86,7 +97,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public TLeaf getRootItemOr(TLeaf defaultItem)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return defaultItem;
@@ -97,7 +108,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Object getRootItemOrDefaultOfAnyType(Object defaultItem)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return defaultItem;
@@ -106,9 +117,9 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     }
 
     @Override
-    public TLeaf getAt(TreePath<TNode> path) throws NoItemAtPathException
+    public TLeaf getAt(@SuppressWarnings("BoundedWildcard") TreePath<TNode> path) throws NoItemAtPathException
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             throw new NoItemAtPathException(source, viewPath.appendedWith(path));
@@ -122,7 +133,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public TLeaf getAtOr(TreePath<TNode> path, TLeaf defaultItem)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return defaultItem;
@@ -133,7 +144,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Object getAtOrDefaultOfAnyType(TreePath<TNode> path, Object defaultItem)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return defaultItem;
@@ -144,7 +155,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TLeaf> getItems()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -155,7 +166,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TLeaf> getItemsInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -166,7 +177,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TLeaf> getItemsWhere(BiPredicate<TreePath<TNode>, TLeaf> test)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -177,7 +188,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TLeaf> getItemsWherePath(Predicate<TreePath<TNode>> test)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -188,7 +199,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TLeaf> getItemsInOrderWhere(Comparator<? super TNode> comparator, BiPredicate<TreePath<TNode>, TLeaf> test)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -199,7 +210,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TLeaf> getItemsInOrderWherePath(Comparator<? super TNode> comparator, Predicate<TreePath<TNode>> test)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -210,7 +221,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TLeaf> getItemsUnderRoot()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -221,7 +232,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TLeaf> getItemsUnderRootInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -232,7 +243,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TLeaf> getItemsAlong(TreePath<TNode> path)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -243,7 +254,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TLeaf> getItemsUnderRootAlong(TreePath<TNode> path)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -254,7 +265,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TLeaf> getImmediateItems()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -265,7 +276,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TLeaf> getImmediateItemsInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -276,7 +287,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TLeaf> getRootAndImmediateItems()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -287,7 +298,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TLeaf> getRootAndImmediateItemsInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -298,7 +309,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntries()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -309,7 +320,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -320,7 +331,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<TreeEntry<TNode, TLeaf>> test)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -331,7 +342,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(Comparator<? super TNode> comparator, Predicate<TreeEntry<TNode, TLeaf>> test)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -342,7 +353,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesWherePath(Predicate<TreePath<TNode>> test)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -353,7 +364,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWherePath(Comparator<? super TNode> comparator, Predicate<TreePath<TNode>> test)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -364,7 +375,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesUnderRoot()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -375,7 +386,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesUnderRootInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -386,7 +397,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesAlong(TreePath<TNode> path)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -397,7 +408,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesUnderRootAlong(TreePath<TNode> path)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -408,7 +419,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getImmediateEntries()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -419,7 +430,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TreeEntry<TNode, TLeaf>> getImmediateEntriesInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -430,7 +441,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getRootAndImmediateEntries()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -441,7 +452,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TreeEntry<TNode, TLeaf>> getRootAndImmediateEntriesInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -456,7 +467,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Map<TNode, Tree<TNode, TLeaf>> getBranches()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyMap();
@@ -467,7 +478,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Collection<TreePath<TNode>> getPaths()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -478,7 +489,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public List<TreePath<TNode>> getPathsInOrder(Comparator<? extends TNode> comparator)
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyList();
@@ -493,7 +504,7 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
     @Override
     public Map<TNode, Tree<TNode, TLeaf>> getBranchViews()
     {
-        T sourceBranch = internalBranchGetter.apply(source, viewPath);
+        T sourceBranch = getInternalBranch(source, viewPath);
 
         if(sourceBranch == null)
             return Collections.emptyMap();
@@ -510,81 +521,193 @@ public class TreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf> implements Tre
         return result;
     }
 
-    // TO DO: Continue implementing from here.
-
     @Override
     public TLeaf setRootItem(TLeaf newItem)
-    { return source.setRootItem(newItem); }
+    { return getOrCreateInternalBranch(source, viewPath).setRootItem(newItem); }
 
     @Override
     public TLeaf setRootItemIfAbsent(TLeaf newItem)
-    { return source.setRootItemIfAbsent(newItem); }
+    { return getOrCreateInternalBranch(source, viewPath).setRootItemIfAbsent(newItem); }
 
     @Override
     public TLeaf setRootItemIf(TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test)
-    { return source.setRootItemIf(newItem, test); }
+    { return getOrCreateInternalBranch(source, viewPath).setRootItemIf(newItem, test); }
 
     @Override
     public TLeaf setAt(TreePath<TNode> path, TLeaf newItem)
-    { return source.setAt(path, newItem); }
+    { return getOrCreateInternalBranch(source, viewPath).setAt(path, newItem); }
 
     @Override
     public TLeaf setAtIfAbsent(TreePath<TNode> path, TLeaf newItem)
-    { return source.setAtIfAbsent(path, newItem); }
+    { return getOrCreateInternalBranch(source, viewPath).setAtIfAbsent(path, newItem); }
 
     @Override
-    public TLeaf setAtIf(TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test)
-    { return source.setAtIf(newItem, test); }
+    public TLeaf setAtIf(TreePath<TNode> path, TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test)
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+        {
+            if(test.test(path, null))
+                getOrCreateInternalBranch(source, viewPath).setAt(path, newItem);
+
+            return null;
+        }
+
+        return sourceBranch.setAtIf(path, newItem, test);
+    }
 
     @Override
     public void clear()
-    { source.clear(); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return;
+
+        sourceBranch.clear();
+        trim(source, viewPath);
+    }
 
     @Override
     public void clearUnderRoot()
-    { source.clearUnderRoot(); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return;
+
+        sourceBranch.clearUnderRoot();
+        trim(source, viewPath);
+    }
 
     @Override
     public void clearWhere(BiPredicate<TreePath<TNode>, TLeaf> test)
-    { source.clearWhere(test); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return;
+
+        sourceBranch.clearWhere(test);
+        trim(source, viewPath);
+    }
+
+    @Override
+    public void clearWherePath(Predicate<TreePath<TNode>> test)
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return;
+
+        sourceBranch.clearWherePath(test);
+        trim(source, viewPath);
+    }
 
     @Override
     public TLeaf clearRoot()
-    { return source.clearRoot(); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return null;
+
+        TLeaf result = sourceBranch.clearRoot();
+        trim(source, viewPath);
+        return result;
+    }
 
     @Override
     public TLeaf clearRootIf(BiPredicate<TreePath<TNode>, TLeaf> test)
-    { return source.clearRootIf(test); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return null;
+
+        TLeaf result = sourceBranch.clearRootIf(test);
+        trim(source, viewPath);
+        return result;
+    }
 
     @Override
-    public TLeaf clearAt(TreePath<TNode> path)
-    { return source.clearAt(path); }
+    public TLeaf clearAtIf(@SuppressWarnings("BoundedWildcard") TreePath<TNode> path,
+                           BiPredicate<TreePath<TNode>, TLeaf> test)
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
 
-    @Override
-    public TLeaf clearAtIf(TreePath<TNode> path, BiPredicate<TreePath<TNode>, TLeaf> test)
-    { return source.clearAtIf(path, test); }
+        if(sourceBranch == null)
+            return null;
+
+        TLeaf result = sourceBranch.clearAtIf(path, test);
+        trim(source, viewPath.appendedWith(path));
+        return result;
+    }
 
     @Override
     public List<TLeaf> toList()
-    { return source.toList(); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return Collections.emptyList();
+
+        return sourceBranch.toList();
+    }
 
     @Override
     public List<TLeaf> toOrderedList(Comparator<? super TNode> comparator)
-    { return source.toOrderedList(comparator); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return Collections.emptyList();
+
+        return sourceBranch.toOrderedList(comparator);
+    }
 
     @Override
     public Tree<TNode, TLeaf> withReversedKeys()
-    { return source.withReversedKeys(); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return getNewEmptyTree();
+
+        return sourceBranch.withReversedKeys();
+    }
 
     @Override
     public int size()
-    { return source.size(); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return 0;
+
+        return sourceBranch.size();
+    }
 
     @Override
     public int countDepth()
-    { return source.countDepth(); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return 0;
+
+        return sourceBranch.countDepth();
+    }
 
     @Override
     public String toTreeString()
-    { return source.toTreeString(); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return "[root]";
+
+        return sourceBranch.toTreeString();
+    }
 }

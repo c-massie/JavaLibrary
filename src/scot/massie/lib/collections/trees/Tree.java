@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -230,7 +229,7 @@ public interface Tree<TNode, TLeaf>
 
     TLeaf setAtIfAbsent(TreePath<TNode> path, TLeaf newItem);
 
-    TLeaf setAtIf(TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test);
+    TLeaf setAtIf(TreePath<TNode> path, TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test);
     //endregion
 
     //region remove items in tree
@@ -246,11 +245,14 @@ public interface Tree<TNode, TLeaf>
 
     void clearWhere(BiPredicate<TreePath<TNode>, TLeaf> test);
 
+    void clearWherePath(Predicate<TreePath<TNode>> test);
+
     TLeaf clearRoot();
 
     TLeaf clearRootIf(BiPredicate<TreePath<TNode>, TLeaf> test);
 
-    TLeaf clearAt(TreePath<TNode> path);
+    default TLeaf clearAt(TreePath<TNode> path)
+    { return getBranchView(path).clearRoot(); }
 
     TLeaf clearAtIf(TreePath<TNode> path, BiPredicate<TreePath<TNode>, TLeaf> test);
     //endregion
