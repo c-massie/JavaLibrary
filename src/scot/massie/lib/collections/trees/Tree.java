@@ -88,15 +88,15 @@ public interface Tree<TNode, TLeaf>
 
     List<TLeaf> getItemsInOrder(Comparator<? super TNode> comparator);
 
-    Collection<TLeaf> getItemsWhere(BiPredicate<TreePath<TNode>, TLeaf> test);
+    Collection<TLeaf> getItemsWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test);
 
-    Collection<TLeaf> getItemsWherePath(Predicate<TreePath<TNode>> test);
+    Collection<TLeaf> getItemsWherePath(Predicate<? super TreePath<TNode>> test);
 
     Collection<TLeaf> getItemsInOrderWhere(Comparator<? super TNode> comparator,
-                                           BiPredicate<TreePath<TNode>, TLeaf> test);
+                                           BiPredicate<? super TreePath<TNode>, ? super TLeaf> test);
 
     Collection<TLeaf> getItemsInOrderWherePath(Comparator<? super TNode> comparator,
-                                               Predicate<TreePath<TNode>> test);
+                                               Predicate<? super TreePath<TNode>> test);
 
     Collection<TLeaf> getItemsUnderRoot();
 
@@ -136,7 +136,7 @@ public interface Tree<TNode, TLeaf>
     { return getBranchView(path).getRootAndImmediateItems(); }
 
     default List<TLeaf> getAtAndImmediatelyUnderInOrder(TreePath<TNode> path,
-                                                              Comparator<? super TNode> comparator)
+                                                        Comparator<? super TNode> comparator)
     { return getBranchView(path).getRootAndImmediateItemsInOrder(comparator); }
     //endregion
 
@@ -145,15 +145,15 @@ public interface Tree<TNode, TLeaf>
 
     List<TreeEntry<TNode, TLeaf>> getEntriesInOrder(Comparator<? super TNode> comparator);
 
-    Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<TreeEntry<TNode, TLeaf>> test);
+    Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<? super TreeEntry<TNode, TLeaf>> test);
 
     List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(Comparator<? super TNode> comparator,
-                                                         Predicate<TreeEntry<TNode, TLeaf>> test);
+                                                         Predicate<? super TreeEntry<TNode, TLeaf>> test);
 
-    Collection<TreeEntry<TNode, TLeaf>> getEntriesWherePath(Predicate<TreePath<TNode>> test);
+    Collection<TreeEntry<TNode, TLeaf>> getEntriesWherePath(Predicate<? super TreePath<TNode>> test);
 
     List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWherePath(Comparator<? super TNode> comparator,
-                                                             Predicate<TreePath<TNode>> test);
+                                                             Predicate<? super TreePath<TNode>> test);
 
     Collection<TreeEntry<TNode, TLeaf>> getEntriesUnderRoot();
 
@@ -189,14 +189,14 @@ public interface Tree<TNode, TLeaf>
     { return getBranchView(path).getImmediateEntries(); }
 
     default List<TreeEntry<TNode, TLeaf>> getEntriesImmediatelyUnderInOrder(TreePath<TNode> path,
-                                                                    Comparator<? super TNode> comparator)
+                                                                            Comparator<? super TNode> comparator)
     { return getBranchView(path).getImmediateEntriesInOrder(comparator); }
 
     default Collection<TreeEntry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnder(TreePath<TNode> path)
     { return getBranchView(path).getRootAndImmediateEntries(); }
 
     default List<TreeEntry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnderInOrder(TreePath<TNode> path,
-                                                                         Comparator<? super TNode> comparator)
+                                                                                 Comparator<? super TNode> comparator)
     { return getBranchView(path).getRootAndImmediateEntriesInOrder(comparator); }
     //endregion
 
@@ -223,13 +223,13 @@ public interface Tree<TNode, TLeaf>
 
     TLeaf setRootItemIfAbsent(TLeaf newItem);
 
-    TLeaf setRootItemIf(TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test);
+    TLeaf setRootItemIf(TLeaf newItem, BiPredicate<? super TreePath<TNode>, ? super TLeaf> test);
 
     TLeaf setAt(TreePath<TNode> path, TLeaf newItem);
 
     TLeaf setAtIfAbsent(TreePath<TNode> path, TLeaf newItem);
 
-    TLeaf setAtIf(TreePath<TNode> path, TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test);
+    TLeaf setAtIf(TreePath<TNode> path, TLeaf newItem, BiPredicate<? super TreePath<TNode>, ? super TLeaf> test);
     //endregion
 
     //region remove items in tree
@@ -243,18 +243,18 @@ public interface Tree<TNode, TLeaf>
     default void clearUnder(TreePath<TNode> path)
     { getBranchView(path).clearUnderRoot(); }
 
-    void clearWhere(BiPredicate<TreePath<TNode>, TLeaf> test);
+    void clearWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test);
 
-    void clearWherePath(Predicate<TreePath<TNode>> test);
+    void clearWherePath(Predicate<? super TreePath<TNode>> test);
 
     TLeaf clearRoot();
 
-    TLeaf clearRootIf(BiPredicate<TreePath<TNode>, TLeaf> test);
+    TLeaf clearRootIf(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test);
 
     default TLeaf clearAt(TreePath<TNode> path)
     { return getBranchView(path).clearRoot(); }
 
-    TLeaf clearAtIf(TreePath<TNode> path, BiPredicate<TreePath<TNode>, TLeaf> test);
+    TLeaf clearAtIf(TreePath<TNode> path, BiPredicate<? super TreePath<TNode>, ? super TLeaf> test);
     //endregion
 
     //region conversion

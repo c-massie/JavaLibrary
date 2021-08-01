@@ -1,8 +1,5 @@
 package scot.massie.lib.collections.trees;
 
-import scot.massie.lib.collections.trees.Tree;
-import scot.massie.lib.collections.trees.TreeEntry;
-import scot.massie.lib.collections.trees.TreePath;
 import scot.massie.lib.collections.trees.exceptions.NoItemAtPathException;
 
 import java.util.Collection;
@@ -175,7 +172,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public Collection<TLeaf> getItemsWhere(BiPredicate<TreePath<TNode>, TLeaf> test)
+    public Collection<TLeaf> getItemsWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -186,7 +183,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public Collection<TLeaf> getItemsWherePath(Predicate<TreePath<TNode>> test)
+    public Collection<TLeaf> getItemsWherePath(Predicate<? super TreePath<TNode>> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -197,7 +194,8 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public Collection<TLeaf> getItemsInOrderWhere(Comparator<? super TNode> comparator, BiPredicate<TreePath<TNode>, TLeaf> test)
+    public Collection<TLeaf> getItemsInOrderWhere(Comparator<? super TNode> comparator,
+                                                  BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -208,7 +206,8 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public Collection<TLeaf> getItemsInOrderWherePath(Comparator<? super TNode> comparator, Predicate<TreePath<TNode>> test)
+    public Collection<TLeaf> getItemsInOrderWherePath(Comparator<? super TNode> comparator,
+                                                      Predicate<? super TreePath<TNode>> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -329,7 +328,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<TreeEntry<TNode, TLeaf>> test)
+    public Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<? super TreeEntry<TNode, TLeaf>> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -340,7 +339,8 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(Comparator<? super TNode> comparator, Predicate<TreeEntry<TNode, TLeaf>> test)
+    public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(Comparator<? super TNode> comparator,
+                                                                Predicate<? super TreeEntry<TNode, TLeaf>> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -351,7 +351,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public Collection<TreeEntry<TNode, TLeaf>> getEntriesWherePath(Predicate<TreePath<TNode>> test)
+    public Collection<TreeEntry<TNode, TLeaf>> getEntriesWherePath(Predicate<? super TreePath<TNode>> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -362,7 +362,8 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWherePath(Comparator<? super TNode> comparator, Predicate<TreePath<TNode>> test)
+    public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWherePath(Comparator<? super TNode> comparator,
+                                                                    Predicate<? super TreePath<TNode>> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -530,7 +531,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     { return getOrCreateInternalBranch(source, viewPath).setRootItemIfAbsent(newItem); }
 
     @Override
-    public TLeaf setRootItemIf(TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test)
+    public TLeaf setRootItemIf(TLeaf newItem, BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     { return getOrCreateInternalBranch(source, viewPath).setRootItemIf(newItem, test); }
 
     @Override
@@ -542,7 +543,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     { return getOrCreateInternalBranch(source, viewPath).setAtIfAbsent(path, newItem); }
 
     @Override
-    public TLeaf setAtIf(TreePath<TNode> path, TLeaf newItem, BiPredicate<TreePath<TNode>, TLeaf> test)
+    public TLeaf setAtIf(TreePath<TNode> path, TLeaf newItem, BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -582,7 +583,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public void clearWhere(BiPredicate<TreePath<TNode>, TLeaf> test)
+    public void clearWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -594,7 +595,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public void clearWherePath(Predicate<TreePath<TNode>> test)
+    public void clearWherePath(Predicate<? super TreePath<TNode>> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -619,7 +620,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public TLeaf clearRootIf(BiPredicate<TreePath<TNode>, TLeaf> test)
+    public TLeaf clearRootIf(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
@@ -633,7 +634,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
 
     @Override
     public TLeaf clearAtIf(@SuppressWarnings("BoundedWildcard") TreePath<TNode> path,
-                           BiPredicate<TreePath<TNode>, TLeaf> test)
+                           BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 
