@@ -488,7 +488,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
-    public List<TreePath<TNode>> getPathsInOrder(Comparator<? extends TNode> comparator)
+    public List<TreePath<TNode>> getPathsInOrder(Comparator<? super TNode> comparator)
     {
         T sourceBranch = getInternalBranch(source, viewPath);
 

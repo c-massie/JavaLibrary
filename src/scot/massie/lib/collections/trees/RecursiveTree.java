@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
@@ -20,6 +22,15 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     protected boolean hasRootItem = false;
 
     protected final Map<TNode, RecursiveTree<TNode, TLeaf>> branches = new HashMap<>();
+
+    public RecursiveTree()
+    {}
+
+    public RecursiveTree(Tree<TNode, TLeaf> other)
+    {
+        for(TreeEntry<TNode, TLeaf> entry : other.getEntries())
+            setAt(entry.getPath(), entry.getItem());
+    }
 
     RecursiveTree<TNode, TLeaf> getInternalDirectBranch(TNode branchPathStart)
     { return branches.get(branchPathStart); }
@@ -81,6 +92,12 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             RecursiveTree<TNode, TLeaf> parentBranch = branchesAlongPath.get(i - 1);
             parentBranch.branches.remove(path.getNode(i - 1));
         }
+    }
+
+    void trim()
+    {
+        // TO DO: Write
+        throw new UnsupportedOperationException("Not yet implemented.");
     }
 
     @Override
@@ -171,7 +188,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public TLeaf getRootItem() throws NoItemAtPathException
     {
         if(!hasRootItem)
-            throw new NoItemAtPathException(this, TreePath.getRoot());
+            throw new NoItemAtPathException(this, TreePath.root());
 
         return rootItem;
     }
@@ -263,6 +280,9 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     @Override
     public List<TLeaf> getItemsInOrder(Comparator<? super TNode> comparator)
     {
+        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
+                = Map.Entry.comparingByKey(comparator.reversed());
+
         Deque<RecursiveTree<TNode, TLeaf>> branchStack = new ArrayDeque<>();
         branchStack.add(this);
         List<TLeaf> result = new ArrayList<>();
@@ -273,7 +293,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 
             branch.branches.entrySet()
                            .stream()
-                           .sorted(Map.Entry.comparingByKey(comparator.reversed()))
+                           .sorted(mapEntryComparator)
                            .forEachOrdered(x -> branchStack.add(x.getValue()));
 
             if(branch.hasRootItem)
@@ -286,299 +306,816 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     @Override
     public Collection<TLeaf> getItemsWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        Collection<TLeaf> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+
+            if(branch.hasRootItem && test.test(path, branch.rootItem))
+                result.add(branch.rootItem);
+        }
+
+        return result;
     }
 
     @Override
     public Collection<TLeaf> getItemsWherePath(Predicate<? super TreePath<TNode>> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        Collection<TLeaf> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+
+            if(branch.hasRootItem && test.test(path))
+                result.add(branch.rootItem);
+        }
+
+        return result;
     }
 
     @Override
     public Collection<TLeaf> getItemsInOrderWhere(Comparator<? super TNode> comparator,
                                                   BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
+                = Map.Entry.comparingByKey(comparator.reversed());
+
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        Collection<TLeaf> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            branch.branches.entrySet()
+                           .stream()
+                           .sorted(mapEntryComparator)
+                           .forEachOrdered(x ->
+            {
+                branchStack.add(new TreeBranchWithPath<>(x.getValue(), path.appendedWith(x.getKey())));
+            });
+
+            if(branch.hasRootItem && test.test(path, branch.rootItem))
+                result.add(branch.rootItem);
+        }
+
+        return result;
     }
 
     @Override
     public Collection<TLeaf> getItemsInOrderWherePath(Comparator<? super TNode> comparator,
                                                       Predicate<? super TreePath<TNode>> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
+                = Map.Entry.comparingByKey(comparator.reversed());
+
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        Collection<TLeaf> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            branch.branches.entrySet()
+                           .stream()
+                           .sorted(mapEntryComparator)
+                           .forEachOrdered(x ->
+            {
+                branchStack.add(new TreeBranchWithPath<>(x.getValue(), path.appendedWith(x.getKey())));
+            });
+
+            if(branch.hasRootItem && test.test(path))
+                result.add(branch.rootItem);
+        }
+
+        return result;
     }
 
     @Override
     public Collection<TLeaf> getItemsUnderRoot()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Deque<RecursiveTree<TNode, TLeaf>> branchStack = new ArrayDeque<>(this.branches.values());
+        Collection<TLeaf> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            RecursiveTree<TNode, TLeaf> current = branchStack.remove();
+            branchStack.addAll(current.branches.values());
+
+            if(current.hasRootItem)
+                result.add(current.rootItem);
+        }
+
+        return result;
     }
 
     @Override
     public List<TLeaf> getItemsUnderRootInOrder(Comparator<? super TNode> comparator)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
+                = Map.Entry.comparingByKey(comparator.reversed());
+
+        Deque<RecursiveTree<TNode, TLeaf>> branchStack = new ArrayDeque<>();
+
+        branches.entrySet()
+                .stream()
+                .sorted(mapEntryComparator)
+                .forEachOrdered(x -> branchStack.add(x.getValue()));
+
+        List<TLeaf> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            RecursiveTree<TNode, TLeaf> branch = branchStack.removeLast();
+
+            branch.branches.entrySet()
+                           .stream()
+                           .sorted(mapEntryComparator)
+                           .forEachOrdered(x -> branchStack.add(x.getValue()));
+
+            if(branch.hasRootItem)
+                result.add(branch.rootItem);
+        }
+
+        return result;
     }
 
     @Override
     public List<TLeaf> getItemsAlong(TreePath<TNode> path)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        List<TLeaf> result = new ArrayList<>();
+        RecursiveTree<TNode, TLeaf> current = this;
+
+        if(hasRootItem)
+            result.add(rootItem);
+
+        for(TNode node : path.getNodes())
+        {
+            current = current.branches.get(node);
+
+            if(current == null)
+                return result;
+
+            if(current.hasRootItem)
+                result.add(current.rootItem);
+        }
+
+        return result;
     }
 
     @Override
     public List<TLeaf> getItemsUnderRootAlong(TreePath<TNode> path)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        List<TLeaf> result = new ArrayList<>();
+        RecursiveTree<TNode, TLeaf> current = this;
+
+        for(TNode node : path.getNodes())
+        {
+            current = current.branches.get(node);
+
+            if(current == null)
+                return result;
+
+            if(current.hasRootItem)
+                result.add(current.rootItem);
+        }
+
+        return result;
     }
 
     @Override
     public Collection<TLeaf> getImmediateItems()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Collection<TLeaf> result = new ArrayList<>();
+
+        for(RecursiveTree<TNode, TLeaf> branch : branches.values())
+            if(branch.hasRootItem)
+                result.add(branch.rootItem);
+
+        return result;
     }
 
     @Override
     public List<TLeaf> getImmediateItemsInOrder(Comparator<? super TNode> comparator)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        List<TLeaf> result = new ArrayList<>();
+
+        branches.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey(comparator))
+                .forEachOrdered(x ->
+        {
+            if(x.getValue().hasRootItem)
+                result.add(x.getValue().rootItem);
+        });
+
+        return result;
     }
 
     @Override
     public Collection<TLeaf> getRootAndImmediateItems()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Collection<TLeaf> result = new ArrayList<>();
+
+        if(hasRootItem)
+            result.add(rootItem);
+
+        for(RecursiveTree<TNode, TLeaf> branch : branches.values())
+            if(branch.hasRootItem)
+                result.add(branch.rootItem);
+
+        return result;
     }
 
     @Override
     public List<TLeaf> getRootAndImmediateItemsInOrder(Comparator<? super TNode> comparator)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        List<TLeaf> result = new ArrayList<>();
+
+        if(hasRootItem)
+            result.add(rootItem);
+
+        branches.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey(comparator))
+                .forEachOrdered(x ->
+        {
+            if(x.getValue().hasRootItem)
+                result.add(x.getValue().rootItem);
+        });
+
+        return result;
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntries()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+
+            if(branch.hasRootItem)
+                result.add(new TreeEntry<>(this, path, branch.rootItem));
+        }
+
+        return result;
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrder(Comparator<? super TNode> comparator)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
+                = Map.Entry.comparingByKey(comparator.reversed());
+
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            branch.branches.entrySet()
+                           .stream()
+                           .sorted(mapEntryComparator)
+                           .forEachOrdered(entry ->
+            {
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+            });
+
+            if(branch.hasRootItem)
+                result.add(new TreeEntry<>(this, path, branch.rootItem));
+        }
+
+        return result;
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<? super TreeEntry<TNode, TLeaf>> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+
+            if(branch.hasRootItem)
+            {
+                TreeEntry<TNode, TLeaf> treeEntry = new TreeEntry<>(this, path, branch.rootItem);
+
+                if(test.test(treeEntry))
+                    result.add(treeEntry);
+            }
+        }
+
+        return result;
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(Comparator<? super TNode> comparator,
                                                                 Predicate<? super TreeEntry<TNode, TLeaf>> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
+                = Map.Entry.comparingByKey(comparator.reversed());
+
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            branch.branches.entrySet()
+                           .stream()
+                           .sorted(mapEntryComparator)
+                           .forEachOrdered(entry ->
+            {
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+            });
+
+            if(branch.hasRootItem)
+            {
+                TreeEntry<TNode, TLeaf> treeEntry = new TreeEntry<>(this, path, branch.rootItem);
+
+                if(test.test(treeEntry))
+                    result.add(treeEntry);
+            }
+        }
+
+        return result;
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesWherePath(Predicate<? super TreePath<TNode>> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+
+            if(branch.hasRootItem && test.test(path))
+                result.add(new TreeEntry<>(this, path, branch.rootItem));
+        }
+
+        return result;
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWherePath(Comparator<? super TNode> comparator,
                                                                     Predicate<? super TreePath<TNode>> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
+                = Map.Entry.comparingByKey(comparator.reversed());
+
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            branch.branches.entrySet()
+                           .stream()
+                           .sorted(mapEntryComparator)
+                           .forEachOrdered(entry ->
+            {
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+            });
+
+            if(branch.hasRootItem && test.test(path))
+                result.add(new TreeEntry<>(this, path, branch.rootItem));
+        }
+
+        return result;
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesUnderRoot()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+
+        for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branches.entrySet())
+            branchStack.add(new TreeBranchWithPath<>(entry.getValue(), new TreePath<>(entry.getKey())));
+
+        Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+
+            if(branch.hasRootItem)
+                result.add(new TreeEntry<>(this, path, branch.rootItem));
+        }
+
+        return result;
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesUnderRootInOrder(Comparator<? super TNode> comparator)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
+                = Map.Entry.comparingByKey(comparator.reversed());
+
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+
+        for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branches.entrySet())
+            branchStack.add(new TreeBranchWithPath<>(entry.getValue(), new TreePath<>(entry.getKey())));
+
+        List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            branch.branches.entrySet()
+                           .stream()
+                           .sorted(mapEntryComparator)
+                           .forEachOrdered(entry ->
+            {
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+            });
+
+            if(branch.hasRootItem)
+                result.add(new TreeEntry<>(this, path, branch.rootItem));
+        }
+
+        return result;
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesAlong(TreePath<TNode> path)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+        RecursiveTree<TNode, TLeaf> current = this;
+
+        if(hasRootItem)
+            result.add(new TreeEntry<>(this, TreePath.root(), rootItem));
+
+        for(int i = 0; i < path.size(); i++)
+        {
+            TNode node = path.getNode(i);
+            current = current.branches.get(node);
+
+            if(current == null)
+                return result;
+
+            if(current.hasRootItem)
+                result.add(new TreeEntry<>(this, path.truncateTo(i + 1), current.rootItem));
+        }
+
+        return result;
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesUnderRootAlong(TreePath<TNode> path)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+        RecursiveTree<TNode, TLeaf> current = this;
+
+        for(int i = 0; i < path.size(); i++)
+        {
+            TNode node = path.getNode(i);
+            current = current.branches.get(node);
+
+            if(current == null)
+                return result;
+
+            if(current.hasRootItem)
+                result.add(new TreeEntry<>(this, path.truncateTo(i + 1), current.rootItem));
+        }
+
+        return result;
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getImmediateEntries()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branches.entrySet())
+            if(entry.getValue().hasRootItem)
+                result.add(new TreeEntry<>(this, new TreePath<>(entry.getKey()), entry.getValue().rootItem));
+
+        return result;
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getImmediateEntriesInOrder(Comparator<? super TNode> comparator)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        branches.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey(comparator))
+                .forEachOrdered(entry ->
+        {
+            if(entry.getValue().hasRootItem)
+                result.add(new TreeEntry<>(RecursiveTree.this,
+                                           new TreePath<>(entry.getKey()),
+                                           entry.getValue().rootItem));
+        });
+
+        return result;
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getRootAndImmediateEntries()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        if(hasRootItem)
+            result.add(new TreeEntry<>(this, TreePath.root(), rootItem));
+
+        for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branches.entrySet())
+            if(entry.getValue().hasRootItem)
+                result.add(new TreeEntry<>(this, new TreePath<>(entry.getKey()), entry.getValue().rootItem));
+
+        return result;
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getRootAndImmediateEntriesInOrder(Comparator<? super TNode> comparator)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        if(hasRootItem)
+            result.add(new TreeEntry<>(this, TreePath.root(), rootItem));
+
+        branches.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey(comparator))
+                .forEachOrdered(entry ->
+        {
+            if(entry.getValue().hasRootItem)
+                result.add(new TreeEntry<>(RecursiveTree.this,
+                                           new TreePath<>(entry.getKey()),
+                                           entry.getValue().rootItem));
+        });
+
+        return result;
     }
 
     @Override
     public Tree<TNode, TLeaf> getBranch(TreePath<TNode> path)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        RecursiveTree<TNode, TLeaf> internalBranch = getInternalBranch(path);
+        return internalBranch == null ? new RecursiveTree<>() : new RecursiveTree<>(internalBranch);
     }
 
     @Override
     public Map<TNode, Tree<TNode, TLeaf>> getBranches()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Map<TNode, Tree<TNode, TLeaf>> result = new HashMap<>();
+
+        for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branches.entrySet())
+            result.put(entry.getKey(), new RecursiveTree<>(entry.getValue()));
+
+        return result;
     }
 
     @Override
     public Collection<TreePath<TNode>> getPaths()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        Collection<TreePath<TNode>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+
+            if(branch.hasRootItem)
+                result.add(path);
+        }
+
+        return result;
     }
 
     @Override
-    public List<TreePath<TNode>> getPathsInOrder(Comparator<? extends TNode> comparator)
+    public List<TreePath<TNode>> getPathsInOrder(Comparator<? super TNode> comparator)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
+                = Map.Entry.comparingByKey(comparator.reversed());
+
+        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
+        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
+        List<TreePath<TNode>> result = new ArrayList<>();
+
+        while(!branchStack.isEmpty())
+        {
+            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+            TreePath<TNode> path = branchWithPath.getPath();
+
+            branch.branches.entrySet()
+                           .stream()
+                           .sorted(mapEntryComparator)
+                           .forEachOrdered(entry ->
+            {
+                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+            });
+
+            if(branch.hasRootItem)
+                result.add(path);
+        }
+
+        return result;
     }
 
     @Override
     public Tree<TNode, TLeaf> getBranchView(TreePath<TNode> path)
-    {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
-    }
+    { return new RecursiveTreeView<>(this, path); }
 
     @Override
     public Map<TNode, Tree<TNode, TLeaf>> getBranchViews()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Map<TNode, Tree<TNode, TLeaf>> result = new HashMap<>();
+
+        for(TNode node : branches.keySet())
+            result.put(node, new RecursiveTreeView<>(this, new TreePath<>(node)));
+
+        return result;
     }
 
     @Override
     public TLeaf setRootItem(TLeaf newItem)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        TLeaf old = hasRootItem ? rootItem : null;
+        hasRootItem = true;
+        rootItem = newItem;
+        return old;
     }
 
     @Override
     public TLeaf setRootItemIfAbsent(TLeaf newItem)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        TLeaf old = hasRootItem ? rootItem : null;
+
+        if(!hasRootItem)
+        {
+            hasRootItem = true;
+            rootItem = newItem;
+        }
+
+        return old;
     }
 
     @Override
     public TLeaf setRootItemIf(TLeaf newItem, BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        TLeaf old = hasRootItem ? rootItem : null;
+
+        if(test.test(TreePath.root(), old))
+        {
+            hasRootItem = true;
+            rootItem = newItem;
+        }
+
+        return old;
     }
 
     @Override
     public TLeaf setAt(TreePath<TNode> path, TLeaf newItem)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        RecursiveTree<TNode, TLeaf> branch = getOrCreateInternalBranch(path);
+        TLeaf old = branch.hasRootItem ? branch.rootItem : null;
+        branch.hasRootItem = true;
+        branch.rootItem = newItem;
+        return old;
     }
 
     @Override
     public TLeaf setAtIfAbsent(TreePath<TNode> path, TLeaf newItem)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        RecursiveTree<TNode, TLeaf> branch = getOrCreateInternalBranch(path);
+        TLeaf old = branch.hasRootItem ? branch.rootItem : null;
+
+        if(!branch.hasRootItem)
+        {
+            branch.hasRootItem = true;
+            branch.rootItem = newItem;
+        }
+
+        return old;
     }
 
     @Override
     public TLeaf setAtIf(TreePath<TNode> path, TLeaf newItem, BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        RecursiveTree<TNode, TLeaf> branch = getInternalBranch(path);
+        TLeaf old = (branch != null && branch.hasRootItem) ? (branch.rootItem) : (null);
+
+        if(test.test(path, old))
+        {
+            if(branch == null)
+                branch = getOrCreateInternalBranch(path);
+
+            branch.hasRootItem = true;
+            branch.rootItem = newItem;
+        }
+
+        return old;
     }
 
     @Override
     public void clear()
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        hasRootItem = false;
+        rootItem = null;
+        branches.clear();
     }
 
     @Override
     public void clearUnderRoot()
-    {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
-    }
+    { branches.clear(); }
 
     @Override
     public void clearWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Collection<TreeEntry<TNode, TLeaf>> entries = getEntriesWhere(test);
+
+        for(TreeEntry<TNode, TLeaf> entry : entries)
+            clearAt(entry.getPath());
+
+        trim();
     }
 
     @Override
     public void clearWherePath(Predicate<? super TreePath<TNode>> test)
     {
-        // TO DO: Write.
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Collection<TreePath<TNode>> paths = getPaths();
+
+        for(TreePath<TNode> path : paths)
+            if(test.test(path))
+                clearAt(path);
+
+        trim();
     }
 
     @Override

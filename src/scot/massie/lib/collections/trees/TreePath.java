@@ -31,7 +31,7 @@ public class TreePath<TNode>
     public static <TNode> TreePath<TNode> fromStream(Stream<? extends TNode> path)
     { return new TreePath<>(path.collect(Collectors.toList())); }
 
-    public static <TNode> TreePath<TNode> getRoot()
+    public static <TNode> TreePath<TNode> root()
     { return new TreePath<>(); }
     //endregion
 
@@ -119,6 +119,18 @@ public class TreePath<TNode>
 
     public TreePath<TNode> getParent()
     { return (nodes.size() >= 1) ? (new TreePath<>(nodes.subList(0, nodes.size() - 1))) : (null); }
+
+    public TreePath<TNode> truncateTo(int newLength)
+    {
+        if(newLength < 0)
+            throw new IllegalArgumentException("TreePath.truncateTo can only shorten tree paths to a positive number "
+                                               + "of nodes");
+
+        if(newLength >= nodes.size())
+            return this;
+
+        return new TreePath<>(nodes.subList(0, newLength));
+    }
 
     public TreePath<TNode> withoutFirstNodes(int numberOfNodesToDrop)
     {

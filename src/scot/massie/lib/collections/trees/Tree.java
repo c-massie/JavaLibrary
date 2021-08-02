@@ -147,6 +147,9 @@ public interface Tree<TNode, TLeaf>
 
     Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<? super TreeEntry<TNode, TLeaf>> test);
 
+    default Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
+    { return getEntriesWhere(x -> test.test(x.path, x.item)); }
+
     List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(Comparator<? super TNode> comparator,
                                                          Predicate<? super TreeEntry<TNode, TLeaf>> test);
 
@@ -209,7 +212,7 @@ public interface Tree<TNode, TLeaf>
     //region get paths
     Collection<TreePath<TNode>> getPaths();
 
-    List<TreePath<TNode>> getPathsInOrder(Comparator<? extends TNode> comparator);
+    List<TreePath<TNode>> getPathsInOrder(Comparator<? super TNode> comparator);
     //endregion
 
     //region get branch views
