@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -278,6 +279,27 @@ public interface Tree<TNode, TLeaf>
     //endregion
 
     //region string representations
-    String toTreeString();
+    default String toTreeString()
+    { return toTreeString((o1, o2) -> 0); }
+
+    default String toTreeString(Comparator<? super TNode> comparator)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        if(hasRootItem())
+            sb.append("[(root)] = ").append(Objects.toString(getRootItem(), "(null)"));
+        else
+            sb.append("[(root)]");
+
+        for(TreeEntry<TNode, TLeaf> entry : getEntriesInOrder(comparator))
+        {
+            sb.append("\n[")
+              .append(entry.getPath().toString())
+              .append("] = ")
+              .append(Objects.toString(entry.getItem(), "(null)"));
+        }
+
+        return sb.toString();
+    }
     //endregion
 }

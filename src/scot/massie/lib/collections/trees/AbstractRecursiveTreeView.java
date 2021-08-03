@@ -700,15 +700,4 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
 
         return sourceBranch.countDepth();
     }
-
-    @Override
-    public String toTreeString()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return "[root]";
-
-        return sourceBranch.toTreeString();
-    }
 }
