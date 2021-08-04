@@ -8,11 +8,10 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
@@ -94,10 +93,58 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         }
     }
 
+    @SuppressWarnings("PackageVisibleField") // Is a POD class.
+    static class BranchWithAlreadyCoveredState<TNode, TLeaf>
+    {
+        final RecursiveTree<TNode, TLeaf> branch;
+        boolean alreadyCovered = false;
+
+        public BranchWithAlreadyCoveredState(RecursiveTree<TNode, TLeaf> branch)
+        { this.branch = branch; }
+    }
+
     void trim()
     {
-        // TO DO: Write
-        throw new UnsupportedOperationException("Not yet implemented.");
+        Deque<BranchWithAlreadyCoveredState<TNode, TLeaf>> stack = new ArrayDeque<>();
+        stack.add(new BranchWithAlreadyCoveredState<>(this));
+
+        while(!stack.isEmpty())
+        {
+            /*
+                initialStackSize = stack size
+
+                for each sub-branch of branch:
+                    if the sub-branch has no root item and no branches:
+                        remove it from the branch
+                    else if (branch has not already been covered) and (sub-branch has branches):
+                        add sub-branch to the stack
+
+                if stack size == initialStackSize:
+                    remove branch from stack
+             */
+
+            BranchWithAlreadyCoveredState<TNode, TLeaf> branchWithAlreadyCoveredState = stack.getLast();
+            RecursiveTree<TNode, TLeaf> branch = branchWithAlreadyCoveredState.branch;
+            boolean alreadyCovered = branchWithAlreadyCoveredState.alreadyCovered;
+
+            int initialStackSize = stack.size();
+
+            for(Iterator<RecursiveTree<TNode, TLeaf>> iter = branch.branches.values().iterator(); iter.hasNext(); )
+            {
+                RecursiveTree<TNode, TLeaf> subBranch = iter.next();
+
+                if(subBranch.branches.isEmpty())
+                {
+                    if(!subBranch.hasRootItem)
+                        iter.remove();
+                }
+                else if(!alreadyCovered)
+                    stack.add(new BranchWithAlreadyCoveredState<>(subBranch));
+            }
+
+            if(stack.size() == initialStackSize) // If no sub-branches have been added to the stack
+                stack.remove();
+        }
     }
 
     @Override
@@ -384,7 +431,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 
         while(!branchStack.isEmpty())
         {
-            RecursiveTree<TNode, TLeaf> current = branchStack.remove();
+            RecursiveTree<TNode, TLeaf> current = branchStack.removeLast();
             branchStack.addAll(current.branches.values());
 
             if(current.hasRootItem)
@@ -1150,7 +1197,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 
         while(!branchStack.isEmpty())
         {
-            RecursiveTree<TNode, TLeaf> current = branchStack.remove();
+            RecursiveTree<TNode, TLeaf> current = branchStack.removeLast();
             branchStack.addAll(current.branches.values());
 
             if(current.hasRootItem)
