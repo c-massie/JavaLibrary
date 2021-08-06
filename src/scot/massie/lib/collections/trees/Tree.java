@@ -148,11 +148,17 @@ public interface Tree<TNode, TLeaf>
 
     Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<? super TreeEntry<TNode, TLeaf>> test);
 
-    default Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
+    default Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(
+            BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     { return getEntriesWhere(x -> test.test(x.path, x.item)); }
 
     List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(Comparator<? super TNode> comparator,
                                                          Predicate<? super TreeEntry<TNode, TLeaf>> test);
+
+    default List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(
+            Comparator<? super TNode> comparator,
+            BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
+    { return getEntriesInOrderWhere(comparator, x -> test.test(x.path, x.item)); }
 
     Collection<TreeEntry<TNode, TLeaf>> getEntriesWherePath(Predicate<? super TreePath<TNode>> test);
 

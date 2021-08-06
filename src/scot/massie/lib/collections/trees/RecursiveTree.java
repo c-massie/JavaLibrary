@@ -150,7 +150,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         }
     }
 
-    void forEachBranch(Consumer<? super RecursiveTree<TNode, TLeaf>> f, boolean includeRoot)
+    void forEachItem(Consumer<? super TLeaf> f, boolean includeRoot)
     {
         Deque<RecursiveTree<TNode, TLeaf>> branchStack
                 = new ArrayDeque<>(includeRoot ? Collections.singleton(this) : this.branches.values());
@@ -160,12 +160,13 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             RecursiveTree<TNode, TLeaf> current = branchStack.removeLast();
             branchStack.addAll(current.branches.values());
 
-            f.accept(current);
+            if(current.hasRootItem)
+                f.accept(current.rootItem);
         }
     }
 
-    void forEachBranchInOrder(Comparator<? super TNode> comparator,
-                              Consumer<? super RecursiveTree<TNode, TLeaf>> f,
+    void forEachItemInOrder(Comparator<? super TNode> comparator,
+                              Consumer<? super TLeaf> f,
                               boolean includeRoot)
     {
         Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
@@ -190,12 +191,12 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
                            .sorted(mapEntryComparator)
                            .forEachOrdered(x -> branchStack.add(x.getValue()));
 
-            f.accept(branch);
+            if(branch.hasRootItem)
+                f.accept(branch.rootItem);
         }
     }
 
-    void forEachBranchWithPath(BiConsumer<? super TreePath<TNode>, ? super RecursiveTree<TNode, TLeaf>> f,
-                               boolean includeRoot)
+    void forEachItemWithPath(BiConsumer<? super TreePath<TNode>, ? super TLeaf> f,  boolean includeRoot)
     {
         Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
 
@@ -214,13 +215,14 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
                 branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
 
-            f.accept(path, branch);
+            if(branch.hasRootItem)
+                f.accept(path, branch.rootItem);
         }
     }
 
-    void forEachBranchWithPathInOrder(Comparator<? super TNode> comparator,
-                                      BiConsumer<? super TreePath<TNode>, ? super RecursiveTree<TNode, TLeaf>> f,
-                                      boolean includeRoot)
+    void forEachItemWithPathInOrder(Comparator<? super TNode> comparator,
+                                    BiConsumer<? super TreePath<TNode>, ? super TLeaf> f,
+                                    boolean includeRoot)
     {
         Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
                 = Map.Entry.comparingByKey(comparator.reversed());
@@ -231,6 +233,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
         else
         {
+            //noinspection CodeBlock2Expr Clearer as a block.
             branches.entrySet()
                     .stream()
                     .sorted(mapEntryComparator)
@@ -244,41 +247,43 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
             RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
             TreePath<TNode> path = branchWithPath.getPath();
 
+            //noinspection CodeBlock2Expr Clearer as a block.
             branch.branches.entrySet()
                            .stream()
                            .sorted(mapEntryComparator)
                            .forEachOrdered(x ->
             { branchStack.add(new TreeBranchWithPath<>(x.getValue(), path.appendedWith(x.getKey()))); });
 
-            f.accept(path, branch);
+            if(branch.hasRootItem)
+                f.accept(path, branch.rootItem);
         }
     }
 
-    void forEachBranch(Consumer<? super RecursiveTree<TNode, TLeaf>> f)
-    { forEachBranch(f, true); }
+    void forEachItem(Consumer<? super TLeaf> f)
+    { forEachItem(f, true); }
 
-    void forEachBranchInOrder(Comparator<? super TNode> comparator, Consumer<? super RecursiveTree<TNode, TLeaf>> f)
-    { forEachBranchInOrder(comparator, f, true); }
+    void forEachItemInOrder(Comparator<? super TNode> comparator, Consumer<? super TLeaf> f)
+    { forEachItemInOrder(comparator, f, true); }
 
-    void forEachBranchUnderRoot(Consumer<? super RecursiveTree<TNode, TLeaf>> f)
-    { forEachBranch(f, false); }
+    void forEachItemUnderRoot(Consumer<? super TLeaf> f)
+    { forEachItem(f, false); }
 
-    void forEachBranchUnderRootInOrder(Comparator<? super TNode> comparator, Consumer<? super RecursiveTree<TNode, TLeaf>> f)
-    { forEachBranchInOrder(comparator, f, false); }
+    void forEachItemUnderRootInOrder(Comparator<? super TNode> comparator, Consumer<? super TLeaf> f)
+    { forEachItemInOrder(comparator, f, false); }
 
-    void forEachBranchWithPath(BiConsumer<? super TreePath<TNode>, ? super RecursiveTree<TNode, TLeaf>> f)
-    { forEachBranchWithPath(f, true); }
+    void forEachItemWithPath(BiConsumer<? super TreePath<TNode>, ? super TLeaf> f)
+    { forEachItemWithPath(f, true); }
 
-    void forEachBranchWithPathInOrder(Comparator<? super TNode> comparator,
-                                      BiConsumer<? super TreePath<TNode>, ? super RecursiveTree<TNode, TLeaf>> f)
-    { forEachBranchWithPathInOrder(comparator, f, true); }
+    void forEachItemWithPathInOrder(Comparator<? super TNode> comparator,
+                                    BiConsumer<? super TreePath<TNode>, ? super TLeaf> f)
+    { forEachItemWithPathInOrder(comparator, f, true); }
 
-    void forEachBranchWithPathUnderRoot(BiConsumer<? super TreePath<TNode>, ? super RecursiveTree<TNode, TLeaf>> f)
-    { forEachBranchWithPath(f, false); }
+    void forEachItemWithPathUnderRoot(BiConsumer<? super TreePath<TNode>, ? super TLeaf> f)
+    { forEachItemWithPath(f, false); }
 
-    void forEachBranchWithPathUnderRootInOrder(Comparator<? super TNode> comparator,
-                                      BiConsumer<? super TreePath<TNode>, ? super RecursiveTree<TNode, TLeaf>> f)
-    { forEachBranchWithPathInOrder(comparator, f, false); }
+    void forEachItemWithPathUnderRootInOrder(Comparator<? super TNode> comparator,
+                                             BiConsumer<? super TreePath<TNode>, ? super TLeaf> f)
+    { forEachItemWithPathInOrder(comparator, f, false); }
 
     @Override
     public boolean hasItems()
@@ -292,7 +297,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     { return !branches.isEmpty(); } // Assumes that tree is trimmed
 
     @Override
-    public boolean hasItemsAlong(TreePath<TNode> path)
+    public boolean hasItemsAlong(@SuppressWarnings("BoundedWildcard") TreePath<TNode> path)
     {
         RecursiveTree<TNode, TLeaf> branch = this;
 
@@ -307,6 +312,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
                 return false;
         }
 
+        //noinspection RedundantIfStatement Is a step in a process, the final result after all steps is false.
         if(branch.hasRootItem)
             return true;
 
@@ -314,7 +320,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     }
 
     @Override
-    public boolean hasNonRootItemsAlong(TreePath<TNode> path)
+    public boolean hasNonRootItemsAlong(@SuppressWarnings("BoundedWildcard") TreePath<TNode> path)
     {
         RecursiveTree<TNode, TLeaf> branch = this;
 
@@ -397,13 +403,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<TLeaf> getItemsWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
         Collection<TLeaf> result = new ArrayList<>();
-
-        forEachBranchWithPath((path, branch) ->
-        {
-            if(branch.hasRootItem && test.test(path, branch.rootItem))
-                result.add(branch.rootItem);
-        });
-
+        forEachItemWithPath((path, item) -> { if(test.test(path, item)) result.add(item); });
         return result;
     }
 
@@ -411,13 +411,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<TLeaf> getItemsWherePath(Predicate<? super TreePath<TNode>> test)
     {
         Collection<TLeaf> result = new ArrayList<>();
-
-        forEachBranchWithPath((path, branch) ->
-        {
-            if(branch.hasRootItem && test.test(path))
-                result.add(branch.rootItem);
-        });
-
+        forEachItemWithPath((path, item) -> { if(test.test(path)) result.add(item); });
         return result;
     }
 
@@ -426,13 +420,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
                                                   BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
         Collection<TLeaf> result = new ArrayList<>();
-
-        forEachBranchWithPathInOrder(comparator, (path, branch) ->
-        {
-            if(branch.hasRootItem && test.test(path, branch.rootItem))
-                result.add(branch.rootItem);
-        });
-
+        forEachItemWithPathInOrder(comparator, (path, item) -> { if(test.test(path, item)) result.add(item); });
         return result;
     }
 
@@ -441,13 +429,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
                                                       Predicate<? super TreePath<TNode>> test)
     {
         Collection<TLeaf> result = new ArrayList<>();
-
-        forEachBranchWithPathInOrder(comparator, (path, branch) ->
-        {
-            if(branch.hasRootItem && test.test(path))
-                result.add(branch.rootItem);
-        });
-
+        forEachItemWithPathInOrder(comparator, (path, item) -> { if(test.test(path)) result.add(item); });
         return result;
     }
 
@@ -455,13 +437,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<TLeaf> getItemsUnderRoot()
     {
         Collection<TLeaf> result = new ArrayList<>();
-
-        forEachBranchUnderRoot(branch ->
-        {
-            if(branch.hasRootItem)
-                result.add(branch.rootItem);
-        });
-
+        forEachItemUnderRoot(result::add);
         return result;
     }
 
@@ -469,18 +445,12 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public List<TLeaf> getItemsUnderRootInOrder(Comparator<? super TNode> comparator)
     {
         List<TLeaf> result = new ArrayList<>();
-
-        forEachBranchUnderRootInOrder(comparator, branch ->
-        {
-            if(branch.hasRootItem)
-                result.add(branch.rootItem);
-        });
-
+        forEachItemUnderRootInOrder(comparator, result::add);
         return result;
     }
 
     @Override
-    public List<TLeaf> getItemsAlong(TreePath<TNode> path)
+    public List<TLeaf> getItemsAlong(@SuppressWarnings("BoundedWildcard") TreePath<TNode> path)
     {
         List<TLeaf> result = new ArrayList<>();
         RecursiveTree<TNode, TLeaf> current = this;
@@ -503,7 +473,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     }
 
     @Override
-    public List<TLeaf> getItemsUnderRootAlong(TreePath<TNode> path)
+    public List<TLeaf> getItemsUnderRootAlong(@SuppressWarnings("BoundedWildcard") TreePath<TNode> path)
     {
         List<TLeaf> result = new ArrayList<>();
         RecursiveTree<TNode, TLeaf> current = this;
@@ -590,13 +560,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public Collection<TreeEntry<TNode, TLeaf>> getEntries()
     {
         Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
-
-        forEachBranchWithPath((path, branch) ->
-        {
-            if(branch.hasRootItem)
-                result.add(new TreeEntry<>(RecursiveTree.this, path, branch.rootItem));
-        });
-
+        forEachItemWithPath((path, item) -> result.add(new TreeEntry<>(this, path, item)));
         return result;
     }
 
@@ -604,40 +568,36 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrder(Comparator<? super TNode> comparator)
     {
         List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
-
-        forEachBranchWithPathInOrder(comparator, (path, branch) ->
-        {
-            if(branch.hasRootItem)
-                result.add(new TreeEntry<>(RecursiveTree.this, path, branch.rootItem));
-        });
-
+        forEachItemWithPathInOrder(comparator, (path, item) -> result.add(new TreeEntry<>(this, path, item)));
         return result;
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<? super TreeEntry<TNode, TLeaf>> test)
     {
-        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
-        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
         Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
 
-        while(!branchStack.isEmpty())
+        forEachItemWithPath((path, item) ->
         {
-            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
-            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
-            TreePath<TNode> path = branchWithPath.getPath();
+            TreeEntry<TNode, TLeaf> entry = new TreeEntry<>(this, path, item);
 
-            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
-                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+            if(test.test(entry))
+                result.add(entry);
+        });
 
-            if(branch.hasRootItem)
-            {
-                TreeEntry<TNode, TLeaf> treeEntry = new TreeEntry<>(this, path, branch.rootItem);
+        return result;
+    }
 
-                if(test.test(treeEntry))
-                    result.add(treeEntry);
-            }
-        }
+    @Override
+    public Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
+    {
+        Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        forEachItemWithPath((path, item) ->
+        {
+            if(test.test(path, item))
+                result.add(new TreeEntry<>(this, path, item));
+        });
 
         return result;
     }
@@ -646,35 +606,31 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(Comparator<? super TNode> comparator,
                                                                 Predicate<? super TreeEntry<TNode, TLeaf>> test)
     {
-        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
-                = Map.Entry.comparingByKey(comparator.reversed());
-
-        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
-        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
         List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
 
-        while(!branchStack.isEmpty())
+        forEachItemWithPathInOrder(comparator, (path, item) ->
         {
-            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
-            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
-            TreePath<TNode> path = branchWithPath.getPath();
+            TreeEntry<TNode, TLeaf> entry = new TreeEntry<>(this, path, item);
 
-            branch.branches.entrySet()
-                           .stream()
-                           .sorted(mapEntryComparator)
-                           .forEachOrdered(entry ->
-            {
-                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
-            });
+            if(test.test(entry))
+                result.add(entry);
+        });
 
-            if(branch.hasRootItem)
-            {
-                TreeEntry<TNode, TLeaf> treeEntry = new TreeEntry<>(this, path, branch.rootItem);
+        return result;
+    }
 
-                if(test.test(treeEntry))
-                    result.add(treeEntry);
-            }
-        }
+    @Override
+    public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(
+            Comparator<? super TNode> comparator,
+            BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
+    {
+        List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
+
+        forEachItemWithPathInOrder(comparator, (path, item) ->
+        {
+            if(test.test(path, item))
+                result.add(new TreeEntry<>(this, path, item));
+        });
 
         return result;
     }
@@ -682,23 +638,8 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesWherePath(Predicate<? super TreePath<TNode>> test)
     {
-        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
-        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
         Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
-
-        while(!branchStack.isEmpty())
-        {
-            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
-            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
-            TreePath<TNode> path = branchWithPath.getPath();
-
-            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
-                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
-
-            if(branch.hasRootItem && test.test(path))
-                result.add(new TreeEntry<>(this, path, branch.rootItem));
-        }
-
+        forEachItemWithPath((path, item) -> { if(test.test(path)) result.add(new TreeEntry<>(this, path, item)); });
         return result;
     }
 
@@ -706,30 +647,12 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWherePath(Comparator<? super TNode> comparator,
                                                                     Predicate<? super TreePath<TNode>> test)
     {
-        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
-                = Map.Entry.comparingByKey(comparator.reversed());
-
-        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
-        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
         List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
-
-        while(!branchStack.isEmpty())
+        forEachItemWithPathInOrder(comparator, (path, item) ->
         {
-            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
-            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
-            TreePath<TNode> path = branchWithPath.getPath();
-
-            branch.branches.entrySet()
-                           .stream()
-                           .sorted(mapEntryComparator)
-                           .forEachOrdered(entry ->
-            {
-                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
-            });
-
-            if(branch.hasRootItem && test.test(path))
-                result.add(new TreeEntry<>(this, path, branch.rootItem));
-        }
+            if(test.test(path))
+                result.add(new TreeEntry<>(this, path, item));
+        });
 
         return result;
     }
@@ -737,60 +660,16 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesUnderRoot()
     {
-        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
-
-        for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branches.entrySet())
-            branchStack.add(new TreeBranchWithPath<>(entry.getValue(), new TreePath<>(entry.getKey())));
-
         Collection<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
-
-        while(!branchStack.isEmpty())
-        {
-            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
-            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
-            TreePath<TNode> path = branchWithPath.getPath();
-
-            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
-                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
-
-            if(branch.hasRootItem)
-                result.add(new TreeEntry<>(this, path, branch.rootItem));
-        }
-
+        forEachItemWithPathUnderRoot((path, item) -> result.add(new TreeEntry<>(this, path, item)));
         return result;
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesUnderRootInOrder(Comparator<? super TNode> comparator)
     {
-        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
-                = Map.Entry.comparingByKey(comparator.reversed());
-
-        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
-
-        for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branches.entrySet())
-            branchStack.add(new TreeBranchWithPath<>(entry.getValue(), new TreePath<>(entry.getKey())));
-
         List<TreeEntry<TNode, TLeaf>> result = new ArrayList<>();
-
-        while(!branchStack.isEmpty())
-        {
-            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
-            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
-            TreePath<TNode> path = branchWithPath.getPath();
-
-            branch.branches.entrySet()
-                           .stream()
-                           .sorted(mapEntryComparator)
-                           .forEachOrdered(entry ->
-            {
-                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
-            });
-
-            if(branch.hasRootItem)
-                result.add(new TreeEntry<>(this, path, branch.rootItem));
-        }
-
+        forEachItemWithPathUnderRootInOrder(comparator, (path, item) -> result.add(new TreeEntry<>(this, path, item)));
         return result;
     }
 
@@ -928,54 +807,16 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     @Override
     public Collection<TreePath<TNode>> getPaths()
     {
-        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
-        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
         Collection<TreePath<TNode>> result = new ArrayList<>();
-
-        while(!branchStack.isEmpty())
-        {
-            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
-            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
-            TreePath<TNode> path = branchWithPath.getPath();
-
-            for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
-                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
-
-            if(branch.hasRootItem)
-                result.add(path);
-        }
-
+        forEachItemWithPath((path, item) -> result.add(path));
         return result;
     }
 
     @Override
     public List<TreePath<TNode>> getPathsInOrder(Comparator<? super TNode> comparator)
     {
-        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
-                = Map.Entry.comparingByKey(comparator.reversed());
-
-        Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack = new ArrayDeque<>();
-        branchStack.add(new TreeBranchWithPath<>(this, TreePath.root()));
         List<TreePath<TNode>> result = new ArrayList<>();
-
-        while(!branchStack.isEmpty())
-        {
-            TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
-            RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
-            TreePath<TNode> path = branchWithPath.getPath();
-
-            branch.branches.entrySet()
-                           .stream()
-                           .sorted(mapEntryComparator)
-                           .forEachOrdered(entry ->
-            {
-                branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
-            });
-
-            if(branch.hasRootItem)
-                result.add(path);
-        }
-
+        forEachItemWithPathInOrder(comparator, (path, item) -> result.add(path));
         return result;
     }
 
@@ -1092,7 +933,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         Collection<TreeEntry<TNode, TLeaf>> entries = getEntriesWhere(test);
 
         for(TreeEntry<TNode, TLeaf> entry : entries)
-            clearAt(entry.getPath());
+            getInternalBranch(entry.getPath()).clearRoot();
 
         trim();
     }
@@ -1104,7 +945,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 
         for(TreePath<TNode> path : paths)
             if(test.test(path))
-                clearAt(path);
+                getInternalBranch(path).clearRoot();
 
         trim();
     }
@@ -1172,45 +1013,16 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     @Override
     public List<TLeaf> toList()
     {
-        Deque<RecursiveTree<TNode, TLeaf>> branchStack = new ArrayDeque<>();
-        branchStack.add(this);
         List<TLeaf> result = new ArrayList<>();
-
-        while(!branchStack.isEmpty())
-        {
-            RecursiveTree<TNode, TLeaf> current = branchStack.removeLast();
-            branchStack.addAll(current.branches.values());
-
-            if(current.hasRootItem)
-                result.add(current.rootItem);
-        }
-
+        forEachItem(result::add);
         return result;
     }
 
     @Override
     public List<TLeaf> toOrderedList(Comparator<? super TNode> comparator)
     {
-        Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
-                = Map.Entry.comparingByKey(comparator.reversed());
-
-        Deque<RecursiveTree<TNode, TLeaf>> branchStack = new ArrayDeque<>();
-        branchStack.add(this);
         List<TLeaf> result = new ArrayList<>();
-
-        while(!branchStack.isEmpty())
-        {
-            RecursiveTree<TNode, TLeaf> branch = branchStack.removeLast();
-
-            branch.branches.entrySet()
-                           .stream()
-                           .sorted(mapEntryComparator)
-                           .forEachOrdered(x -> branchStack.add(x.getValue()));
-
-            if(branch.hasRootItem)
-                result.add(branch.rootItem);
-        }
-
+        forEachItemInOrder(comparator, result::add);
         return result;
     }
 
@@ -1228,20 +1040,9 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     @Override
     public int size()
     {
-        Deque<RecursiveTree<TNode, TLeaf>> branchStack = new ArrayDeque<>();
-        branchStack.add(this);
-        int result = 0;
-
-        while(!branchStack.isEmpty())
-        {
-            RecursiveTree<TNode, TLeaf> current = branchStack.removeLast();
-            branchStack.addAll(current.branches.values());
-
-            if(current.hasRootItem)
-                result++;
-        }
-
-        return result;
+        final int[] result = {0};
+        forEachItem(x -> result[0]++);
+        return result[0];
     }
 
     @Override
