@@ -19,12 +19,15 @@ import java.util.function.Predicate;
 
 public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 {
+    //region fields
     protected TLeaf rootItem = null;
 
     protected boolean hasRootItem = false;
 
     protected final Map<TNode, RecursiveTree<TNode, TLeaf>> branches = new HashMap<>();
+    //endregion
 
+    //region initialisation
     public RecursiveTree()
     {}
 
@@ -33,7 +36,10 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
         for(TreeEntry<TNode, TLeaf> entry : other.getEntries())
             setAt(entry.getPath(), entry.getItem());
     }
+    //endregion
 
+    //region methods
+    //region get internal branches
     RecursiveTree<TNode, TLeaf> getInternalDirectBranch(TNode branchPathStart)
     { return branches.get(branchPathStart); }
 
@@ -65,7 +71,9 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 
         return current;
     }
+    //endregion
 
+    //region trim
     void trim(@SuppressWarnings("BoundedWildcard")
                       /* Should not be TreePath<? extends TNode> */
                       TreePath<TNode> path)
@@ -149,7 +157,9 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
                 stack.remove();
         }
     }
+    //endregion
 
+    //region loop over items
     void forEachItem(Consumer<? super TLeaf> f, boolean includeRoot)
     {
         Deque<RecursiveTree<TNode, TLeaf>> branchStack
@@ -284,7 +294,9 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     void forEachItemWithPathUnderRootInOrder(Comparator<? super TNode> comparator,
                                              BiConsumer<? super TreePath<TNode>, ? super TLeaf> f)
     { forEachItemWithPathInOrder(comparator, f, false); }
+    //endregion
 
+    //region Tree implementation
     @Override
     public boolean hasItems()
     {
@@ -1056,4 +1068,6 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 
         return maxDepth;
     }
+    //endregion
+    //endregion
 }

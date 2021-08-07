@@ -10,17 +10,44 @@ import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
+/**
+ * <p>Tree data structure that stores items by placing items at paths and accessing them based on those paths.</p>
+ *
+ * <p>Paths are represented by the {@link TreePath} type, an ordered collection of nodes for navigating trees. See
+ * associated terminology.</p>
+ * @param <TNode> The type of the nodes of the paths used.
+ * @param <TLeaf> The type of the items being stored.
+ */
 public interface Tree<TNode, TLeaf>
 {
     //region check state of contents
     //region has items
+
+    /**
+     * Gets whether this tree contains any items at any paths.
+     * @return True if this tree contains any items at any paths. Otherwise, false.
+     */
     boolean hasItems();
 
+    /**
+     * Gets whether this tree contains any items at any paths other than root.
+     * @return True if this tree contains any items at any paths other than root. Otherwise, false.
+     */
     boolean hasNonRootItems();
 
+    /**
+     * Gets whether this tree contains any items at any paths starting with (including) the given path.
+     * @param path The path to check for the presence of any items at or under.
+     * @return True if this tree contains any items at any paths starting with (including) the given path.
+     */
     default boolean hasItemsAtOrUnder(TreePath<TNode> path)
     { return getBranchView(path).hasItems(); }
 
+    /**
+     * Gets whether this tree contains any items at any paths starting with (but not including) the given path.
+     * @param path The path to check for the presence of any items under.
+     * @return
+     */
     default boolean hasItemsUnder(TreePath<TNode> path)
     { return getBranchView(path).hasNonRootItems(); }
 
