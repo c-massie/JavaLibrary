@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -176,8 +177,8 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     }
 
     void forEachItemInOrder(Comparator<? super TNode> comparator,
-                              Consumer<? super TLeaf> f,
-                              boolean includeRoot)
+                            Consumer<? super TLeaf> f,
+                            boolean includeRoot)
     {
         Comparator<Map.Entry<TNode, RecursiveTree<TNode, TLeaf>>> mapEntryComparator
                 = Map.Entry.comparingByKey(comparator.reversed());
@@ -1068,6 +1069,63 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
 
         return maxDepth;
     }
+    //endregion
+
+    //region Iterable implementation
+    @Override
+    public Iterator<TreeEntry<TNode, TLeaf>> iterator()
+    {
+        return new Iterator<TreeEntry<TNode, TLeaf>>()
+        {
+            private final Deque<TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf>> branchStack;
+
+            private TreeEntry<TNode, TLeaf> nextResult;
+
+            {
+                branchStack = new ArrayDeque<>();
+                branchStack.add(new TreeBranchWithPath<>(RecursiveTree.this, TreePath.root()));
+                nextResult = progress();
+            }
+
+            @Override
+            public boolean hasNext()
+            { return nextResult != null; }
+
+            @Override
+            public TreeEntry<TNode, TLeaf> next()
+            {
+                TreeEntry<TNode, TLeaf> result = nextResult;
+
+                if(result == null)
+                    throw new NoSuchElementException();
+
+                nextResult = progress();
+                return nextResult;
+            }
+
+            TreeEntry<TNode, TLeaf> progress()
+            {
+                while(!branchStack.isEmpty())
+                {
+                    TreeBranchWithPath<RecursiveTree<TNode, TLeaf>, TNode, TLeaf> branchWithPath = branchStack.removeLast();
+                    RecursiveTree<TNode, TLeaf> branch = branchWithPath.getBranch();
+                    TreePath<TNode> path = branchWithPath.getPath();
+
+                    for(Map.Entry<TNode, RecursiveTree<TNode, TLeaf>> entry : branch.branches.entrySet())
+                        branchStack.add(new TreeBranchWithPath<>(entry.getValue(), path.appendedWith(entry.getKey())));
+
+                    if(branch.hasRootItem)
+                        return new TreeEntry<>(RecursiveTree.this, path, branch.rootItem);
+                }
+
+                return null;
+            }
+        };
+    }
+
+    @Override
+    public void forEach(Consumer<? super TreeEntry<TNode, TLeaf>> action)
+    { forEachItemWithPath((path, item) -> action.accept(new TreeEntry<>(this, path, item))); }
     //endregion
     //endregion
 }

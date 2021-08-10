@@ -18,7 +18,7 @@ import java.util.function.Predicate;
  * @param <TNode> The type of the nodes of the paths used.
  * @param <TLeaf> The type of the items being stored.
  */
-public interface Tree<TNode, TLeaf>
+public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
 {
     //region check state of contents
     //region has items
