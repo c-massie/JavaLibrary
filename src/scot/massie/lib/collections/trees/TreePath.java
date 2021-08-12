@@ -325,6 +325,9 @@ public final class TreePath<TNode>
      */
     public TreePath<TNode> appendedWith(TreePath<? extends TNode> other)
     {
+        if(other == null)
+            throw new IllegalArgumentException("Argument was null.");
+
         List<TNode> resultNodes = new ArrayList<>(nodes);
         resultNodes.addAll(other.nodes);
         return new TreePath<>(resultNodes);
@@ -349,6 +352,9 @@ public final class TreePath<TNode>
      */
     public TreePath<TNode> prependedWith(TreePath<? extends TNode> other)
     {
+        if(other == null)
+            throw new IllegalArgumentException("Argument was null.");
+
         List<TNode> resultNodes = new ArrayList<>(other.nodes);
         resultNodes.addAll(nodes);
         return new TreePath<>(resultNodes);

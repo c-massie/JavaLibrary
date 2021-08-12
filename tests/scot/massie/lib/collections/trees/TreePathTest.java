@@ -3,7 +3,9 @@ package scot.massie.lib.collections.trees;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.*;
@@ -205,6 +207,9 @@ class TreePathTest
      */
 
     TreePath<String> getNewTreePath(String... elements)
+    { return new TreePath<>(elements); }
+
+    TreePath<Object> getNewObjTreePath(Object... elements)
     { return new TreePath<>(elements); }
 
     @Test
@@ -409,786 +414,671 @@ class TreePathTest
     @Test
     void withoutFirstNodes_multi_more()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third", "fourth", "fifth").withoutFirstNodes(6));
     }
 
     @Test
     void withoutFirstNodes_multi_all()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third", "fourth", "fifth").withoutFirstNodes(5).getNodes())
+                .isEmpty();
     }
 
     @Test
     void withoutFirstNodes_multi_some()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third", "fourth", "fifth").withoutFirstNodes(4).getNodes())
+                .containsExactly("fifth");
     }
 
     @Test
     void withoutFirstNodes_multi_one()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third", "fourth", "fifth").withoutFirstNodes(1).getNodes())
+                .containsExactly("second", "third", "fourth", "fifth");
     }
 
     @Test
     void withoutFirstNodes_multi_none()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third", "fourth", "fifth").withoutFirstNodes(0).getNodes())
+                .containsExactly("first", "second", "third", "fourth", "fifth");
     }
 
     @Test
     void withoutFirstNodes_multi_negative()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third", "fourth", "fifth").withoutFirstNodes(-1));
     }
 
     @Test
     void withoutFirstNodes_single_more()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(IllegalArgumentException.class, () -> getNewTreePath("first").withoutFirstNodes(2)); }
 
     @Test
     void withoutFirstNodes_single_all()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first").withoutFirstNodes(1).getNodes()).isEmpty(); }
 
     @Test
     void withoutFirstNodes_single_none()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first").withoutFirstNodes(0).getNodes()).containsExactly("first"); }
 
     @Test
     void withoutFirstNodes_single_negative()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(IllegalArgumentException.class, () -> getNewTreePath("first").withoutFirstNodes(-1)); }
 
     @Test
     void withoutFirstNodes_root_more()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(IllegalArgumentException.class, () -> getNewTreePath().withoutFirstNodes(1)); }
 
     @Test
     void withoutFirstNodes_root_all()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().withoutFirstNodes(0).getNodes()).isEmpty(); }
 
     @Test
     void withoutFirstNodes_root_negative()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
-
-
+    { assertThrows(IllegalArgumentException.class, () -> getNewTreePath().withoutFirstNodes(-1)); }
 
     @Test
     void withoutLastNodes_multi_more()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third", "fourth", "fifth").withoutLastNodes(6));
     }
 
     @Test
     void withoutLastNodes_multi_all()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third", "fourth", "fifth").withoutLastNodes(5).getNodes())
+                .isEmpty();
     }
 
     @Test
     void withoutLastNodes_multi_some()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third", "fourth", "fifth").withoutLastNodes(4).getNodes())
+                .containsExactly("first");
     }
 
     @Test
     void withoutLastNodes_multi_one()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third", "fourth", "fifth").withoutLastNodes(1).getNodes())
+                .containsExactly("first", "second", "third", "fourth");
     }
 
     @Test
     void withoutLastNodes_multi_none()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third", "fourth", "fifth").withoutLastNodes(0).getNodes())
+                .containsExactly("first", "second", "third", "fourth", "fifth");
     }
 
     @Test
     void withoutLastNodes_multi_negative()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third", "fourth", "fifth").withoutLastNodes(-1));
     }
 
     @Test
     void withoutLastNodes_single_more()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(IllegalArgumentException.class, () -> getNewTreePath("first").withoutLastNodes(2)); }
 
     @Test
     void withoutLastNodes_single_all()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first").withoutLastNodes(1).getNodes()).isEmpty(); }
 
     @Test
     void withoutLastNodes_single_none()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first").withoutLastNodes(0).getNodes()).containsExactly("first"); }
 
     @Test
     void withoutLastNodes_single_negative()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(IllegalArgumentException.class, () -> getNewTreePath("first").withoutLastNodes(-1)); }
 
     @Test
     void withoutLastNodes_root_more()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(IllegalArgumentException.class, () -> getNewTreePath().withoutLastNodes(1)); }
 
     @Test
     void withoutLastNodes_root_all()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().withoutLastNodes(0).getNodes()).isEmpty(); }
 
     @Test
     void withoutLastNodes_root_negative()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThrows(IllegalArgumentException.class, () -> getNewTreePath().withoutLastNodes(-1)); }
     
     @Test
     void appendedWith_path_null()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third").appendedWith((TreePath<String>)null));
     }
 
     @Test
     void appendedWith_path_root()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").appendedWith(getNewTreePath()).getNodes())
+                .containsExactly("first", "second", "third");
     }
 
     @Test
     void appendedWith_path_singleElement()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").appendedWith(getNewTreePath("fourth")).getNodes())
+                .containsExactly("first", "second", "third", "fourth");
     }
 
     @Test
     void appendedWith_path_multiElement()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .appendedWith(getNewTreePath("fourth", "fifth", "sixth"))
+                           .getNodes())
+                .containsExactly("first", "second", "third", "fourth", "fifth", "sixth");
     }
 
     @Test
     void appendedWith_node_null()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").appendedWith((String)null).getNodes())
+                .containsExactly("first", "second", "third", null);
     }
 
     @Test
     void appendedWith_node_element()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").appendedWith("fourth").getNodes())
+                .containsExactly("first", "second", "third", "fourth");
     }
 
     @Test
     void prependedWith_path_null()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third").prependedWith((TreePath<String>)null));
     }
 
     @Test
     void prependedWith_path_root()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").prependedWith(getNewTreePath()).getNodes())
+                .containsExactly("first", "second", "third");
     }
 
     @Test
     void prependedWith_path_singleElement()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").prependedWith(getNewTreePath("zeroth")).getNodes())
+                .containsExactly("zeroth", "first", "second", "third");
     }
 
     @Test
     void prependedWith_path_multiElement()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .prependedWith(getNewTreePath("minustwoth", "minusoneth", "zeroth"))
+                           .getNodes())
+                .containsExactly("minustwoth", "minusoneth", "zeroth", "first", "second", "third");
     }
 
     @Test
     void prependedWith_node_null()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").prependedWith((String)null).getNodes())
+                .containsExactly(null, "first", "second", "third");
     }
 
     @Test
     void prependedWith_node_element()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").prependedWith("zeroth").getNodes())
+                .containsExactly("zeroth", "first", "second", "third");
     }
 
     @Test
     void reversed_multi()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").reversed().getNodes())
+                .containsExactly("third", "second", "firth");
     }
 
     @Test
     void reversed_single()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first").reversed().getNodes()).containsExactly("first"); }
 
     @Test
     void reversed_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().reversed().getNodes()).isEmpty(); }
 
     @Test
     void isAncestorOf_root_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().isAncestorOf(getNewTreePath())).isFalse(); }
 
     @Test
     void isAncestorOf_root_multi()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().isAncestorOf(getNewTreePath("first", "second", "third"))).isTrue(); }
     
     @Test
     void isAncestorOf_multi_null()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third").isAncestorOf(null));
     }
 
     @Test
     void isAncestorOf_multi_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").isAncestorOf(getNewTreePath())).isFalse(); }
 
     @Test
     void isAncestorOf_multi_beginningPart()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").isAncestorOf(getNewTreePath("first"))).isFalse(); }
 
     @Test
     void isAncestorOf_multi_same()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").isAncestorOf(getNewTreePath("first", "second", "third")))
+                .isFalse();
     }
 
     @Test
     void isAncestorOf_multi_sameWithAdditional()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isAncestorOf(getNewTreePath("first", "second", "third", "fourth")))
+                .isTrue();
     }
 
     @Test
-    void isAncestorOf_multi_shorterAndDiffrent()
+    void isAncestorOf_multi_shorterAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").isAncestorOf(getNewTreePath("oneth")))
+                .isFalse();
     }
 
     @Test
     void isAncestorOf_multi_sameLengthButDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").isAncestorOf(getNewTreePath("oneth", "twoth", "threeth")))
+                .isFalse();
     }
 
     @Test
     void isAncestorOf_multi_longerAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isAncestorOf(getNewTreePath("oneth", "twoth", "threeth", "fourst")))
+                .isFalse();
     }
 
     @Test
     void isEqualToOrAncestorOf_root_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().isEqualToOrAncestorOf(getNewTreePath())).isTrue(); }
 
     @Test
     void isEqualToOrAncestorOf_root_multi()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().isEqualToOrAncestorOf(getNewTreePath("first", "second", "third"))).isTrue(); }
 
     @Test
     void isEqualToOrAncestorOf_multi_null()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third").isEqualToOrAncestorOf(null));
     }
 
     @Test
     void isEqualToOrAncestorOf_multi_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").isEqualToOrAncestorOf(getNewTreePath())).isFalse(); }
 
     @Test
     void isEqualToOrAncestorOf_multi_beginningPart()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").isEqualToOrAncestorOf(getNewTreePath("first"))).isFalse(); }
 
     @Test
     void isEqualToOrAncestorOf_multi_same()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isEqualToOrAncestorOf(getNewTreePath("first", "second", "third")))
+                .isTrue();
     }
 
     @Test
     void isEqualToOrAncestorOf_multi_sameWithAdditional()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isEqualToOrAncestorOf(getNewTreePath("first", "second", "third", "fourth")))
+                .isTrue();
     }
 
     @Test
-    void isEqualToOrAncestorOf_multi_shorterAndDiffrent()
+    void isEqualToOrAncestorOf_multi_shorterAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").isEqualToOrAncestorOf(getNewTreePath("oneth")))
+                .isFalse();
     }
 
     @Test
     void isEqualToOrAncestorOf_multi_sameLengthButDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isEqualToOrAncestorOf(getNewTreePath("oneth", "twoth", "threeth")))
+                .isFalse();
     }
 
     @Test
     void isEqualToOrAncestorOf_multi_longerAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isEqualToOrAncestorOf(getNewTreePath("oneth", "twoth", "threeth", "fourst")))
+                .isFalse();
     }
 
     @Test
     void isDescendantOf_root_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().isDescendantOf(getNewTreePath())).isFalse(); }
 
     @Test
     void isDescendantOf_root_multi()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().isDescendantOf(getNewTreePath("first", "second", "third"))).isFalse(); }
 
     @Test
     void isDescendantOf_multi_null()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third").isDescendantOf(null));
     }
 
     @Test
     void isDescendantOf_multi_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").isDescendantOf(getNewTreePath())).isTrue(); }
 
     @Test
     void isDescendantOf_multi_beginningPart()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").isDescendantOf(getNewTreePath("first"))).isTrue(); }
 
     @Test
     void isDescendantOf_multi_same()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isDescendantOf(getNewTreePath("first", "second", "third")))
+                .isFalse();
     }
 
     @Test
     void isDescendantOf_multi_sameWithAdditional()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isDescendantOf(getNewTreePath("first", "second", "third", "fourth")))
+                .isFalse();
     }
 
     @Test
-    void isDescendantOf_multi_shorterAndDiffrent()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    void isDescendantOf_multi_shorterAndDifferent()
+    { assertThat(getNewTreePath("first", "second", "third").isDescendantOf(getNewTreePath("oneth"))).isFalse(); }
 
     @Test
     void isDescendantOf_multi_sameLengthButDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isDescendantOf(getNewTreePath("oneth", "twoth", "threeth")))
+                .isFalse();
     }
 
     @Test
     void isDescendantOf_multi_longerAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isDescendantOf(getNewTreePath("oneth", "twoth", "threeth", "fourst")))
+                .isFalse();
     }
 
     @Test
     void isEqualToOrDescendantOf_root_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().isEqualToOrDescendantOf(getNewTreePath())).isTrue(); }
 
     @Test
     void isEqualToOrDescendantOf_root_multi()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().isEqualToOrDescendantOf(getNewTreePath("first", "second", "third"))).isFalse(); }
 
     @Test
     void isEqualToOrDescendantOf_multi_null()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThrows(IllegalArgumentException.class,
+                     () -> getNewTreePath("first", "second", "third").isEqualToOrDescendantOf(null));
     }
 
     @Test
     void isEqualToOrDescendantOf_multi_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").isEqualToOrDescendantOf(getNewTreePath())).isTrue(); }
 
     @Test
     void isEqualToOrDescendantOf_multi_beginningPart()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third").isEqualToOrDescendantOf(getNewTreePath("first")))
+                .isTrue();
     }
 
     @Test
     void isEqualToOrDescendantOf_multi_same()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isEqualToOrDescendantOf(getNewTreePath("first", "second", "third")))
+                .isTrue();
     }
 
     @Test
     void isEqualToOrDescendantOf_multi_sameWithAdditional()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isEqualToOrDescendantOf(getNewTreePath("first", "second", "third", "fourth")))
+                .isFalse();
     }
 
     @Test
-    void isEqualToOrDescendantOf_multi_shorterAndDiffrent()
+    void isEqualToOrDescendantOf_multi_shorterAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isEqualToOrDescendantOf(getNewTreePath("oneth")))
+                .isFalse();
     }
 
     @Test
     void isEqualToOrDescendantOf_multi_sameLengthButDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isEqualToOrDescendantOf(getNewTreePath("oneth", "twoth", "threeth")))
+                .isFalse();
     }
 
     @Test
     void isEqualToOrDescendantOf_multi_longerAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .isEqualToOrDescendantOf(getNewTreePath("oneth", "twoth", "threeth", "fourst")))
+                .isFalse();
     }
 
     @Test
     void isRoot_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().isRoot()).isTrue(); }
 
     @Test
     void isRoot_single()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first").isRoot()).isFalse(); }
 
     @Test
     void isRoot_multi()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").isRoot()).isFalse(); }
 
     @Test
     void equals_path_root_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().equals((TreePath<String>)getNewTreePath())).isTrue(); }
 
     @Test
     void equals_path_root_multi()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().equals((TreePath<String>)getNewTreePath("first", "second", "third"))).isFalse(); }
 
     @Test
     void equals_path_multi_null()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").equals((TreePath<String>)null)).isFalse(); }
 
     @Test
     void equals_path_multi_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").equals((TreePath<String>)getNewTreePath())).isFalse(); }
 
     @Test
     void equals_path_multi_beginningPart()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((TreePath<String>)getNewTreePath("first")))
+                .isFalse();
     }
 
     @Test
     void equals_path_multi_same()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((TreePath<String>)getNewTreePath("first", "second", "third")))
+                .isTrue();
     }
 
     @Test
     void equals_path_multi_sameWithAdditional()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((TreePath<String>)getNewTreePath("first", "second", "third", "fourth")))
+                .isFalse();
     }
 
     @Test
-    void equals_path_multi_shorterAndDiffrent()
+    void equals_path_multi_shorterAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((TreePath<String>)getNewTreePath("oneth")))
+                .isFalse();
     }
 
     @Test
     void equals_path_multi_sameLengthButDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((TreePath<String>)getNewTreePath("oneth", "twoth", "threeth")))
+                .isFalse();
     }
 
     @Test
     void equals_path_multi_longerAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((TreePath<String>)getNewTreePath("oneth", "twoth", "threeth", "fourst")))
+                .isFalse();
     }
 
     @Test
     void equals_object_root_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().equals((Object)getNewTreePath())).isTrue(); }
 
     @Test
     void equals_object_root_multi()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().equals((Object)getNewTreePath("first", "second", "third"))).isFalse(); }
 
     @Test
     void equals_object_multi_null()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").equals((Object)null)).isFalse(); }
 
     @Test
     void equals_object_multi_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").equals((Object)getNewTreePath())).isFalse(); }
 
     @Test
     void equals_object_multi_beginningPart()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((Object)getNewTreePath("first")))
+                .isFalse();
     }
 
     @Test
     void equals_object_multi_same()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((Object)getNewTreePath("first", "second", "third")))
+                .isTrue();
     }
 
     @Test
     void equals_object_multi_sameWithAdditional()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((Object)getNewTreePath("first", "second", "third", "fourth")))
+                .isFalse();
     }
 
     @Test
-    void equals_object_multi_shorterAndDiffrent()
+    void equals_object_multi_shorterAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((Object)getNewTreePath("oneth")))
+                .isFalse();
     }
+
 
     @Test
     void equals_object_multi_sameLengthButDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((Object)getNewTreePath("oneth", "twoth", "threeth")))
+                .isFalse();
     }
 
     @Test
     void equals_object_multi_longerAndDifferent()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewTreePath("first", "second", "third")
+                           .equals((Object)getNewTreePath("oneth", "twoth", "threeth", "fourst")))
+                .isFalse();
     }
 
     @Test
     void toString_root()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath().toString()).isEqualTo("(root)"); }
 
     @Test
     void toString_single_null()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath((String)null).toString()).isEqualTo("(null)"); }
 
     @Test
     void toString_single_nonNull()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first").toString()).isEqualTo("first"); }
 
     @Test
     void toString_multi()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").toString()).isEqualTo("first.second.third"); }
 
     @Test
     void getComparableType_all_same()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewTreePath("first", "second", "third").getComparableType()).isEqualTo(String.class); }
 
     @Test
     void getComparableType_all_different()
-    {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
-    }
+    { assertThat(getNewObjTreePath("first", 2, UUID.randomUUID()).getComparableType()).isNull(); }
 
     @Test
     void getComparableType_none()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewObjTreePath(new ArrayList<String>(), new ArrayList<String>(), new ArrayList<String>())
+                           .getComparableType())
+                .isNull();
     }
 
     @Test
     void getComparableType_some()
     {
-        // TO DO: Write.
-        System.out.println("Test not yet written.");
+        assertThat(getNewObjTreePath("first", "second", new ArrayList<String>(), new ArrayList<String>())
+                           .getComparableType())
+                .isNull();
     }
 }
