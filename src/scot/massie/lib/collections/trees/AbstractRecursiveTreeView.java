@@ -6,9 +6,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf>
@@ -700,4 +702,12 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
 
         return sourceBranch.countDepth();
     }
+
+    @Override
+    public Iterator<TreeEntry<TNode, TLeaf>> iterator()
+    { return source.iterator(); }
+
+    @Override
+    public void forEach(Consumer<? super TreeEntry<TNode, TLeaf>> action)
+    { source.forEach(action); }
 }

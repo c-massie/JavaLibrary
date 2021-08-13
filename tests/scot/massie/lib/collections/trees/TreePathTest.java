@@ -643,7 +643,7 @@ class TreePathTest
     void reversed_multi()
     {
         assertThat(getNewTreePath("first", "second", "third").reversed().getNodes())
-                .containsExactly("third", "second", "firth");
+                .containsExactly("third", "second", "first");
     }
 
     @Test
