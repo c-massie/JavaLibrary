@@ -15,6 +15,9 @@ import java.util.function.Predicate;
  *
  * <p>Paths are represented by the {@link TreePath} type, an ordered collection of nodes for navigating trees. See
  * associated terminology.</p>
+ *
+ * @implNote If an implementation of a tree doesn't allow null values, assigning null to a path in a tree should be
+ *           treated as clearing the item from that path.
  * @param <TNode> The type of the nodes of the paths used.
  * @param <TLeaf> The type of the items being stored.
  */
