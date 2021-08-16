@@ -7,9 +7,19 @@ import org.junit.jupiter.api.Test;
 import scot.massie.lib.collections.trees.exceptions.NoItemAtPathException;
 import scot.massie.lib.utils.tuples.Pair;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.*;
 
+@SuppressWarnings("unchecked")
 abstract class TreeTest
 {
     /*
@@ -161,9 +171,11 @@ abstract class TreeTest
         getItemsAtAndUnder
             empty
             populated
+            populated, empty at & under path
         getItemsAtAndUnderInOrder
             empty
             populated
+            populated, empty at & under path
         getItemsUnder
             empty
             populated
@@ -411,15 +423,59 @@ abstract class TreeTest
 
     /**
      * Should have a root item.
+     *
+     * Should have items at a path length > 2, starting with "first", "second".
+     *
+     * Should not have any items with a path starting with "zoot"
      * @return A populated tree.
      */
-    protected abstract Tree<String, Integer> getPopulatedTree1();
+    protected Tree<String, Integer> getPopulatedTree1()
+    { return getNewTree(tree1Items); }
 
     /**
      * Should have no root item.
+     *
+     * Should have items at a path length > 2, starting with "first", "second".
+     *
+     * Should not have any items with a path starting with "zoot"
      * @return A populated tree.
      */
-    protected abstract Tree<String, Integer> getPopulatedTree2();
+    protected Tree<String, Integer> getPopulatedTree2()
+    { return getNewTree(tree2Items); }
+
+    Pair<TreePath<String>, Integer>[] tree1Items = (Pair<TreePath<String>, Integer>[]) new Pair[]
+    {
+            new Pair<>(TreePath.root(), 37),
+            new Pair<>(new TreePath<>("first"), 29),
+            new Pair<>(new TreePath<>("first", "second"), 65),
+            new Pair<>(new TreePath<>("first", "second", "third"), 71),
+            new Pair<>(new TreePath<>("first", "second", "third", "fourth"), 11),
+            new Pair<>(new TreePath<>("first", "second", "third", "fourth", "notfive", "notsix"), 29),
+            new Pair<>(new TreePath<>("first", "second", "third", "fourth", "fifth"), 54),
+            new Pair<>(new TreePath<>("first", "second", "third", "fourth", "fiveth"), 98),
+            new Pair<>(new TreePath<>("first", "twoth"), 58),
+            new Pair<>(new TreePath<>("first", "twoth", "threeth"), 66),
+            new Pair<>(new TreePath<>("uno"), 44),
+            new Pair<>(new TreePath<>("uno", "dos"), 87),
+            new Pair<>(new TreePath<>("uno", "dos", "third"), 92),
+    };
+
+    Pair<TreePath<String>, Integer>[] tree2Items = (Pair<TreePath<String>, Integer>[]) new Pair[]
+    {
+            new Pair<>(TreePath.root(), 37),
+            new Pair<>(new TreePath<>("first"), 29),
+            new Pair<>(new TreePath<>("first", "second"), 65),
+            new Pair<>(new TreePath<>("first", "second", "third"), 71),
+            new Pair<>(new TreePath<>("first", "second", "third", "fourth"), 11),
+            new Pair<>(new TreePath<>("first", "second", "third", "fourth", "notfive", "notsix"), 29),
+            new Pair<>(new TreePath<>("first", "second", "third", "fourth", "fifth"), 54),
+            new Pair<>(new TreePath<>("first", "second", "third", "fourth", "fiveth"), 98),
+            new Pair<>(new TreePath<>("first", "twoth"), 58),
+            new Pair<>(new TreePath<>("first", "twoth", "threeth"), 66),
+            new Pair<>(new TreePath<>("uno"), 44),
+            new Pair<>(new TreePath<>("uno", "dos"), 87),
+            new Pair<>(new TreePath<>("uno", "dos", "third"), 92),
+    };
 
     @Test
     void hasItems_empty()
@@ -1025,5 +1081,477 @@ abstract class TreeTest
             assertion.isEqualTo(null);
         else
             assertion.isEqualTo(null);
+    }
+
+
+    @Test
+    void getItems_empty()
+    { assertThat(getNewTree().getItems()).isEmpty(); }
+
+    @Test
+    void getItems_populated()
+    {
+        assertThat(getPopulatedTree1().getItems())
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(tree1Items)
+                                                           .map(Pair::getSecond)
+                                                           .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsInOrder_empty()
+    { assertThat(getNewTree().getItems()).isEmpty(); }
+
+    @Test
+    void getItemsInOrder_populated()
+    {
+        assertThat(getPopulatedTree1().getItems())
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsWhere_empty()
+    { assertThat(getNewTree().getItemsWhere((path, n) -> path.size() > 2)).isEmpty(); }
+
+    @Test
+    void getItemsWhere_populated_matches()
+    {
+        assertThat(getPopulatedTree1().getItemsWhere((path, n) -> path.size() > 2))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().size() > 2)
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsWhere_populated_noMatches()
+    {
+        assertThat(getPopulatedTree1().getItemsWhere((path, n) -> path.isDescendantOf(new TreePath<>("zoot"))))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsWherePath_empty()
+    { assertThat(getNewTree().getItemsWherePath(path -> path.size() > 2)).isEmpty(); }
+
+    @Test
+    void getItemsWherePath_populated_matches()
+    {
+        assertThat(getPopulatedTree1().getItemsWherePath(path -> path.size() > 2))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().size() > 2)
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsWherePath_populated_noMatches()
+    {
+        assertThat(getPopulatedTree1().getItemsWherePath(path -> path.isDescendantOf(new TreePath<>("zoot"))))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsInOrderWhere_empty()
+    {
+        assertThat(getNewTree().getItemsInOrderWhere(Comparator.naturalOrder(), (path, n) -> path.size() > 2))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsInOrderWhere_populated_matches()
+    {
+        assertThat(getPopulatedTree1().getItemsInOrderWhere(Comparator.naturalOrder(), (path, n) -> path.size() > 2))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().size() > 2)
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsInOrderWhere_populated_noMatches()
+    {
+        assertThat(getPopulatedTree1().getItemsInOrderWhere(Comparator.naturalOrder(),
+                                                            (path, n) -> path.isDescendantOf(new TreePath<>("zoot"))))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsInOrderWherePath_empty()
+    {
+        assertThat(getNewTree().getItemsInOrderWhere(Comparator.naturalOrder(), (path, n) -> path.size() > 2))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsInOrderWherePath_populated_matches()
+    {
+        assertThat(getPopulatedTree1().getItemsInOrderWhere(Comparator.naturalOrder(), (path, n) -> path.size() > 2))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().size() > 2)
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsInOrderWherePath_populated_noMatches()
+    {
+        assertThat(getPopulatedTree1().getItemsInOrderWhere(Comparator.naturalOrder(),
+                                                            (path, n) -> path.isDescendantOf(new TreePath<>("zoot"))))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsUnderRoot_empty()
+    { assertThat(getNewTree().getItemsUnderRoot()).isEmpty(); }
+
+    @Test
+    void getItemsUnderRoot_populated()
+    {
+        assertThat(getPopulatedTree1().getItemsUnderRoot())
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> !x.getFirst().isRoot())
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+
+
+    @Test
+    void getItemsUnderRootInOrder_empty()
+    { assertThat(getNewTree().getItemsUnderRootInOrder(Comparator.naturalOrder())).isEmpty(); }
+
+    @Test
+    void getItemsUnderRootInOrder_populated()
+    {
+        assertThat(getPopulatedTree1().getItemsUnderRootInOrder(Comparator.naturalOrder()))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> !x.getFirst().isRoot())
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsAtAndUnder_empty()
+    { assertThat(getNewTree().getItemsAtAndUnder(new TreePath<>("first", "second"))).isEmpty(); }
+
+    @Test
+    void getItemsAtAndUnder_populated()
+    {
+        TreePath<String> path = new TreePath<>("first", "second");
+
+        assertThat(getPopulatedTree1().getItemsAtAndUnder(path))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().isEqualToOrDescendantOf(path))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsAtAndUnder_populated_emptyAtAndUnderPath()
+    { assertThat(getPopulatedTree1().getItemsAtAndUnder(new TreePath<>("zoot"))).isEmpty(); }
+
+    @Test
+    void getItemsAtAndUnderInOrder_empty()
+    {
+        assertThat(getNewTree().getItemsAtAndUnderInOrder(new TreePath<>("first", "second"), Comparator.naturalOrder()))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsAtAndUnderInOrder_populated()
+    {
+        TreePath<String> path = new TreePath<>("first", "second");
+
+        assertThat(getPopulatedTree1().getItemsAtAndUnderInOrder(path, Comparator.naturalOrder()))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().isEqualToOrDescendantOf(path))
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsAtAndUnderInOrder_populated_emptyAtAndUnderPath()
+    {
+        assertThat(getPopulatedTree1().getItemsAtAndUnderInOrder(new TreePath<>("zoot"), Comparator.naturalOrder()))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsUnder_empty()
+    { assertThat(getNewTree().getItemsUnder(new TreePath<>("first", "second"))).isEmpty(); }
+
+    @Test
+    void getItemsUnder_populated()
+    {
+        TreePath<String> path = new TreePath<>("first", "second");
+
+        assertThat(getPopulatedTree1().getItemsUnder(path))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().isDescendantOf(path))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsUnder_populated_emptyAtAndUnderPath()
+    { assertThat(getPopulatedTree1().getItemsUnder(new TreePath<>("zoot"))).isEmpty(); }
+
+    @Test
+    void getItemsUnderInOrder_empty()
+    {
+        assertThat(getNewTree().getItemsUnderInOrder(new TreePath<>("first", "second"), Comparator.naturalOrder()))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsUnderInOrder_populated()
+    {
+        TreePath<String> path = new TreePath<>("first", "second");
+
+        assertThat(getPopulatedTree1().getItemsUnderInOrder(path, Comparator.naturalOrder()))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().isDescendantOf(path))
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsUnderInOrder_populated_emptyAtAndUnderPath()
+    {
+        assertThat(getPopulatedTree1().getItemsUnderInOrder(new TreePath<>("zoot"), Comparator.naturalOrder()))
+                .isEmpty();
+    }
+
+    @Test
+    void getItemsAlong_empty()
+    { assertThat(getNewTree().getItemsAlong(new TreePath<>("first", "second"))).isEmpty(); }
+
+    @Test
+    void getItemsAlong_populated()
+    {
+        TreePath<String> path = new TreePath<>("first", "second");
+
+        assertThat(getPopulatedTree1().getItemsAlong(path))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().isEqualToOrAncestorOf(path))
+                              .sorted(Comparator.comparing(x -> x.getFirst().size()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsAlong_populated_emptyAlongPath()
+    { assertThat(getPopulatedTree1().getItemsAlong(new TreePath<>("zoot", "doot"))).isEmpty(); }
+
+    @Test
+    void getItemsUnderRootAlong_empty()
+    { assertThat(getNewTree().getItemsUnderRootAlong(new TreePath<>("first", "second"))).isEmpty(); }
+
+    @Test
+    void getItemsUnderRootAlong_populated()
+    {
+        TreePath<String> path = new TreePath<>("first", "second");
+
+        assertThat(getPopulatedTree1().getItemsUnderRootAlong(path))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> (!x.getFirst().isRoot()) && (x.getFirst().isEqualToOrAncestorOf(path)))
+                              .sorted(Comparator.comparing(x -> x.getFirst().size()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getItemsUnderRootAlong_populated_emptyAlongPath()
+    { assertThat(getPopulatedTree1().getItemsUnderRootAlong(new TreePath<>("zoot", "doot"))).isEmpty(); }
+
+    @Test
+    void getImmediateItems_empty()
+    { assertThat(getNewTree().getImmediateItems()).isEmpty(); }
+
+    @Test
+    void getImmediateItems_populated()
+    {
+        assertThat(getPopulatedTree1().getImmediateItems())
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().size() == 1)
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getImmediateItemsInOrder_empty()
+    { assertThat(getNewTree().getImmediateItemsInOrder(Comparator.naturalOrder())).isEmpty(); }
+
+    @Test
+    void getImmediateItemsInOrder_populated()
+    {
+        assertThat(getPopulatedTree1().getImmediateItemsInOrder(Comparator.naturalOrder()))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().size() == 1)
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getRootAndImmediateItems_empty()
+    { assertThat(getNewTree().getRootAndImmediateItems()).isEmpty(); }
+
+    @Test
+    void getRootAndImmediateItems_populated()
+    {
+        assertThat(getPopulatedTree1().getRootAndImmediateItems())
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> (x.getFirst().isRoot()) || (x.getFirst().size() == 1))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getRootAndImmediateItemsInOrder_empty()
+    { assertThat(getNewTree().getRootAndImmediateItemsInOrder(Comparator.naturalOrder())).isEmpty(); }
+
+    @Test
+    void getRootAndImmediateItemsInOrder_populated()
+    {
+        assertThat(getPopulatedTree1().getRootAndImmediateItemsInOrder(Comparator.naturalOrder()))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> (x.getFirst().isRoot()) || (x.getFirst().size() == 1))
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getImmediatelyUnder_empty()
+    { assertThat(getNewTree().getImmediatelyUnder(new TreePath<>("first"))).isEmpty(); }
+
+    @Test
+    void getImmediatelyUnder_populated()
+    {
+        TreePath<String> path = new TreePath<>("first");
+
+        assertThat(getPopulatedTree1().getImmediatelyUnder(path))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().isAncestorOf(path) && x.getFirst().size() == path.size() + 1)
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getImmediatelyUnder_populated_emptyUnderPath()
+    { assertThat(getPopulatedTree1().getImmediatelyUnder(new TreePath<>("zoot"))).isEmpty(); }
+
+    @Test
+    void getImmediatelyUnderInOrder_empty()
+    {
+        assertThat(getNewTree().getImmediatelyUnderInOrder(new TreePath<>("first"), Comparator.naturalOrder()))
+                .isEmpty();
+    }
+
+    @Test
+    void getImmediatelyUnderInOrder_populated()
+    {
+        TreePath<String> path = new TreePath<>("first");
+
+        assertThat(getPopulatedTree1().getImmediatelyUnderInOrder(path, Comparator.naturalOrder()))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().isAncestorOf(path) && x.getFirst().size() == path.size() + 1)
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getImmediatelyUnderInOrder_populated_emptyUnderPath()
+    {
+        assertThat(getPopulatedTree1().getImmediatelyUnderInOrder(new TreePath<>("zoot"), Comparator.naturalOrder()))
+                .isEmpty();
+    }
+
+
+
+
+
+
+    @Test
+    void getAtAndImmediatelyUnder_empty()
+    { assertThat(getNewTree().getAtAndImmediatelyUnder(new TreePath<>("first"))).isEmpty(); }
+
+    @Test
+    void getAtAndImmediatelyUnder_populated()
+    {
+        TreePath<String> path = new TreePath<>("first");
+
+        assertThat(getPopulatedTree1().getAtAndImmediatelyUnder(path))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> (x.getFirst().isRoot())
+                                           || (x.getFirst().isAncestorOf(path)
+                                               && x.getFirst().size() == path.size() + 1))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getAtAndImmediatelyUnder_populated_emptyUnderPath()
+    { assertThat(getPopulatedTree1().getAtAndImmediatelyUnder(new TreePath<>("zoot"))).isEmpty(); }
+
+    @Test
+    void getAtAndImmediatelyUnderInOrder_empty()
+    {
+        assertThat(getNewTree().getAtAndImmediatelyUnderInOrder(new TreePath<>("first"), Comparator.naturalOrder()))
+                .isEmpty();
+    }
+
+    @Test
+    void getAtAndImmediatelyUnderInOrder_populated()
+    {
+        TreePath<String> path = new TreePath<>("first");
+
+        assertThat(getPopulatedTree1().getAtAndImmediatelyUnderInOrder(path, Comparator.naturalOrder()))
+                .containsExactlyElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> (x.getFirst().isRoot())
+                                           || (x.getFirst().isAncestorOf(path)
+                                               && x.getFirst().size() == path.size() + 1))
+                              .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
+                              .map(Pair::getSecond)
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getAtAndImmediatelyUnderInOrder_populated_emptyUnderPath()
+    {
+        assertThat(getPopulatedTree1().getAtAndImmediatelyUnderInOrder(new TreePath<>("zoot"),
+                                                                       Comparator.naturalOrder()))
+                .isEmpty();
     }
 }
