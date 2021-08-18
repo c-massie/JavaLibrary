@@ -7,8 +7,12 @@ import org.junit.jupiter.api.Test;
 import scot.massie.lib.collections.trees.exceptions.NoItemAtPathException;
 import scot.massie.lib.utils.tuples.Pair;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
@@ -516,7 +520,7 @@ abstract class TreeTest
         if(allowsNull())    assertion.isTrue();
         else                assertion.isFalse();
     }
-    
+
     @Test
     void hasItemsAtOrUnder_root_empty()
     { assertThat(getNewTree().hasItemsAtOrUnder(TreePath.root())).isFalse(); }
@@ -1984,5 +1988,58 @@ abstract class TreeTest
                                                                        Comparator.naturalOrder()))
                 .isEmpty();
     }
-    
+
+    @Test
+    void getBranch_withItems()
+    {
+        // Assumes that .getEntries() is functioning correctly.
+
+        TreePath<String> path = new TreePath<>("first", "second");
+
+        assertThat(getPopulatedTree1().getBranch(path).getEntries().stream().map(x -> new Pair<>(x.path, x.item)))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().isEqualToOrAncestorOf(path))
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getBranch_withoutItems()
+    { assertThat(getPopulatedTree1().getBranch(new TreePath<>("zoot", "doot")).getEntries()).isEmpty(); }
+
+    @Test
+    void getBranches_empty()
+    { assertThat(getNewTree().getBranches()).isEmpty(); }
+
+    @Test
+    void getBranches_populated()
+    {
+        // Assumes that .getEntries() of the tree objects returned by .getBranches() is functioning correctly.
+
+        Map<String, Tree<String, Integer>> branches = getPopulatedTree1().getBranches();
+        Map<String, Collection<Pair<TreePath<String>, Integer>>> expectedEntries = new HashMap<>();
+
+        for(Pair<TreePath<String>, Integer> p : tree1Items)
+        {
+            if(p.getFirst().isRoot())
+                continue;
+
+            expectedEntries.computeIfAbsent(p.getFirst().first(), x -> new ArrayList<>())
+                           .add(new Pair<>(p.getFirst().withoutFirstNodes(1), p.getSecond()));
+        }
+
+        assertThat(branches).hasSize(expectedEntries.size());
+
+        for(Map.Entry<String, Tree<String, Integer>> e : branches.entrySet())
+        {
+            assertThat(expectedEntries).containsKey(e.getKey());
+
+            assertThat(e.getValue()
+                        .getEntries()
+                        .stream()
+                        .map(x -> new Pair<>(x.path, x.item))
+                        .collect(Collectors.toList()))
+                    .containsExactlyInAnyOrderElementsOf(expectedEntries.get(e.getKey()));
+        }
+    }
 }
