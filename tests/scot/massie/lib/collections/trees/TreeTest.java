@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
@@ -2040,6 +2041,140 @@ abstract class TreeTest
                         .map(x -> new Pair<>(x.path, x.item))
                         .collect(Collectors.toList()))
                     .containsExactlyInAnyOrderElementsOf(expectedEntries.get(e.getKey()));
+        }
+    }
+
+    @Test
+    void getPaths_empty()
+    { assertThat(getNewTree().getPaths()).isEmpty(); }
+
+    @Test
+    void getPaths_populated()
+    {
+        assertThat(getPopulatedTree1().getPaths())
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(tree1Items)
+                                                           .map(Pair::getFirst)
+                                                           .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getPathsInOrder_empty()
+    { assertThat(getNewTree().getPathsInOrder(Comparator.naturalOrder())).isEmpty(); }
+
+    @Test
+    void getPathsInOrder_populated()
+    {
+        assertThat(getPopulatedTree1().getPathsInOrder(Comparator.naturalOrder()))
+                .containsExactlyElementsOf(Arrays.stream(tree1Items)
+                                                 .map(Pair::getFirst)
+                                                 .sorted(TreePath.getComparator())
+                                                 .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getBranchView_hasCorrectItems()
+    {
+        // Assumes that the type returned get .getBranchView is working correctly.
+
+        TreePath<String> path = new TreePath<>("first", "second");
+
+        assertThat(getPopulatedTree1().getBranchView(path)
+                                      .getEntries()
+                                      .stream()
+                                      .map(x -> new Pair<>(x.path, x.item))
+                                      .collect(Collectors.toList()))
+                .containsExactlyInAnyOrderElementsOf(
+                        Arrays.stream(tree1Items)
+                              .filter(x -> x.getFirst().isEqualToOrDescendantOf(path))
+                              .map(x -> new Pair<>(x.getFirst().withoutFirstNodes(2), x.getSecond()))
+                              .collect(Collectors.toList()));
+    }
+
+    @Test
+    void getBranchView_addItem_inBranch()
+    {
+        // Assumes that the type returned get .getBranchView is working correctly.
+        // Assumes that .getAt is working correctly.
+
+        Tree<String, Integer> tree = getNewTree();
+        Tree<String, Integer> branch = tree.getBranch(new TreePath<>("first", "second"));
+
+        branch.setRootItem(67);
+        assertThat(tree.getAt(new TreePath<>("first", "second"))).isEqualTo(67);
+    }
+
+    @Test
+    void getBranchView_addItem_inTree()
+    {
+        // Assumes that the type returned get .getBranchView is working correctly.
+        // Assumes that .setAt is working correctly.
+
+        Tree<String, Integer> tree = getNewTree();
+        Tree<String, Integer> branch = tree.getBranch(new TreePath<>("first", "second"));
+
+        tree.setAt(new TreePath<>("first", "second"), 67);
+        assertThat(branch.getRootItem()).isEqualTo(67);
+    }
+
+    @Test
+    void getBranchView_removeItem_inBranch()
+    {
+        // Assumes that the type returned get .getBranchView is working correctly.
+        // Assumes that .setAt and .getAtOr are working correctly.
+
+        Tree<String, Integer> tree = getNewTree();
+        tree.setAt(new TreePath<>("first", "second", "third"), 67);
+        Tree<String, Integer> branch = tree.getBranch(new TreePath<>("first", "second"));
+
+        branch.clearAt(new TreePath<>("third"));
+        assertThat(tree.getAtOr(new TreePath<>("first", "second", "third"), 85)).isEqualTo(85);
+    }
+
+    @Test
+    void getBranchView_removeItem_inTree()
+    {
+        // Assumes that the type returned get .getBranchView is working correctly.
+        // Assumes that .setAt and .clearAt are working correctly.
+
+        Tree<String, Integer> tree = getNewTree();
+        tree.setAt(new TreePath<>("first", "second", "third"), 67);
+        Tree<String, Integer> branch = tree.getBranch(new TreePath<>("first", "second"));
+
+        tree.clearAt(new TreePath<>("first", "second", "third"));
+        assertThat(branch.getAtOr(new TreePath<>("third"), 85)).isEqualTo(85);
+    }
+
+    @Test
+    void getBranchViews_empty()
+    { assertThat(getNewTree().getBranchViews()).isEmpty(); }
+
+    @Test
+    void getBranchViews_populated()
+    {
+        Map<String, Tree<String, Integer>> branchViews = getPopulatedTree1().getBranchViews();
+        Map<String, Collection<Pair<TreePath<String>, Integer>>> expectedEntriesPerKey = new HashMap<>();
+
+        for(Pair<TreePath<String>, Integer> pair : tree1Items)
+        {
+            if(pair.getFirst().isRoot())
+                continue;
+
+            expectedEntriesPerKey.computeIfAbsent(pair.getFirst().first(), x -> new ArrayList<>())
+                                 .add(new Pair<>(pair.getFirst().withoutFirstNodes(1), pair.getSecond()));
+        }
+
+        assertThat(branchViews).hasSize(expectedEntriesPerKey.size());
+
+        for(Map.Entry<String, Tree<String, Integer>> e : branchViews.entrySet())
+        {
+            assertThat(expectedEntriesPerKey).containsKey(e.getKey());
+
+            assertThat(e.getValue()
+                        .getEntries()
+                        .stream()
+                        .map(x -> new Pair<>(x.path, x.item))
+                        .collect(Collectors.toList()))
+                    .containsExactlyInAnyOrderElementsOf(expectedEntriesPerKey.get(e.getKey()));
         }
     }
 }
