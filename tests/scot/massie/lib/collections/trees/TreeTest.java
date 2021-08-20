@@ -346,9 +346,14 @@ abstract class TreeTest
             item at path
             setting null
         setAtIf
-            empty
-            item at path
-            setting null
+            empty, test succeeds
+            empty, test fails
+            empty, test succeeds, setting null
+            empty, test fails, setting null
+            item at path, test succeeds
+            item at path, test fails
+            item at path, test succeeds, setting null
+            item at path, test fails, setting null
     remove items in tree
         clear
             empty
@@ -2176,5 +2181,209 @@ abstract class TreeTest
                         .collect(Collectors.toList()))
                     .containsExactlyInAnyOrderElementsOf(expectedEntriesPerKey.get(e.getKey()));
         }
+    }
+
+    @Test
+    void setRootItem_empty()
+    {
+        // Assumes .getRootItem() is working as expected.
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setRootItem(5)).isNull();
+        assertThat(tree.getRootItem()).isEqualTo(5);
+    }
+
+    @Test
+    void setRootItem_itemAtRoot()
+    {
+        // Assumes .getRootItem() is working as expected.
+        Tree<String, Integer> tree = getNewTree(new Pair<>(TreePath.root(), 7));
+        assertThat(tree.setRootItem(5)).isEqualTo(7);
+        assertThat(tree.getRootItem()).isEqualTo(5);
+    }
+
+    @Test
+    void setRootItemIfAbsent_empty()
+    {
+        // Assumes .getRootItem() is working as expected.
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setRootItemIfAbsent(5)).isNull();
+        assertThat(tree.getRootItem()).isEqualTo(5);
+    }
+
+    @Test
+    void setRootItemIfAbsent_itemAtRoot()
+    {
+        // Assumes .getRootItem() is working as expected.
+        Tree<String, Integer> tree = getNewTree(new Pair<>(TreePath.root(), 7));
+        assertThat(tree.setRootItemIfAbsent(5)).isEqualTo(7);
+        assertThat(tree.getRootItem()).isEqualTo(7);
+    }
+
+    @Test
+    void setRootItemIf_empty_succeeds()
+    {
+        // Assumes .getRootItem() is working as expected.
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setRootItemIf(5, (path, n) -> true)).isNull();
+        assertThat(tree.getRootItem()).isEqualTo(5);
+    }
+
+    @Test
+    void setRootItemIf_empty_fails()
+    {
+        // Assumes .getRootItem() is working as expected.
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setRootItemIf(5, (path, n) -> false)).isNull();
+        assertThrows(NoItemAtPathException.class, tree::getRootItem);
+    }
+
+    @Test
+    void setRootItemIf_itemAtRoot_succeeds()
+    {
+        // Assumes .getRootItem() is working as expected.
+        Tree<String, Integer> tree = getNewTree(new Pair<>(TreePath.root(), 7));
+        assertThat(tree.setRootItemIf(5, (path, n) -> true)).isEqualTo(7);
+        assertThat(tree.getRootItem()).isEqualTo(5);
+    }
+
+    @Test
+    void setRootItemIf_itemAtRoot_fails()
+    {
+        // Assumes .getRootItem() is working as expected.
+        Tree<String, Integer> tree = getNewTree(new Pair<>(TreePath.root(), 7));
+        assertThat(tree.setRootItemIf(5, (path, n) -> false)).isEqualTo(7);
+        assertThat(tree.getRootItem()).isEqualTo(7);
+    }
+
+    @Test
+    void setAt_empty()
+    {
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setAt(path, 5)).isNull();
+        assertThat(tree.getAt(path)).isEqualTo(5);
+    }
+
+    @Test
+    void setAt_itemAtPath()
+    {
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree(new Pair<>(path, 7));
+        assertThat(tree.setAt(path, 5)).isEqualTo(7);
+        assertThat(tree.getAt(path)).isEqualTo(5);
+    }
+
+    @Test
+    void setAtIfAbsent_empty()
+    {
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setAtIfAbsent(path, 5)).isNull();
+        assertThat(tree.getAt(path)).isEqualTo(5);
+    }
+
+    @Test
+    void setAtIfAbsent_itemAtPath()
+    {
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree(new Pair<>(path, 7));
+        assertThat(tree.setAtIfAbsent(path, 5)).isEqualTo(7);
+        assertThat(tree.getAt(path)).isEqualTo(7);
+    }
+
+    @Test
+    void setAtIf_empty_succeeds()
+    {
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setAtIf(path, 5, (p, n) -> true)).isNull();
+        assertThat(tree.getAt(path)).isEqualTo(5);
+    }
+
+    @Test
+    void setAtIf_empty_fails()
+    {
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setAtIf(path, 5, (p, n) -> false)).isNull();
+        assertThrows(NoItemAtPathException.class, () -> tree.getAt(path));
+    }
+
+    @Test
+    void setAtIf_empty_succeeds_settingNull()
+    {
+        if(!allowsNull())
+            return;
+
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setAtIf(path, null, (p, n) -> true)).isNull();
+        assertThat(tree.getAt(path)).isNull();
+    }
+
+    @Test
+    void setAtIf_empty_fails_settingNull()
+    {
+        if(!allowsNull())
+            return;
+
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree();
+        assertThat(tree.setAtIf(path, null, (p, n) -> false)).isNull();
+        assertThrows(NoItemAtPathException.class, () -> tree.getAt(path));
+    }
+
+    @Test
+    void setAtIf_itemAtPath_succeeds()
+    {
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree(new Pair<>(path, 7));
+        assertThat(tree.setAtIf(path, 5, (p, n) -> true)).isEqualTo(7);
+        assertThat(tree.getAt(path)).isEqualTo(5);
+    }
+
+    @Test
+    void setAtIf_itemAtPath_fails()
+    {
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree(new Pair<>(path, 7));
+        assertThat(tree.setAtIf(path, 5, (p, n) -> false)).isEqualTo(7);
+        assertThrows(NoItemAtPathException.class, () -> tree.getAt(path));
+    }
+
+    @Test
+    void setAtIf_itemAtPath_succeeds_settingNull()
+    {
+        if(!allowsNull())
+            return;
+
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree(new Pair<>(path, 7));
+        assertThat(tree.setAtIf(path, null, (p, n) -> true)).isEqualTo(7);
+        assertThat(tree.getAt(path)).isNull();
+    }
+
+    @Test
+    void setAtIf_itemAtPath_fails_settingNull()
+    {
+        if(!allowsNull())
+            return;
+
+        // Assumes .getAt() is working as expected.
+        TreePath<String> path = new TreePath<>("first", "second");
+        Tree<String, Integer> tree = getNewTree(new Pair<>(path, 7));
+        assertThat(tree.setAtIf(path, null, (p, n) -> false)).isEqualTo(7);
+        assertThrows(NoItemAtPathException.class, () -> tree.getAt(path));
     }
 }
