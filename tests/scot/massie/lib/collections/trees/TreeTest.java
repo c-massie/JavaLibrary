@@ -468,7 +468,6 @@ abstract class TreeTest
 
     private static final Pair<TreePath<String>, Integer>[] tree2Items = (Pair<TreePath<String>, Integer>[]) new Pair[]
     {
-            new Pair<>(TreePath.root(), 37),
             new Pair<>(new TreePath<>("first"), 29),
             new Pair<>(new TreePath<>("first", "second"), 65),
             new Pair<>(new TreePath<>("first", "second", "third"), 71),
@@ -1091,12 +1090,12 @@ abstract class TreeTest
 
     @Test
     void getItemsInOrder_empty()
-    { assertThat(getNewTree().getItems()).isEmpty(); }
+    { assertThat(getNewTree().getItemsInOrder(Comparator.naturalOrder())).isEmpty(); }
 
     @Test
     void getItemsInOrder_populated()
     {
-        assertThat(getPopulatedTree1().getItems())
+        assertThat(getPopulatedTree1().getItemsInOrder(Comparator.naturalOrder()))
                 .containsExactlyElementsOf(
                         Arrays.stream(tree1Items)
                               .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
@@ -1351,7 +1350,7 @@ abstract class TreeTest
 
     @Test
     void getItemsAlong_populated_emptyAlongPath()
-    { assertThat(getPopulatedTree1().getItemsAlong(new TreePath<>("zoot", "doot"))).isEmpty(); }
+    { assertThat(getPopulatedTree2().getItemsAlong(new TreePath<>("zoot", "doot"))).isEmpty(); }
 
     @Test
     void getItemsUnderRootAlong_empty()
@@ -1449,7 +1448,7 @@ abstract class TreeTest
         assertThat(getPopulatedTree1().getImmediatelyUnder(path))
                 .containsExactlyInAnyOrderElementsOf(
                         Arrays.stream(tree1Items)
-                              .filter(x -> x.getFirst().isAncestorOf(path) && x.getFirst().size() == path.size() + 1)
+                              .filter(x -> x.getFirst().isDescendantOf(path) && x.getFirst().size() == path.size() + 1)
                               .map(Pair::getSecond)
                               .collect(Collectors.toList()));
     }
@@ -1473,7 +1472,7 @@ abstract class TreeTest
         assertThat(getPopulatedTree1().getImmediatelyUnderInOrder(path, Comparator.naturalOrder()))
                 .containsExactlyElementsOf(
                         Arrays.stream(tree1Items)
-                              .filter(x -> x.getFirst().isAncestorOf(path) && x.getFirst().size() == path.size() + 1)
+                              .filter(x -> x.getFirst().isDescendantOf(path) && x.getFirst().size() == path.size() + 1)
                               .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
                               .map(Pair::getSecond)
                               .collect(Collectors.toList()));
@@ -1498,9 +1497,8 @@ abstract class TreeTest
         assertThat(getPopulatedTree1().getAtAndImmediatelyUnder(path))
                 .containsExactlyInAnyOrderElementsOf(
                         Arrays.stream(tree1Items)
-                              .filter(x -> (x.getFirst().isRoot())
-                                           || (x.getFirst().isAncestorOf(path)
-                                               && x.getFirst().size() == path.size() + 1))
+                              .filter(x -> (x.getFirst().isEqualToOrDescendantOf(path))
+                                           && (x.getFirst().size() <= (path.size() + 1)))
                               .map(Pair::getSecond)
                               .collect(Collectors.toList()));
     }
@@ -1524,9 +1522,8 @@ abstract class TreeTest
         assertThat(getPopulatedTree1().getAtAndImmediatelyUnderInOrder(path, Comparator.naturalOrder()))
                 .containsExactlyElementsOf(
                         Arrays.stream(tree1Items)
-                              .filter(x -> (x.getFirst().isRoot())
-                                           || (x.getFirst().isAncestorOf(path)
-                                               && x.getFirst().size() == path.size() + 1))
+                              .filter(x -> (x.getFirst().isEqualToOrDescendantOf(path))
+                                           && (x.getFirst().size() <= (path.size() + 1)))
                               .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
                               .map(Pair::getSecond)
                               .collect(Collectors.toList()));
@@ -1554,12 +1551,12 @@ abstract class TreeTest
 
     @Test
     void getEntriesInOrder_empty()
-    { assertThat(getNewTree().getEntries()).isEmpty(); }
+    { assertThat(getNewTree().getEntriesInOrder(Comparator.naturalOrder())).isEmpty(); }
 
     @Test
     void getEntriesInOrder_populated()
     {
-        assertThat(getPopulatedTree1().getEntries().stream().map(TreeEntry::toPair))
+        assertThat(getPopulatedTree1().getEntriesInOrder(Comparator.naturalOrder()).stream().map(TreeEntry::toPair))
                 .containsExactlyElementsOf(
                         Arrays.stream(tree1Items)
                               .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
@@ -1809,7 +1806,7 @@ abstract class TreeTest
 
     @Test
     void getEntriesAlong_populated_emptyAlongPath()
-    { assertThat(getPopulatedTree1().getEntriesAlong(new TreePath<>("zoot", "doot"))).isEmpty(); }
+    { assertThat(getPopulatedTree2().getEntriesAlong(new TreePath<>("zoot", "doot"))).isEmpty(); }
 
     @Test
     void getEntriesUnderRootAlong_empty()
@@ -1904,7 +1901,7 @@ abstract class TreeTest
         assertThat(getPopulatedTree1().getEntriesImmediatelyUnder(path).stream().map(TreeEntry::toPair))
                 .containsExactlyInAnyOrderElementsOf(
                         Arrays.stream(tree1Items)
-                              .filter(x -> x.getFirst().isAncestorOf(path) && x.getFirst().size() == path.size() + 1)
+                              .filter(x -> x.getFirst().isDescendantOf(path) && x.getFirst().size() == path.size() + 1)
                               .collect(Collectors.toList()));
     }
 
@@ -1928,7 +1925,7 @@ abstract class TreeTest
                                       .map(TreeEntry::toPair))
                 .containsExactlyElementsOf(
                         Arrays.stream(tree1Items)
-                              .filter(x -> x.getFirst().isAncestorOf(path) && x.getFirst().size() == path.size() + 1)
+                              .filter(x -> x.getFirst().isDescendantOf(path) && x.getFirst().size() == path.size() + 1)
                               .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
                               .collect(Collectors.toList()));
     }
@@ -1953,9 +1950,8 @@ abstract class TreeTest
                                       .stream().map(TreeEntry::toPair))
                 .containsExactlyInAnyOrderElementsOf(
                         Arrays.stream(tree1Items)
-                              .filter(x -> (x.getFirst().isRoot())
-                                           || (x.getFirst().isAncestorOf(path)
-                                               && x.getFirst().size() == path.size() + 1))
+                              .filter(x -> (x.getFirst().isEqualToOrDescendantOf(path))
+                                           && (x.getFirst().size() <= (path.size() + 1)))
                               .collect(Collectors.toList()));
     }
 
@@ -1979,9 +1975,8 @@ abstract class TreeTest
                                       .stream().map(TreeEntry::toPair))
                 .containsExactlyElementsOf(
                         Arrays.stream(tree1Items)
-                              .filter(x -> (x.getFirst().isRoot())
-                                           || (x.getFirst().isAncestorOf(path)
-                                               && x.getFirst().size() == path.size() + 1))
+                              .filter(x -> (x.getFirst().isEqualToOrDescendantOf(path))
+                                           && (x.getFirst().size() <= (path.size() + 1)))
                               .sorted(Comparator.comparing(Pair::getFirst, TreePath.getComparator()))
                               .collect(Collectors.toList()));
     }
@@ -2004,7 +1999,8 @@ abstract class TreeTest
         assertThat(getPopulatedTree1().getBranch(path).getEntries().stream().map(TreeEntry::toPair))
                 .containsExactlyInAnyOrderElementsOf(
                         Arrays.stream(tree1Items)
-                              .filter(x -> x.getFirst().isEqualToOrAncestorOf(path))
+                              .filter(x -> x.getFirst().isEqualToOrDescendantOf(path))
+                              .map(x -> new Pair<>(x.getFirst().withoutFirstNodes(2), x.getSecond()))
                               .collect(Collectors.toList()));
     }
 
@@ -2101,7 +2097,7 @@ abstract class TreeTest
         // Assumes that .getAt is working correctly.
 
         Tree<String, Integer> tree = getNewTree();
-        Tree<String, Integer> branch = tree.getBranch(new TreePath<>("first", "second"));
+        Tree<String, Integer> branch = tree.getBranchView(new TreePath<>("first", "second"));
 
         branch.setRootItem(67);
         assertThat(tree.getAt(new TreePath<>("first", "second"))).isEqualTo(67);
@@ -2114,7 +2110,7 @@ abstract class TreeTest
         // Assumes that .setAt is working correctly.
 
         Tree<String, Integer> tree = getNewTree();
-        Tree<String, Integer> branch = tree.getBranch(new TreePath<>("first", "second"));
+        Tree<String, Integer> branch = tree.getBranchView(new TreePath<>("first", "second"));
 
         tree.setAt(new TreePath<>("first", "second"), 67);
         assertThat(branch.getRootItem()).isEqualTo(67);
@@ -2128,7 +2124,7 @@ abstract class TreeTest
 
         Tree<String, Integer> tree = getNewTree();
         tree.setAt(new TreePath<>("first", "second", "third"), 67);
-        Tree<String, Integer> branch = tree.getBranch(new TreePath<>("first", "second"));
+        Tree<String, Integer> branch = tree.getBranchView(new TreePath<>("first", "second"));
 
         branch.clearAt(new TreePath<>("third"));
         assertThat(tree.getAtOr(new TreePath<>("first", "second", "third"), 85)).isEqualTo(85);
@@ -2142,7 +2138,7 @@ abstract class TreeTest
 
         Tree<String, Integer> tree = getNewTree();
         tree.setAt(new TreePath<>("first", "second", "third"), 67);
-        Tree<String, Integer> branch = tree.getBranch(new TreePath<>("first", "second"));
+        Tree<String, Integer> branch = tree.getBranchView(new TreePath<>("first", "second"));
 
         tree.clearAt(new TreePath<>("first", "second", "third"));
         assertThat(branch.getAtOr(new TreePath<>("third"), 85)).isEqualTo(85);
@@ -2357,7 +2353,7 @@ abstract class TreeTest
         TreePath<String> path = new TreePath<>("first", "second");
         Tree<String, Integer> tree = getNewTree(new Pair<>(path, 7));
         assertThat(tree.setAtIf(path, 5, (p, n) -> false)).isEqualTo(7);
-        assertThrows(NoItemAtPathException.class, () -> tree.getAt(path));
+        assertThat(tree.getAt(path)).isEqualTo(7);
     }
 
     @Test
@@ -2383,7 +2379,7 @@ abstract class TreeTest
         TreePath<String> path = new TreePath<>("first", "second");
         Tree<String, Integer> tree = getNewTree(new Pair<>(path, 7));
         assertThat(tree.setAtIf(path, null, (p, n) -> false)).isEqualTo(7);
-        assertThrows(NoItemAtPathException.class, () -> tree.getAt(path));
+        assertThat(tree.getAt(path)).isEqualTo(7);
     }
 
     @Test
@@ -2598,7 +2594,7 @@ abstract class TreeTest
     {
         // Assumes that .getRootItem is working as expected.
         Tree<String, Integer> tree = getNewTree(new Pair<>(TreePath.root(), 5));
-        assertThat(tree.clearRootIf((p, n) -> true)).isEqualTo(5);
+        assertThat(tree.clearRootIf((p, n) -> false)).isEqualTo(5);
         assertThat(tree.getRootItem()).isEqualTo(5);
     }
 
@@ -2648,7 +2644,7 @@ abstract class TreeTest
         // Assumes that .getAt is working as expected.
         TreePath<String> path = new TreePath<>("first", "second");
         Tree<String, Integer> tree = getNewTree(new Pair<>(path, 5));
-        assertThat(tree.clearAtIf(path, (p, n) -> true)).isEqualTo(5);
+        assertThat(tree.clearAtIf(path, (p, n) -> false)).isEqualTo(5);
         assertThat(tree.getAt(path)).isEqualTo(5);
     }
 

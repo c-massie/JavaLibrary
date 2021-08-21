@@ -10,6 +10,8 @@ import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
+import static scot.massie.lib.collections.trees.TreeUtils.*;
+
 /**
  * <p>Tree data structure that stores items by placing items at paths and accessing them based on those paths.</p>
  *
@@ -514,7 +516,7 @@ public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
      * @return A collection of entries for all items in this tree whose paths start with (including) the given path.
      */
     default Collection<TreeEntry<TNode, TLeaf>> getEntriesAtAndUnder(TreePath<TNode> path)
-    { return getBranchView(path).getEntries(); }
+    { return convertEntriesForTree(getBranchView(path).getEntries(), this, path); }
 
     /**
      * Gets entries for all items in this tree whose path starts with (including) the given path, in order.
@@ -526,7 +528,7 @@ public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
      */
     default List<TreeEntry<TNode, TLeaf>> getEntriesAtAndUnderInOrder(TreePath<TNode> path,
                                                                       Comparator<? super TNode> comparator)
-    { return getBranchView(path).getEntriesInOrder(comparator); }
+    { return convertEntriesForTree(getBranchView(path).getEntriesInOrder(comparator), this, path); }
 
     /**
      * Gets entries for all items in this tree whose path starts with (but not including) the given path.
@@ -535,7 +537,7 @@ public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
      *         path.
      */
     default Collection<TreeEntry<TNode, TLeaf>> getEntriesUnder(TreePath<TNode> path)
-    { return getBranchView(path).getEntriesUnderRoot(); }
+    { return convertEntriesForTree(getBranchView(path).getEntriesUnderRoot(), this, path); }
 
     /**
      * Gets entries for all items in this tree whose path starts with (but not including) the given path, in order.
@@ -547,7 +549,7 @@ public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
      */
     default List<TreeEntry<TNode, TLeaf>> getEntriesUnderInOrder(TreePath<TNode> path,
                                                                  Comparator<? super TNode> comparator)
-    { return getBranchView(path).getEntriesUnderRootInOrder(comparator); }
+    { return convertEntriesForTree(getBranchView(path).getEntriesUnderRootInOrder(comparator), this, path); }
 
     /**
      * Gets entries for all items in this tree whose paths the given path starts with. (Including root)
@@ -602,7 +604,7 @@ public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
      *         path.
      */
     default Collection<TreeEntry<TNode, TLeaf>> getEntriesImmediatelyUnder(TreePath<TNode> path)
-    { return getBranchView(path).getImmediateEntries(); }
+    { return convertEntriesForTree(getBranchView(path).getImmediateEntries(), this, path); }
 
     /**
      * Gets entries for all items with paths beginning with and one element longer than the given path, in order.
@@ -614,7 +616,7 @@ public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
      */
     default List<TreeEntry<TNode, TLeaf>> getEntriesImmediatelyUnderInOrder(TreePath<TNode> path,
                                                                             Comparator<? super TNode> comparator)
-    { return getBranchView(path).getImmediateEntriesInOrder(comparator); }
+    { return convertEntriesForTree(getBranchView(path).getImmediateEntriesInOrder(comparator), this, path); }
 
     /**
      * Gets entries for all items with paths beginning with and zero or one element longer than the given path.
@@ -623,7 +625,7 @@ public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
      *         given path.
      */
     default Collection<TreeEntry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnder(TreePath<TNode> path)
-    { return getBranchView(path).getRootAndImmediateEntries(); }
+    { return convertEntriesForTree(getBranchView(path).getRootAndImmediateEntries(), this, path); }
 
     /**
      * Gets entries for all items with paths beginning with and zero or one element longer than the given path.
@@ -636,7 +638,7 @@ public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
      */
     default List<TreeEntry<TNode, TLeaf>> getEntriesAtAndImmediatelyUnderInOrder(TreePath<TNode> path,
                                                                                  Comparator<? super TNode> comparator)
-    { return getBranchView(path).getRootAndImmediateEntriesInOrder(comparator); }
+    { return convertEntriesForTree(getBranchView(path).getRootAndImmediateEntriesInOrder(comparator), this, path); }
     //endregion
 
     //region get branches

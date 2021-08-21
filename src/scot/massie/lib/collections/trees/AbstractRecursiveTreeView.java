@@ -22,14 +22,11 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
 
     protected final TreePath<TNode> viewPathParent;
 
-    protected final TreePath<TNode> viewPathFromParent;
-
     public AbstractRecursiveTreeView(T source, TreePath<TNode> viewPath)
     {
         this.source = source;
         this.viewPath = viewPath;
         this.viewPathParent = viewPath.getParent();
-        this.viewPathFromParent = new TreePath<>(viewPath.last());
     }
 
     public abstract T getInternalBranch(T sourceTree, TreePath<TNode> branchPath);
