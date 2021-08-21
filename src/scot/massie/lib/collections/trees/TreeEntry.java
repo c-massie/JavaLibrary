@@ -1,5 +1,7 @@
 package scot.massie.lib.collections.trees;
 
+import scot.massie.lib.utils.tuples.Pair;
+
 /**
  * An item from a tree, paired with information about its association with the tree it came from.
  * @param <TNode> The type of the nodes in the entry's path.
@@ -55,6 +57,14 @@ public class TreeEntry<TNode, TLeaf>
      */
     public TLeaf getItem()
     { return item; }
+
+    /**
+     * Gets a new pair of this entry's path and item.
+     * @return A new pair object, where the first element is the tree path of this entry and the second element is the
+     *         item.
+     */
+    public Pair<TreePath<TNode>, TLeaf> toPair()
+    { return new Pair<>(path, item); }
 
     @Override
     public String toString()
