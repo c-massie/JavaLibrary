@@ -1,8 +1,9 @@
 package scot.massie.lib.maths;
 
 import scot.massie.lib.collections.maps.FallbackMap;
-import scot.massie.lib.collections.tree.RecursiveTree;
-import scot.massie.lib.collections.tree.Tree;
+import scot.massie.lib.collections.trees.RecursiveTree;
+import scot.massie.lib.collections.trees.Tree;
+import scot.massie.lib.collections.trees.TreePath;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2033,11 +2034,11 @@ public class Equation
                 if(e.getValue().isLeftAssociative)
                     operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
                             .leftAssociativeInfixOperators
-                            .setAt(e.getValue(), e.getValue().tokens);
+                            .setAt(new TreePath<>(e.getValue().getTokens()), e.getValue());
                 else
                     operatorGroups.computeIfAbsent(e.getValue().priority, x -> new OperatorPriorityGroup())
                             .rightAssociativeInfixOperators
-                            .setAt(e.getValue(), e.getValue().tokens);
+                            .setAt(new TreePath<>(e.getValue().getTokens()), e.getValue());
             }
 
             operatorGroupsInOrder = operatorGroups.entrySet()
@@ -2377,7 +2378,7 @@ public class Equation
                 return null;
 
             List<Token> opTokens = opTokenPoints.stream().map(tokenList::get).collect(Collectors.toList());
-            InfixOperator op = opTree.getAt(opTokens);
+            InfixOperator op = opTree.getAt(new TreePath<>(opTokens));
             return op.tryParseFromSplits(tokenList, opTokenPoints, this);
         }
 
@@ -2411,10 +2412,10 @@ public class Equation
                      && infixOperatorTokens.contains(itoken)
                      && canBeInfixOperatorToken(of.tokens, i))
                 {
-                    if(opsBranch.hasItemsAtOrUnder(itoken))
+                    if(opsBranch.hasItemsAtOrUnder(new TreePath<>(itoken)))
                     {
                         points.add(i);
-                        opsBranch = opsBranch.getBranch(itoken);
+                        opsBranch = opsBranch.getBranch(new TreePath<>(itoken));
 
                         if(opsBranch.hasRootItem())
                         {
@@ -2427,7 +2428,7 @@ public class Equation
                             return points;
                         }
                     }
-                    else if(opsTree.hasItemsAtOrUnder(itoken))
+                    else if(opsTree.hasItemsAtOrUnder(new TreePath<>(itoken)))
                     {
                         List<Integer> subOfPoints = getInfixTokenPoints_rightAssociative(
                                 of, opsTree, i, skipFromInclusive, skipToExclusive);
@@ -2469,7 +2470,7 @@ public class Equation
                 return null;
 
             List<Token> opTokens = opTokenPoints.stream().map(tokenList::get).collect(Collectors.toList());
-            InfixOperator op = opTree.getAt(opTokens);
+            InfixOperator op = opTree.getAt(new TreePath<>(opTokens));
             return op.tryParseFromSplits(tokenList, opTokenPoints, this);
         }
 
@@ -2503,10 +2504,10 @@ public class Equation
                      && infixOperatorTokens.contains(itoken)
                      && canBeInfixOperatorToken(of.tokens, i))
                 {
-                    if(opsBranch.hasItemsAtOrUnder(itoken))
+                    if(opsBranch.hasItemsAtOrUnder(new TreePath<>(itoken)))
                     {
                         points.add(0, i);
-                        opsBranch = opsBranch.getBranch(itoken);
+                        opsBranch = opsBranch.getBranch(new TreePath<>(itoken));
 
                         if(opsBranch.hasRootItem())
                         {
@@ -2519,7 +2520,7 @@ public class Equation
                             return points;
                         }
                     }
-                    else if(opsTreeReversed.hasItemsAtOrUnder(itoken))
+                    else if(opsTreeReversed.hasItemsAtOrUnder(new TreePath<>(itoken)))
                     {
                         List<Integer> subOfPoints = getInfixTokenPoints_leftAssociative(
                                 of, opsTreeReversed, i, skipFromInclusive, skipToExclusive);
