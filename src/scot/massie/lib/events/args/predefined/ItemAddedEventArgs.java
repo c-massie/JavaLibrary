@@ -1,12 +1,10 @@
 package scot.massie.lib.events.args.predefined;
 
-import scot.massie.lib.events.args.EventArgs;
-
 /**
  * Generic event args for an item being added to something.
  * @param <T> The type of the item being added.
  */
-public class ItemAddedEventArgs<T> implements EventArgs
+public class ItemAddedEventArgs<T> extends ContentsChangedEventArgs
 {
     /**
      * Creates a new event args for an item being added to something.

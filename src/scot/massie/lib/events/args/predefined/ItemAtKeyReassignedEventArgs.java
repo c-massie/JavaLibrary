@@ -7,7 +7,7 @@ import scot.massie.lib.events.args.EventArgs;
  * @param <K> The type of the key being assigned to.
  * @param <V> The type of the value being assigned or removed.
  */
-public class ItemAtKeyReassignedEventArgs<K, V> implements EventArgs
+public class ItemAtKeyReassignedEventArgs<K, V> extends ContentsChangedEventArgs
 {
     /**
      * Creates a new event args for the value assigned to a key being changed.

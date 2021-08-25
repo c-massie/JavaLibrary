@@ -6,7 +6,7 @@ import scot.massie.lib.events.args.EventArgs;
  * Generic event args for an item being removed from something.
  * @param <T> The type of the item being removed.
  */
-public class ItemRemovedEventArgs<T> implements EventArgs
+public class ItemRemovedEventArgs<T> extends ContentsChangedEventArgs
 {
     /**
      * Creates a new event args for an item being removed from something.

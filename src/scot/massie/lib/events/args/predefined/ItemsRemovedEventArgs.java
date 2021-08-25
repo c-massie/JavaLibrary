@@ -10,7 +10,7 @@ import java.util.Collections;
  * Generic event args for any number of items being removed from something.
  * @param <T> The type of the items being removed.
  */
-public class ItemsRemovedEventArgs<T> implements EventArgs
+public class ItemsRemovedEventArgs<T> extends ContentsChangedEventArgs
 {
     /**
      * Creates a new event args for items being removed from something.

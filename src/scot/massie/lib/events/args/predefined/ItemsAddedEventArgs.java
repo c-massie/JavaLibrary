@@ -10,7 +10,7 @@ import java.util.Collections;
  * Generic event args for any number of items being added to something.
  * @param <T> The type of the items being added.
  */
-public class ItemsAddedEventArgs<T> implements EventArgs
+public class ItemsAddedEventArgs<T> extends ContentsChangedEventArgs
 {
     /**
      * Creates a new event args for items being added to something.
