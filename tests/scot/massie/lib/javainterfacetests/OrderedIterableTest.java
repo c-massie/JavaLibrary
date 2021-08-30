@@ -1,9 +1,8 @@
 package scot.massie.lib.javainterfacetests;
 
 import org.junit.jupiter.api.Test;
-import scot.massie.lib.utils.wrappers.MutableWrapper;
 
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -17,37 +16,25 @@ public abstract class OrderedIterableTest<T, TIterable extends Iterable<T>> exte
     public void foreach_multiple()
     {
         List<T> expectedValues = getTestValues();
-        MutableWrapper<Integer> i = new MutableWrapper<>(0);
-
-        getIterableWithValues().forEach(x ->
-        {
-            assertThat(i.get()).isLessThan(expectedValues.size());
-            assertThat(x).usingComparator(getEquator())
-                         .describedAs("i = " + i.get())
-                         .isEqualTo(expectedValues.get(i.get()));
-
-            i.set(i.get() + 1);
-        });
-
-        assertThat(i.get()).isEqualTo(expectedValues.size());
+        List<T> actualValues = new ArrayList<>();
+        getIterableWithValues().forEach(actualValues::add);
+        assertThat(actualValues).usingElementComparator(getEquator())
+                                .containsExactlyElementsOf(expectedValues);
     }
 
     @Test
     public void iterator_multiple()
     {
         List<T> expectedValues = getTestValues();
+        List<T> actualValues = new ArrayList<>();
+
         Iterator<T> iterator = getIterableWithValues().iterator();
-        int i = 0;
 
-        while(i < expectedValues.size())
-        {
-            assertThat(iterator.hasNext()).isTrue();
-            assertThat(iterator.next()).usingComparator(getEquator()).isEqualTo(expectedValues.get(i));
+        while(iterator.hasNext())
+            actualValues.add(iterator.next());
 
-            i++;
-        }
-
-        assertThat(iterator.hasNext()).isFalse();
         assertThrows(NoSuchElementException.class, iterator::next);
+        assertThat(actualValues).usingElementComparator(getEquator())
+                                .containsExactlyElementsOf(expectedValues);
     }
 }
