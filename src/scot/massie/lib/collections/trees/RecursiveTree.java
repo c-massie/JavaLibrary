@@ -1100,7 +1100,7 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
                     throw new NoSuchElementException();
 
                 nextResult = progress();
-                return nextResult;
+                return result;
             }
 
             TreeEntry<TNode, TLeaf> progress()
