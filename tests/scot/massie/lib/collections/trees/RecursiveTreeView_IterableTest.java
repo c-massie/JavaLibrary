@@ -1,38 +1,43 @@
 package scot.massie.lib.collections.trees;
 
 import scot.massie.lib.javainterfacetests.IterableTest;
-import scot.massie.lib.javainterfacetests.OrderedIterableTest;
-import scot.massie.lib.utils.tuples.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RecursiveTree_IterableTest
-        extends IterableTest<TreeEntry<String, Integer>, RecursiveTree<String, Integer>>
+public class RecursiveTreeView_IterableTest
+        extends IterableTest<TreeEntry<String, Integer>, RecursiveTreeView<String, Integer>>
 {
+    private final TreePath<String> path = new TreePath<>("first", "second");
+
     @Override
-    public RecursiveTree<String, Integer> getEmptyIterable()
+    public RecursiveTreeView<String, Integer> getEmptyIterable()
     {
-        return new RecursiveTree<>();
+        RecursiveTree<String, Integer> tree = new RecursiveTree<>();
+        tree.setAt(TreePath.root(), 684);
+        tree.setAt(new TreePath<>("first"), 394);
+        tree.setAt(new TreePath<>("doot", "noot"), 834);
+        tree.setAt(new TreePath<>("doot"), 583);
+        return new RecursiveTreeView<>(tree, new TreePath<>("first", "second"));
     }
 
     @Override
-    public RecursiveTree<String, Integer> getIterableWithSingleValue()
+    public RecursiveTreeView<String, Integer> getIterableWithSingleValue()
     {
-        RecursiveTree<String, Integer> tree = new RecursiveTree<>();
+        RecursiveTreeView<String, Integer> tree = getEmptyIterable();
         TreeEntry<String, Integer> singleTestValue = getSingleTestValue();
         tree.setAt(singleTestValue.getPath(), singleTestValue.getItem());
         return tree;
     }
 
     @Override
-    public RecursiveTree<String, Integer> getIterableWithValues()
+    public RecursiveTreeView<String, Integer> getIterableWithValues()
     {
-        RecursiveTree<String, Integer> tree = new RecursiveTree<>();
+        RecursiveTreeView<String, Integer> tree = getEmptyIterable();
 
         for(TreeEntry<String, Integer> testValue : getTestValues())
             tree.setAt(testValue.getPath(), testValue.getItem());
-        
+
         return tree;
     }
 
@@ -58,7 +63,7 @@ public class RecursiveTree_IterableTest
         result.add(new TreeEntry<>(null, new TreePath<>("uno"), 44));
         result.add(new TreeEntry<>(null, new TreePath<>("uno", "dos"), 87));
         result.add(new TreeEntry<>(null, new TreePath<>("uno", "dos", "third"), 92));
-        
+
         return result;
     }
 

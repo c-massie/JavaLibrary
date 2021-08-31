@@ -702,9 +702,37 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
 
     @Override
     public Iterator<TreeEntry<TNode, TLeaf>> iterator()
-    { return source.iterator(); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return Collections.emptyIterator();
+
+        return new Iterator<TreeEntry<TNode, TLeaf>>()
+        {
+            private final Iterator<TreeEntry<TNode, TLeaf>> sourceBranchIterator = sourceBranch.iterator();
+
+            @Override
+            public boolean hasNext()
+            { return sourceBranchIterator.hasNext(); }
+
+            @Override
+            public TreeEntry<TNode, TLeaf> next()
+            {
+                TreeEntry<TNode, TLeaf> sourceNext = sourceBranchIterator.next();
+                return new TreeEntry<>(AbstractRecursiveTreeView.this, sourceNext.getPath(), sourceNext.getItem());
+            }
+        };
+    }
 
     @Override
     public void forEach(Consumer<? super TreeEntry<TNode, TLeaf>> action)
-    { source.forEach(action); }
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return;
+
+        sourceBranch.forEach(entry -> action.accept(new TreeEntry<>(this, entry.getPath(), entry.getItem())));
+    }
 }
