@@ -1040,6 +1040,14 @@ public class RecursiveTree<TNode, TLeaf> implements Tree<TNode, TLeaf>
     }
 
     @Override
+    public Map<TreePath<TNode>, TLeaf> toMap()
+    {
+        Map<TreePath<TNode>, TLeaf> result = new HashMap<>();
+        forEachItemWithPath(result::put);
+        return result;
+    }
+
+    @Override
     public Tree<TNode, TLeaf> withReversedKeys()
     {
         Tree<TNode, TLeaf> result = new RecursiveTree<>();

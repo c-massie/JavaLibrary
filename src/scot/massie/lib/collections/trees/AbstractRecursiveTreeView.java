@@ -668,6 +668,17 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     }
 
     @Override
+    public Map<TreePath<TNode>, TLeaf> toMap()
+    {
+        T sourceBranch = getInternalBranch(source, viewPath);
+
+        if(sourceBranch == null)
+            return Collections.emptyMap();
+
+        return sourceBranch.toMap();
+    }
+
+    @Override
     public Tree<TNode, TLeaf> withReversedKeys()
     {
         T sourceBranch = getInternalBranch(source, viewPath);

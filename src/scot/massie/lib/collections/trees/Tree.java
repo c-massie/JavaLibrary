@@ -860,6 +860,12 @@ public interface Tree<TNode, TLeaf> extends Iterable<TreeEntry<TNode, TLeaf>>
     List<TLeaf> toOrderedList(Comparator<? super TNode> comparator);
 
     /**
+     * Gets all items in this tree paired with their tree paths in a map.
+     * @return The items in this tree and their paths as a map.
+     */
+    Map<TreePath<TNode>, TLeaf> toMap();
+
+    /**
      * Gets a copy of this tree, where the paths of all items are reversed.
      * @return A new tree object, with all the items of this tree, but at reversed paths.
      */
