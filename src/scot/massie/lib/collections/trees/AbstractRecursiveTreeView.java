@@ -13,6 +13,8 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static scot.massie.lib.utils.ControlFlowUtils.*;
+
 public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TNode, TLeaf>
         implements Tree<TNode, TLeaf>
 {
@@ -39,45 +41,27 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
 
     @Override
     public boolean hasItems()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-        return sourceBranch != null && sourceBranch.hasItems();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::hasItems, () -> false); }
 
     @Override
     public boolean hasNonRootItems()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-        return sourceBranch != null && sourceBranch.hasNonRootItems();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::hasNonRootItems, () -> false); }
 
     @Override
     public boolean hasItemsAlong(TreePath<TNode> path)
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-        return sourceBranch != null && sourceBranch.hasItemsAlong(path);
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), b -> b.hasItemsAlong(path), () -> false); }
 
     @Override
     public boolean hasNonRootItemsAlong(TreePath<TNode> path)
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-        return sourceBranch != null && sourceBranch.hasNonRootItemsAlong(path);
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), b -> b.hasNonRootItemsAlong(path), () -> false); }
 
     @Override
     public boolean hasItemAt(TreePath<TNode> path)
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-        return sourceBranch != null && sourceBranch.hasItemAt(path);
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), b -> b.hasItemAt(path), () -> false); }
 
     @Override
     public boolean hasRootItem()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-        return sourceBranch != null && sourceBranch.hasRootItem();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::hasRootItem, () -> false); }
 
     @Override
     public TLeaf getRootItem() throws NoItemAtPathException
@@ -93,23 +77,17 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     @Override
     public TLeaf getRootItemOr(TLeaf defaultItem)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return defaultItem;
-
-        return sourceBranch.getRootItemOr(defaultItem);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getRootItemOr(defaultItem),
+                                 () -> defaultItem);
     }
 
     @Override
     public Object getRootItemOrDefaultOfAnyType(Object defaultItem)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return defaultItem;
-
-        return sourceBranch.getRootItemOrDefaultOfAnyType(defaultItem);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getRootItemOrDefaultOfAnyType(defaultItem),
+                                 () -> defaultItem);
     }
 
     @Override
@@ -129,335 +107,229 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     @Override
     public TLeaf getAtOr(TreePath<TNode> path, TLeaf defaultItem)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return defaultItem;
-
-        return sourceBranch.getAtOr(path, defaultItem);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getAtOr(path, defaultItem),
+                                 () -> defaultItem);
     }
 
     @Override
     public Object getAtOrDefaultOfAnyType(TreePath<TNode> path, Object defaultItem)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return defaultItem;
-
-        return sourceBranch.getAtOrDefaultOfAnyType(path, defaultItem);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getAtOrDefaultOfAnyType(path, defaultItem),
+                                 () -> defaultItem);
     }
 
     @Override
     public Collection<TLeaf> getItems()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItems();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::getItems, Collections::emptyList); }
 
     @Override
     public List<TLeaf> getItemsInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItemsInOrder(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getItemsInOrder(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TLeaf> getItemsWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItemsWhere(test);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getItemsWhere(test),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TLeaf> getItemsWherePath(Predicate<? super TreePath<TNode>> test)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItemsWherePath(test);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getItemsWherePath(test),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TLeaf> getItemsInOrderWhere(Comparator<? super TNode> comparator,
                                                   BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItemsInOrderWhere(comparator, test);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getItemsInOrderWhere(comparator, test),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TLeaf> getItemsInOrderWherePath(Comparator<? super TNode> comparator,
                                                       Predicate<? super TreePath<TNode>> test)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItemsInOrderWherePath(comparator, test);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getItemsInOrderWherePath(comparator, test),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TLeaf> getItemsUnderRoot()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItemsUnderRoot();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::getItemsUnderRoot, Collections::emptyList); }
 
     @Override
     public List<TLeaf> getItemsUnderRootInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItemsUnderRootInOrder(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getItemsUnderRootInOrder(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TLeaf> getItemsAlong(TreePath<TNode> path)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItemsAlong(path);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getItemsAlong(path),
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TLeaf> getItemsUnderRootAlong(TreePath<TNode> path)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getItemsUnderRootAlong(path);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getItemsUnderRootAlong(path),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TLeaf> getImmediateItems()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getImmediateItems();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::getImmediateItems, Collections::emptyList); }
 
     @Override
     public List<TLeaf> getImmediateItemsInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getImmediateItemsInOrder(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getImmediateItemsInOrder(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TLeaf> getRootAndImmediateItems()
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getRootAndImmediateItems();
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 Tree::getRootAndImmediateItems,
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TLeaf> getRootAndImmediateItemsInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getRootAndImmediateItemsInOrder(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getRootAndImmediateItemsInOrder(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntries()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntries();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::getEntries, Collections::emptyList); }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntriesInOrder(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getEntriesInOrder(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesWhere(Predicate<? super TreeEntry<TNode, TLeaf>> test)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntriesWhere(test);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getEntriesWhere(test),
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWhere(Comparator<? super TNode> comparator,
                                                                 Predicate<? super TreeEntry<TNode, TLeaf>> test)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntriesInOrderWhere(comparator, test);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getEntriesInOrderWhere(comparator, test),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesWherePath(Predicate<? super TreePath<TNode>> test)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntriesWherePath(test);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getEntriesWherePath(test),
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesInOrderWherePath(Comparator<? super TNode> comparator,
                                                                     Predicate<? super TreePath<TNode>> test)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntriesInOrderWherePath(comparator, test);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getEntriesInOrderWherePath(comparator, test),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getEntriesUnderRoot()
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntriesUnderRoot();
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 Tree::getEntriesUnderRoot,
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesUnderRootInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntriesUnderRootInOrder(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getEntriesUnderRootInOrder(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesAlong(TreePath<TNode> path)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntriesAlong(path);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getEntriesAlong(path),
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getEntriesUnderRootAlong(TreePath<TNode> path)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getEntriesUnderRootAlong(path);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getEntriesUnderRootAlong(path),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getImmediateEntries()
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getImmediateEntries();
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 Tree::getImmediateEntries,
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getImmediateEntriesInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getImmediateEntriesInOrder(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getImmediateEntriesInOrder(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
     public Collection<TreeEntry<TNode, TLeaf>> getRootAndImmediateEntries()
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getRootAndImmediateEntries();
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 Tree::getRootAndImmediateEntries,
+                                 Collections::emptyList);
     }
 
     @Override
     public List<TreeEntry<TNode, TLeaf>> getRootAndImmediateEntriesInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getRootAndImmediateEntriesInOrder(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getRootAndImmediateEntriesInOrder(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
@@ -466,35 +338,18 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
 
     @Override
     public Map<TNode, Tree<TNode, TLeaf>> getBranches()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyMap();
-
-        return sourceBranch.getBranches();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::getBranches, Collections::emptyMap); }
 
     @Override
     public Collection<TreePath<TNode>> getPaths()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getPaths();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::getPaths, Collections::emptyList); }
 
     @Override
     public List<TreePath<TNode>> getPathsInOrder(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.getPathsInOrder(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                 b -> b.getPathsInOrder(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
@@ -559,51 +414,19 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
 
     @Override
     public void clear()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return;
-
-        sourceBranch.clear();
-        trim(source, viewPath);
-    }
+    { ifNotNull(getInternalBranch(source, viewPath), b -> { b.clear(); trim(source, viewPath); }); }
 
     @Override
     public void clearUnderRoot()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return;
-
-        sourceBranch.clearUnderRoot();
-        trim(source, viewPath);
-    }
+    { ifNotNull(getInternalBranch(source, viewPath), b -> { b.clearUnderRoot(); trim(source, viewPath); }); }
 
     @Override
     public void clearWhere(BiPredicate<? super TreePath<TNode>, ? super TLeaf> test)
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return;
-
-        sourceBranch.clearWhere(test);
-        trim(source, viewPath);
-    }
+    { ifNotNull(getInternalBranch(source, viewPath), b -> { b.clearWhere(test); trim(source, viewPath); }); }
 
     @Override
     public void clearWherePath(Predicate<? super TreePath<TNode>> test)
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return;
-
-        sourceBranch.clearWherePath(test);
-        trim(source, viewPath);
-    }
+    { ifNotNull(getInternalBranch(source, viewPath), b -> { b.clearWherePath(test); trim(source, viewPath); }); }
 
     @Override
     public TLeaf clearRoot()
@@ -647,69 +470,31 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
 
     @Override
     public List<TLeaf> toList()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.toList();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::toList, Collections::emptyList); }
 
     @Override
     public List<TLeaf> toOrderedList(Comparator<? super TNode> comparator)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyList();
-
-        return sourceBranch.toOrderedList(comparator);
+        return getFromUnlessNull(getInternalBranch(source, viewPath),
+                                    b -> b.toOrderedList(comparator),
+                                 Collections::emptyList);
     }
 
     @Override
     public Map<TreePath<TNode>, TLeaf> toMap()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return Collections.emptyMap();
-
-        return sourceBranch.toMap();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::toMap, Collections::emptyMap); }
 
     @Override
     public Tree<TNode, TLeaf> withReversedKeys()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return getNewEmptyTree();
-
-        return sourceBranch.withReversedKeys();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::withReversedKeys, this::getNewEmptyTree); }
 
     @Override
     public int size()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return 0;
-
-        return sourceBranch.size();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::size, () -> 0); }
 
     @Override
     public int countDepth()
-    {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return 0;
-
-        return sourceBranch.countDepth();
-    }
+    { return getFromUnlessNull(getInternalBranch(source, viewPath), Tree::countDepth, () -> 0); }
 
     @Override
     public Iterator<TreeEntry<TNode, TLeaf>> iterator()
@@ -739,11 +524,7 @@ public abstract class AbstractRecursiveTreeView<T extends Tree<TNode, TLeaf>, TN
     @Override
     public void forEach(Consumer<? super TreeEntry<TNode, TLeaf>> action)
     {
-        T sourceBranch = getInternalBranch(source, viewPath);
-
-        if(sourceBranch == null)
-            return;
-
-        sourceBranch.forEach(entry -> action.accept(new TreeEntry<>(this, entry.getPath(), entry.getItem())));
+        ifNotNull(getInternalBranch(source, viewPath),
+                  b -> b.forEach(entry -> action.accept(new TreeEntry<>(this, entry.getPath(), entry.getItem()))));
     }
 }
