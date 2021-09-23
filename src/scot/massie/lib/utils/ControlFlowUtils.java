@@ -146,7 +146,14 @@ public final class ControlFlowUtils
     public static <T, R> R getFromUnlessNull(T from, Supplier<R> notNullResultGetter)
     { return from != null ? notNullResultGetter.get() : null; }
 
-    
+    /**
+     * Performs an action if given predicate is satisfied, otherwise another action.
+     * @param val The value to be passed into the predicate.
+     * @param ifStatement The predicate to test.
+     * @param trueAction The action to perform if the predicate is satisfied.
+     * @param falseAction The action to perform if the predicate is not satisfied.
+     * @param <T> The type of the value passed into the predicate.
+     */
     public static <T> void ifVal(T val, Predicate<T> ifStatement, Consumer<T> trueAction, Consumer<T> falseAction)
     {
         if(ifStatement.test(val))
@@ -155,6 +162,14 @@ public final class ControlFlowUtils
             falseAction.accept(val);
     }
 
+    /**
+     * Performs an action if given predicate is satisfied, otherwise another action.
+     * @param val The value to be passed into the predicate.
+     * @param ifStatement The predicate to test.
+     * @param trueAction The action to perform if the predicate is satisfied.
+     * @param falseAction The action to perform if the predicate is not satisfied.
+     * @param <T> The type of the value passed into the predicate.
+     */
     public static <T> void ifVal(T val, Predicate<T> ifStatement, Consumer<T> trueAction, Procedure falseAction)
     {
         if(ifStatement.test(val))
@@ -163,12 +178,27 @@ public final class ControlFlowUtils
             falseAction.run();
     }
 
+    /**
+     * Performs an action if given predicate is satisfied.
+     * @param val The value to be passed into the predicate.
+     * @param ifStatement The predicate to test.
+     * @param trueAction The action to perform if the predicate is satisfied.
+     * @param <T> The type of the value passed into the predicate.
+     */
     public static <T> void ifVal(T val, Predicate<T> ifStatement, Consumer<T> trueAction)
     {
         if(ifStatement.test(val))
             trueAction.accept(val);
     }
 
+    /**
+     * Performs an action if given predicate is satisfied, otherwise another action.
+     * @param val The value to be passed into the predicate.
+     * @param ifStatement The predicate to test.
+     * @param trueAction The action to perform if the predicate is satisfied.
+     * @param falseAction The action to perform if the predicate is not satisfied.
+     * @param <T> The type of the value passed into the predicate.
+     */
     public static <T> void ifVal(T val, Predicate<T> ifStatement, Procedure trueAction, Consumer<T> falseAction)
     {
         if(ifStatement.test(val))
@@ -177,6 +207,14 @@ public final class ControlFlowUtils
             falseAction.accept(val);
     }
 
+    /**
+     * Performs an action if given predicate is satisfied, otherwise another action.
+     * @param val The value to be passed into the predicate.
+     * @param ifStatement The predicate to test.
+     * @param trueAction The action to perform if the predicate is satisfied.
+     * @param falseAction The action to perform if the predicate is not satisfied.
+     * @param <T> The type of the value passed into the predicate.
+     */
     public static <T> void ifVal(T val, Predicate<T> ifStatement, Procedure trueAction, Procedure falseAction)
     {
         if(ifStatement.test(val))
@@ -185,12 +223,26 @@ public final class ControlFlowUtils
             falseAction.run();
     }
 
+    /**
+     * Performs an action if given predicate is satisfied.
+     * @param val The value to be passed into the predicate.
+     * @param ifStatement The predicate to test.
+     * @param trueAction The action to perform if the predicate is satisfied.
+     * @param <T> The type of the value passed into the predicate.
+     */
     public static <T> void ifVal(T val, Predicate<T> ifStatement, Procedure trueAction)
     {
         if(ifStatement.test(val))
             trueAction.run();
     }
 
+    /**
+     * Performs an action if a given value is not null, otherwise another action.
+     * @param val The value to test.
+     * @param trueAction The action to perform if the value is not null.
+     * @param falseAction The action to perform if the value is null.
+     * @param <T> The type of the value to test.
+     */
     public static <T> void ifNotNull(T val, Consumer<T> trueAction, Consumer<T> falseAction)
     {
         if(val != null)
@@ -199,6 +251,13 @@ public final class ControlFlowUtils
             falseAction.accept(val);
     }
 
+    /**
+     * Performs an action if a given value is not null, otherwise another action.
+     * @param val The value to test.
+     * @param trueAction The action to perform if the value is not null.
+     * @param falseAction The action to perform if the value is null.
+     * @param <T> The type of the value to test.
+     */
     public static <T> void ifNotNull(T val, Consumer<T> trueAction, Procedure falseAction)
     {
         if(val != null)
@@ -207,12 +266,25 @@ public final class ControlFlowUtils
             falseAction.run();
     }
 
+    /**
+     * Performs an action if a given value is not null.
+     * @param val The value to test.
+     * @param trueAction The action to perform if the value is not null.
+     * @param <T> The type of the value to test.
+     */
     public static <T> void ifNotNull(T val, Consumer<T> trueAction)
     {
         if(val != null)
             trueAction.accept(val);
     }
 
+    /**
+     * Performs an action if a given value is not null, otherwise another action.
+     * @param val The value to test.
+     * @param trueAction The action to perform if the value is not null.
+     * @param falseAction The action to perform if the value is null.
+     * @param <T> The type of the value to test.
+     */
     public static <T> void ifNotNull(T val, Procedure trueAction, Consumer<T> falseAction)
     {
         if(val != null)
@@ -221,6 +293,13 @@ public final class ControlFlowUtils
             falseAction.accept(val);
     }
 
+    /**
+     * Performs an action if a given value is not null, otherwise another action.
+     * @param val The value to test.
+     * @param trueAction The action to perform if the value is not null.
+     * @param falseAction The action to perform if the value is null.
+     * @param <T> The type of the value to test.
+     */
     public static <T> void ifNotNull(T val, Procedure trueAction, Procedure falseAction)
     {
         if(val != null)
@@ -229,6 +308,12 @@ public final class ControlFlowUtils
             falseAction.run();
     }
 
+    /**
+     * Performs an action if a given value is not null.
+     * @param val The value to test.
+     * @param trueAction The action to perform if the value is not null.
+     * @param <T> The type of the value to test.
+     */
     public static <T> void ifNotNull(T val, Procedure trueAction)
     {
         if(val != null)
