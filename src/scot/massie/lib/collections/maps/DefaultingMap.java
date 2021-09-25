@@ -9,6 +9,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static scot.massie.lib.utils.ControlFlowUtils.*;
+
 /**
  * A map that provides a default value for any particular key when queried where no value has been explicitly set,
  * rather than null.
@@ -92,13 +94,9 @@ public class DefaultingMap<K, V> extends WrapperMap<K, V>
     @Override
     public V get(Object key)
     {
-        @SuppressWarnings("unchecked") // .get should be passed an object of type K.
-        K kKey = (K)key;
-
-        if(!internal.containsKey(kKey))
-            return defaultValueFunction.apply(kKey);
-
-        return internal.get(key);
+        //noinspection unchecked .get should be passed an object of type K.
+        return getFromIf(internal, x -> x.containsKey((K)key), x  -> x.get(key),
+                                                               () -> defaultValueFunction.apply((K)key));
     }
 
     /**
