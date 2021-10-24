@@ -61,7 +61,7 @@ public class ThreadsafeInvokableEvent<TArgs extends EventArgs> implements Invoka
     @Override
     public void invoke(TArgs eventArgs)
     {
-        boolean listenerOrderMatters = false;
+        boolean listenerOrderMatters;
         Stream<EventListenerCallInfo<?>> listenerStream;
 
         synchronized(wrappedEvent)

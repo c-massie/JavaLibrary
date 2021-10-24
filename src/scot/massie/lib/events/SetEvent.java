@@ -40,13 +40,18 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
      */
     protected final Map<InvokableEvent<?>, EventWithArgsConverter<TArgs, ?>> dependentEvents = new HashMap<>();
 
+    /**
+     * The synchronisation lock for this object.
+     */
+    protected final Object syncLock = new Object();
+
     @Override
     public void invoke(TArgs eventArgs)
     {
         boolean listenerOrderMatters = false;
         Stream<EventListenerCallInfo<?>> listenerStream;
 
-        synchronized(listeners)
+        synchronized(syncLock)
         {
             for(InvokableEvent<?> e : dependentEvents.keySet())
                 if(e.listenerOrderMatters())
@@ -64,14 +69,14 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
 
     @Override
     public void register(EventListener<TArgs> listener)
-    { synchronized(listeners) { listeners.add(listener); } }
+    { synchronized(syncLock) { listeners.add(listener); } }
 
     @Override
     public void register(InvokableEvent<TArgs> dependentEvent)
     {
         EventWithArgsConverter<TArgs, TArgs> ewac = new EventWithArgsConverter<>(dependentEvent, Function.identity());
 
-        synchronized(listeners)
+        synchronized(syncLock)
         { dependentEvents.put(dependentEvent, ewac); }
     }
 
@@ -80,30 +85,30 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
     {
         EventWithArgsConverter<TArgs, TDependentArgs> ewac = new EventWithArgsConverter<>(dependentEvent, argWrapper);
 
-        synchronized(listeners)
+        synchronized(syncLock)
         { dependentEvents.put(dependentEvent, ewac); }
     }
 
     @Override
     public void deregister(EventListener<TArgs> listener)
-    { synchronized(listeners) { listeners.remove(listener); } }
+    { synchronized(syncLock) { listeners.remove(listener); } }
 
     @Override
     public void deregister(InvokableEvent<?> event)
-    { synchronized(listeners) { dependentEvents.remove(event); } }
+    { synchronized(syncLock) { dependentEvents.remove(event); } }
 
     @Override
     public void clearListeners()
-    { synchronized(listeners) { listeners.clear(); } }
+    { synchronized(syncLock) { listeners.clear(); } }
 
     @Override
     public void clearDependentEvents()
-    { synchronized(listeners) { dependentEvents.clear(); } }
+    { synchronized(syncLock) { dependentEvents.clear(); } }
 
     @Override
     public void clear()
     {
-        synchronized(listeners)
+        synchronized(syncLock)
         {
             listeners.clear();
             dependentEvents.clear();
@@ -113,7 +118,7 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
     @Override
     public boolean listenerOrderMatters()
     {
-        synchronized(listeners)
+        synchronized(syncLock)
         {
             for(InvokableEvent<?> e : dependentEvents.keySet())
                 if(e.listenerOrderMatters())
@@ -125,12 +130,12 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
 
     @Override
     public Collection<EventListener<TArgs>> getListeners()
-    { synchronized(listeners) { return new HashSet<>(listeners); } }
+    { synchronized(syncLock) { return new HashSet<>(listeners); } }
 
     @Override
     public Collection<InvokableEvent<?>> getDependentEvents()
     {
-        synchronized(listeners)
+        synchronized(syncLock)
         { return dependentEvents.values().stream().map(EventWithArgsConverter::getEvent).collect(Collectors.toList()); }
     }
 
@@ -141,7 +146,7 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
     @Override
     public Stream<EventListenerCallInfo<?>> generateCallInfoAsStream(TArgs args)
     {
-        synchronized(listeners)
+        synchronized(syncLock)
         {
             return Stream.concat(listeners.stream().map(x -> new EventListenerCallInfo<>(x, args)),
                                  dependentEvents.values().stream().flatMap(x -> x.generateCallInfoAsStream(args)));

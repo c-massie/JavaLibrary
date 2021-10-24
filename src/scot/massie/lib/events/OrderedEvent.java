@@ -49,7 +49,10 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
      */
     protected final Map<InvokableEvent<?>, EventWithArgsConverter<TArgs, ?>> dependentEvents = new HashMap<>();
 
-    // Synchronized on listenersWithoutPriority's lock, even where listenersWithPriority or dependentEvents is concerned
+    /**
+     * The synchronisation lock for this object.
+     */
+    protected final Object syncLock = new Object();
 
     @Override
     public void invoke(TArgs eventArgs)
@@ -57,7 +60,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
         boolean listenerOrderMatters = false;
         Stream<EventListenerCallInfo<?>> listenerStream;
 
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         {
             if(!listenersWithPriority.isEmpty())
                 listenerOrderMatters = true;
@@ -80,14 +83,14 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
 
     @Override
     public void register(EventListener<TArgs> listener)
-    { synchronized(listenersWithoutPriority) { listenersWithoutPriority.add(listener); } }
+    { synchronized(syncLock) { listenersWithoutPriority.add(listener); } }
 
     @Override
     public void register(EventListener<TArgs> listener, double priority)
     {
         EventListenerPriorityPair<TArgs> elpp = new EventListenerPriorityPair<>(listener, priority);
 
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         {
             int index = Collections.binarySearch(listenersWithPriority, elpp);
 
@@ -103,7 +106,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
     {
         EventWithArgsConverter<TArgs, TArgs> ewac = new EventWithArgsConverter<>(dependentEvent, Function.identity());
 
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         { dependentEvents.put(dependentEvent, ewac); }
     }
 
@@ -112,14 +115,14 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
     {
         EventWithArgsConverter<TArgs, TDependentArgs> ewac = new EventWithArgsConverter<>(dependentEvent, argWrapper);
 
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         { dependentEvents.put(dependentEvent, ewac); }
     }
 
     @Override
     public void deregister(EventListener<TArgs> listener)
     {
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         {
             listenersWithoutPriority.remove(listener);
             listenersWithPriority.removeIf(x -> x.getListener() == listener);
@@ -128,12 +131,12 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
 
     @Override
     public void deregister(InvokableEvent<?> event)
-    { synchronized(listenersWithoutPriority) { dependentEvents.remove(event); } }
+    { synchronized(syncLock) { dependentEvents.remove(event); } }
 
     @Override
     public void clearListeners()
     {
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         {
             listenersWithoutPriority.clear();
             listenersWithPriority.clear();
@@ -142,12 +145,12 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
 
     @Override
     public void clearDependentEvents()
-    { synchronized(listenersWithoutPriority) { dependentEvents.clear(); } }
+    { synchronized(syncLock) { dependentEvents.clear(); } }
 
     @Override
     public void clear()
     {
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         {
             listenersWithoutPriority.clear();
             listenersWithPriority.clear();
@@ -158,7 +161,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
     @Override
     public boolean listenerOrderMatters()
     {
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         {
             if(!listenersWithPriority.isEmpty())
                 return true;
@@ -174,7 +177,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
     @Override
     public Collection<EventListener<TArgs>> getListeners()
     {
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         {
             return Stream.concat(listenersWithoutPriority.stream(),
                                  listenersWithPriority.stream().map(EventListenerPriorityPair::getListener))
@@ -185,7 +188,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
     @Override
     public List<EventListenerPriorityPair<TArgs>> getListenersWithPriorities()
     {
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         {
             return Stream.concat(listenersWithoutPriority.stream().map(EventListenerPriorityPair::new),
                                  listenersWithPriority.stream())
@@ -195,7 +198,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
 
     @Override
     public Collection<InvokableEvent<?>> getDependentEvents()
-    { synchronized(listenersWithoutPriority) { return dependentEvents.keySet(); } }
+    { synchronized(syncLock) { return dependentEvents.keySet(); } }
 
     @Override
     public List<EventListenerCallInfo<?>> generateCallInfo(TArgs args)
@@ -204,7 +207,7 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
     @Override
     public Stream<EventListenerCallInfo<?>> generateCallInfoAsStream(TArgs args)
     {
-        synchronized(listenersWithoutPriority)
+        synchronized(syncLock)
         {
             return Stream.of(listenersWithoutPriority.stream().map(x -> new EventListenerCallInfo<>(x, args)),
                              listenersWithPriority   .stream().map(x -> x.toCallInfo(args)),
