@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+// TO DO: The same as this class, but ThreadsafeInvokablePriorityEvent
+
 /**
  * Wrapper for an event to produce a threadsafe variant.
  *
@@ -28,7 +30,7 @@ public class ThreadsafeInvokableEvent<TArgs extends EventArgs> implements Invoka
     protected final InvokableEvent<TArgs> wrappedEvent;
 
     /**
-     * Creates a new ThreadsafeInvokableEvent by wrapping an (assumably unthreadsafe) invokable event object.
+     * Creates a new ThreadsafeInvokableEvent by wrapping a (presumably unthreadsafe) invokable event object.
      * @param wrappedEvent The event to wrap.
      */
     public ThreadsafeInvokableEvent(InvokableEvent<TArgs> wrappedEvent)
