@@ -37,6 +37,13 @@ public class ThreadsafeInvokablePriorityEvent<TArgs extends EventArgs>
         this.wrappedEvent = wrappedEvent;
     }
 
+    /**
+     * Creates a new ThreadsafeInvokablePriorityEvent by wrapping an {@link OrderedEvent}. Note that OrderedEvent is
+     * already threadsafe, so this does nothing but provide a version that can be stored in a variable of this type.
+     */
+    public ThreadsafeInvokablePriorityEvent()
+    { this(new OrderedEvent<>()); }
+
     @Override
     public List<EventListenerPriorityPair<TArgs>> getListenersWithPriorities()
     { return wrappedEvent.getListenersWithPriorities(); }

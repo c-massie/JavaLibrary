@@ -36,6 +36,13 @@ public class ThreadsafeInvokableEvent<TArgs extends EventArgs> implements Invoka
     public ThreadsafeInvokableEvent(InvokableEvent<TArgs> wrappedEvent)
     { this.wrappedEvent = wrappedEvent; }
 
+    /**
+     * Creates a new ThreadsafeInvokableEvent by wrapping a {@link SetEvent}. Note that SetEvent is already threadsafe,
+     * so this does nothing but provide a version that can be stored in a variable of this type.
+     */
+    public ThreadsafeInvokableEvent()
+    { this(new SetEvent<>()); }
+
     @Override
     public void register(EventListener<TArgs> listener)
     { synchronized(wrappedEvent) { wrappedEvent.register(listener); } }
