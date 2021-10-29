@@ -18,6 +18,16 @@ import java.util.stream.Stream;
 public final class EventWithArgsConverter<TInvokerArgs extends EventArgs, TInvokedArgs extends EventArgs>
 {
     /**
+     * The event.
+     */
+    private final InvokableEvent<TInvokedArgs> event;
+
+    /**
+     * The function for converting another event's eventargs instances into an instance of {@link #event}'s eventargs.
+     */
+    private final Function<TInvokerArgs, TInvokedArgs> conversion;
+
+    /**
      * Pairs an event with the function required to convert an instance of another event's eventargs to an instance of
      * it's own eventargs.
      * @param event The event.
@@ -28,16 +38,6 @@ public final class EventWithArgsConverter<TInvokerArgs extends EventArgs, TInvok
         this.event = event;
         this.conversion = conversion;
     }
-
-    /**
-     * The event.
-     */
-    private final InvokableEvent<TInvokedArgs> event;
-
-    /**
-     * The function for converting another event's eventargs instances into an instance of {@link #event}'s eventargs.
-     */
-    private final Function<TInvokerArgs, TInvokedArgs> conversion;
 
     /**
      * Gets the event.

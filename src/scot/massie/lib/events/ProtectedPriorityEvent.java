@@ -13,6 +13,11 @@ import scot.massie.lib.events.args.EventArgs;
 public class ProtectedPriorityEvent<TArgs extends EventArgs> extends ProtectedEvent<TArgs> implements PriorityEvent<TArgs>
 {
     /**
+     * The event this wraps, preventing direct invocation.
+     */
+    protected final InvokablePriorityEvent<TArgs> wrappedEvent;
+
+    /**
      * Wraps the given priority event in a ProtectedPriorityEvent instance. Calls to the instance will defer to the
      * wrapped event, except for calls made to methods intended for the implementation of an event rather than the use
      * of one, which will be blocked.
@@ -23,11 +28,6 @@ public class ProtectedPriorityEvent<TArgs extends EventArgs> extends ProtectedEv
         super(wrappedEvent);
         this.wrappedEvent = wrappedEvent;
     }
-
-    /**
-     * The event this wraps, preventing direct invocation.
-     */
-    protected final InvokablePriorityEvent<TArgs> wrappedEvent;
 
     @Override
     public void register(EventListener<TArgs> listener, double priority)

@@ -23,12 +23,6 @@ import java.util.stream.Stream;
 public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
 {
     /**
-     * Creates a new SetEvent with no listeners or dependent events.
-     */
-    public SetEvent()
-    {}
-
-    /**
      * This event's listeners.
      * @implNote Synchronisation is on this, the listeners set, even when working with dependent events.
      */
@@ -44,6 +38,12 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
      * The synchronisation lock for this object.
      */
     protected final Object syncLock = new Object();
+
+    /**
+     * Creates a new SetEvent with no listeners or dependent events.
+     */
+    public SetEvent()
+    {}
 
     @Override
     public void invoke(TArgs eventArgs)

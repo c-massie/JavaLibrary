@@ -9,6 +9,16 @@ import scot.massie.lib.events.args.EventArgs;
 public class ValueReassignedEventArgs<T> implements EventArgs
 {
     /**
+     * The previous value.
+     */
+    protected final T previousValue;
+
+    /**
+     * The value being changed to.
+     */
+    protected T newValue;
+
+    /**
      * Creates a new event args for a value being changed.
      * @param previousValue The previous value.
      * @param newValue The value being changed to.
@@ -18,16 +28,6 @@ public class ValueReassignedEventArgs<T> implements EventArgs
         this.previousValue = previousValue;
         this.newValue = newValue;
     }
-
-    /**
-     * The previous value.
-     */
-    protected final T previousValue;
-
-    /**
-     * The value being changed to.
-     */
-    protected T newValue;
 
     /**
      * Gets the previous value.

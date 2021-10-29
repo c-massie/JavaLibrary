@@ -9,6 +9,26 @@ import scot.massie.lib.events.args.EventArgs;
 public final class EventListenerCallInfo<TArgs extends EventArgs>
 {
     /**
+     * The listener being invoked.
+     */
+    private final EventListener<TArgs> listener;
+
+    /**
+     * The listener's priority, if one is explicitly given.
+     */
+    private final double priority;
+
+    /**
+     * Whether or not the listener has a priority.
+     */
+    private final boolean hasPriority;
+
+    /**
+     * The eventargs object to be passed to the listener when invoked.
+     */
+    private final TArgs args;
+
+    /**
      * Creates a new EventListenerCallInfo object with priority.
      * @param listener The event listener being invoked.
      * @param priority The event listener's priority.
@@ -34,26 +54,6 @@ public final class EventListenerCallInfo<TArgs extends EventArgs>
         this.hasPriority = false;
         this.args = args;
     }
-
-    /**
-     * The listener being invoked.
-     */
-    private final EventListener<TArgs> listener;
-
-    /**
-     * The listener's priority, if one is explicitly given.
-     */
-    private final double priority;
-
-    /**
-     * Whether or not the listener has a priority.
-     */
-    private final boolean hasPriority;
-
-    /**
-     * The eventargs object to be passed to the listener when invoked.
-     */
-    private final TArgs args;
 
     /**
      * Gets the listener being invoked.

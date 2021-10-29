@@ -9,16 +9,16 @@ import scot.massie.lib.events.args.EventArgs;
 public class ItemRemovedEventArgs<T> extends ContentsChangedEventArgs
 {
     /**
+     * The item being removed.
+     */
+    protected T itemRemoved;
+
+    /**
      * Creates a new event args for an item being removed from something.
      * @param itemRemoved The item being added.
      */
     public ItemRemovedEventArgs(T itemRemoved)
     { this.itemRemoved = itemRemoved; }
-
-    /**
-     * The item being removed.
-     */
-    protected T itemRemoved;
 
     /**
      * Gets the item being removed.

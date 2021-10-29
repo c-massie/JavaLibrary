@@ -7,16 +7,16 @@ package scot.massie.lib.events.args.predefined;
 public class ItemAddedEventArgs<T> extends ContentsChangedEventArgs
 {
     /**
+     * The item being added.
+     */
+    protected T itemAdded;
+
+    /**
      * Creates a new event args for an item being added to something.
      * @param itemAdded The item being added.
      */
     public ItemAddedEventArgs(T itemAdded)
     { this.itemAdded = itemAdded; }
-
-    /**
-     * The item being added.
-     */
-    protected T itemAdded;
 
     /**
      * Gets the item being added.

@@ -28,12 +28,6 @@ import java.util.stream.Stream;
 public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityEvent<TArgs>
 {
     /**
-     * Creates a new OrderedEvent with no listeners or dependent events.
-     */
-    public OrderedEvent()
-    {}
-
-    /**
      * The listeners to this event without a particular priority.
      */
     protected final Set<EventListener<TArgs>> listenersWithoutPriority = new HashSet<>();
@@ -53,6 +47,12 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
      * The synchronisation lock for this object.
      */
     protected final Object syncLock = new Object();
+
+    /**
+     * Creates a new OrderedEvent with no listeners or dependent events.
+     */
+    public OrderedEvent()
+    {}
 
     @Override
     public void invoke(TArgs eventArgs)

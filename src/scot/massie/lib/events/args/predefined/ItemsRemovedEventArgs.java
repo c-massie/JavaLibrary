@@ -13,6 +13,16 @@ import java.util.Collections;
 public class ItemsRemovedEventArgs<T> extends ContentsChangedEventArgs
 {
     /**
+     * The items being removed.
+     */
+    protected Collection<T> itemsRemoved;
+
+    /**
+     * A read-only view of the items being added.
+     */
+    protected Collection<T> itemsRemovedAsReadOnly;
+
+    /**
      * Creates a new event args for items being removed from something.
      * @param itemsRemoved The items being removed.
      */
@@ -29,16 +39,6 @@ public class ItemsRemovedEventArgs<T> extends ContentsChangedEventArgs
     @SafeVarargs
     public ItemsRemovedEventArgs(T... itemsRemoved)
     { this(Arrays.asList(itemsRemoved)); }
-
-    /**
-     * The items being removed.
-     */
-    protected Collection<T> itemsRemoved;
-
-    /**
-     * A read-only view of the items being added.
-     */
-    protected Collection<T> itemsRemovedAsReadOnly;
 
     /**
      * Gets the items being removed, as a read-only collection.

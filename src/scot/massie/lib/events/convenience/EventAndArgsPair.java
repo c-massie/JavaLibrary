@@ -14,6 +14,16 @@ import java.util.stream.Stream;
 public final class EventAndArgsPair<TArgs extends EventArgs>
 {
     /**
+     * The event in this pairing.
+     */
+    private final InvokableEvent<TArgs> event;
+
+    /**
+     * The eventargs object in this pairing.
+     */
+    private final TArgs args;
+
+    /**
      * Creates a new pairing of an invokable event with an instance of its event args.
      * @param event The event.
      * @param args The eventargs object.
@@ -23,16 +33,6 @@ public final class EventAndArgsPair<TArgs extends EventArgs>
         this.event = event;
         this.args = args;
     }
-
-    /**
-     * The event in this pairing.
-     */
-    private final InvokableEvent<TArgs> event;
-
-    /**
-     * The eventargs object in this pairing.
-     */
-    private final TArgs args;
 
     /**
      * Gets the event in this pairing.

@@ -12,6 +12,21 @@ public final class EventListenerPriorityPair<TArgs extends EventArgs>
         implements Comparable<EventListenerPriorityPair<TArgs>>
 {
     /**
+     * The event listener.
+     */
+    private final EventListener<TArgs> listener;
+
+    /**
+     * The priority.
+     */
+    private final double priority;
+
+    /**
+     * Whether or not this pairing has a priority.
+     */
+    private final boolean hasPriority;
+
+    /**
      * Creates a new event listener priority pair, with priority.
      * @param listener The event listener.
      * @param priority The event listener's priority.
@@ -33,21 +48,6 @@ public final class EventListenerPriorityPair<TArgs extends EventArgs>
         this.priority = Double.NEGATIVE_INFINITY;
         this.hasPriority = false;
     }
-
-    /**
-     * The event listener.
-     */
-    private final EventListener<TArgs> listener;
-
-    /**
-     * The priority.
-     */
-    private final double priority;
-
-    /**
-     * Whether or not this pairing has a priority.
-     */
-    private final boolean hasPriority;
 
     /**
      * Gets the listener.

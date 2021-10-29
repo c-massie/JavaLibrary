@@ -10,6 +10,31 @@ import scot.massie.lib.events.args.EventArgs;
 public class ItemAtKeyReassignedEventArgs<K, V> extends ContentsChangedEventArgs
 {
     /**
+     * The key being reassigned an item.
+     */
+    protected final K key;
+
+    /**
+     * Whether or not an item was previously assigned to the key.
+     */
+    protected final boolean keyHadItemBefore;
+
+    /**
+     * The item previously assigned to the key, if applicable.
+     */
+    protected final V previousItem;
+
+    /**
+     * Whether or not there should be an item assigned to the key after the event has happened.
+     */
+    protected boolean keyHasItemNow;
+
+    /**
+     * The item to be assigned to the key after the event has happened.
+     */
+    protected V newItem;
+
+    /**
      * Creates a new event args for the value assigned to a key being changed.
      * @param key The key being assigned to.
      * @param previousItem The item previously assigned to the key.
@@ -53,31 +78,6 @@ public class ItemAtKeyReassignedEventArgs<K, V> extends ContentsChangedEventArgs
      */
     public static <K, V> ItemAtKeyReassignedEventArgs<K, V> clearingAtKey(K key, V previousItem)
     { return new ItemAtKeyReassignedEventArgs<>(key, true, previousItem, false, null); }
-
-    /**
-     * The key being reassigned an item.
-     */
-    protected final K key;
-
-    /**
-     * Whether or not an item was previously assigned to the key.
-     */
-    protected final boolean keyHadItemBefore;
-
-    /**
-     * The item previously assigned to the key, if applicable.
-     */
-    protected final V previousItem;
-
-    /**
-     * Whether or not there should be an item assigned to the key after the event has happened.
-     */
-    protected boolean keyHasItemNow;
-
-    /**
-     * The item to be assigned to the key after the event has happened.
-     */
-    protected V newItem;
 
     /**
      * Gets the key being reassigned items.

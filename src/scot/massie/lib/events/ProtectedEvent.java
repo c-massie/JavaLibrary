@@ -15,6 +15,11 @@ import java.util.function.Function;
 public class ProtectedEvent<TArgs extends EventArgs> implements Event<TArgs>
 {
     /**
+     * The event this wraps, preventing direct invocation.
+     */
+    protected final InvokableEvent<TArgs> wrappedEvent;
+
+    /**
      * Wraps the given event in a ProtectedEvent instance. Calls to the instance will defer to the wrapped event, except
      * for calls made to methods intended for the implementation of an event rather than the use of one, which will be
      * blocked.
@@ -22,11 +27,6 @@ public class ProtectedEvent<TArgs extends EventArgs> implements Event<TArgs>
      */
     public ProtectedEvent(InvokableEvent<TArgs> wrappedEvent)
     { this.wrappedEvent = wrappedEvent; }
-
-    /**
-     * The event this wraps, preventing direct invocation.
-     */
-    protected final InvokableEvent<TArgs> wrappedEvent;
 
     @Override
     public void register(EventListener<TArgs> listener)

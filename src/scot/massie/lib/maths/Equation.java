@@ -756,13 +756,14 @@ public class Equation
          * operator is registered.
          */
         private List<OperatorPriorityGroup>        operatorGroupsInOrder = null;
-        //endregion
+
 
         /**
          * Instances of {@link Equation} created by this builder not yet picked up by the garbage collector. This allows
          * updates to be pushed to these objects.
          */
         private final Set<Equation> instances = Collections.newSetFromMap(new WeakHashMap<>());
+        //endregion
 
         //region initialisation
 
