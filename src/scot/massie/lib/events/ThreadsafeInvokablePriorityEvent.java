@@ -46,9 +46,9 @@ public class ThreadsafeInvokablePriorityEvent<TArgs extends EventArgs>
 
     @Override
     public List<EventListenerPriorityPair<TArgs>> getListenersWithPriorities()
-    { return wrappedEvent.getListenersWithPriorities(); }
+    { synchronized(wrappedEvent) { return wrappedEvent.getListenersWithPriorities(); } }
 
     @Override
     public void register(EventListener<TArgs> listener, double priority)
-    { wrappedEvent.register(listener, priority); }
+    { synchronized(wrappedEvent) { wrappedEvent.register(listener, priority); } }
 }
