@@ -23,7 +23,7 @@ public final class ListUtils
      *         satisfy the given predicate.
      */
     @SuppressWarnings("TypeMayBeWeakened") /* May not be weakened, the index of the list is relevant. */
-    public <T> int firstIndexWhere(List<T> list, Predicate<? super T> predicate)
+    public static <T> int firstIndexWhere(List<T> list, Predicate<? super T> predicate)
     {
         int i = 0;
 
@@ -47,7 +47,7 @@ public final class ListUtils
      *         -1 if no items in the list satisfy the given predicate.
      */
     @SuppressWarnings("TypeMayBeWeakened") /* May not be weakened, the index of the list is relevant. */
-    public <T> int firstIndexWhere(List<T> list, BiPredicate<? super Integer, ? super T> predicate)
+    public static <T> int firstIndexWhere(List<T> list, BiPredicate<? super Integer, ? super T> predicate)
     {
         int i = 0;
 
@@ -68,7 +68,7 @@ public final class ListUtils
      * @return The highest index of any item in the list satisfying the given predicate, or the maximum index of the
      *         list, * -1 then - 1, if no items in the list satisfy the given predicate.
      */
-    public <T> int lastIndexWhere(List<T> list, Predicate<? super T> predicate)
+    public static <T> int lastIndexWhere(List<T> list, Predicate<? super T> predicate)
     {
         for(int i = list.size() - 1; i >= 0; i--)
             if(predicate.test(list.get(i)))
@@ -86,7 +86,7 @@ public final class ListUtils
      *         list, * -1 then - 1, if no items in the list satisfy the given predicate.
      */
     @SuppressWarnings("TypeMayBeWeakened") /* May not be weakened, the index of the list is relevant. */
-    public <T> int lastIndexWhere(LinkedList<T> list, Predicate<? super T> predicate)
+    public static <T> int lastIndexWhere(LinkedList<T> list, Predicate<? super T> predicate)
     {
         if(list.isEmpty())
             return -1;
@@ -109,7 +109,7 @@ public final class ListUtils
      * @return The highest index of any item in the list that, together with the index, satisfies the given predicate,
      *         or the maximum index of the list, * -1 then - 1, if no items in the list satisfy the given predicate.
      */
-    public <T> int lastIndexWhere(List<T> list, BiPredicate<? super Integer, ? super T> predicate)
+    public static <T> int lastIndexWhere(List<T> list, BiPredicate<? super Integer, ? super T> predicate)
     {
         for(int i = list.size() - 1; i >= 0; i--)
             if(predicate.test(i, list.get(i)))
@@ -127,7 +127,7 @@ public final class ListUtils
      *         or the maximum index of the list, * -1 then - 1, if no items in the list satisfy the given predicate.
      */
     @SuppressWarnings("TypeMayBeWeakened") /* May not be weakened, the index of the list is relevant. */
-    public <T> int lastIndexWhere(LinkedList<T> list, BiPredicate<? super Integer, ? super T> predicate)
+    public static <T> int lastIndexWhere(LinkedList<T> list, BiPredicate<? super Integer, ? super T> predicate)
     {
         if(list.isEmpty())
             return -1;
