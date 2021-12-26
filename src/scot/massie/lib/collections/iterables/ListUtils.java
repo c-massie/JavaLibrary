@@ -74,7 +74,7 @@ public final class ListUtils
             if(predicate.test(list.get(i)))
                 return i;
 
-        return -(list.size());
+        return -(list.size()) - 1;
     }
 
     /**
@@ -98,7 +98,7 @@ public final class ListUtils
             if(predicate.test(item))
                 return i;
 
-        return -(list.size());
+        return -(list.size()) - 1;
     }
 
     /**
@@ -115,7 +115,7 @@ public final class ListUtils
             if(predicate.test(i, list.get(i)))
                 return i;
 
-        return -(list.size());
+        return -(list.size()) - 1;
     }
 
     /**
@@ -139,6 +139,6 @@ public final class ListUtils
             if(predicate.test(i, item))
                 return i;
 
-        return -(list.size());
+        return -(list.size()) - 1;
     }
 }
