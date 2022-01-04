@@ -2,10 +2,10 @@ package scot.massie.lib.utils.tuples;
 
 import java.util.Objects;
 
-public final class Pair<T1, T2>
+public class Pair<T1, T2>
 {
-    private final T1 first;
-    private final T2 second;
+    protected final T1 first;
+    protected final T2 second;
 
     public Pair(T1 first, T2 second)
     {
