@@ -20,6 +20,13 @@ public interface Event<TArgs extends EventArgs>
     void register(EventListener<TArgs> listener);
 
     /**
+     * Registers an event listener to this event.
+     * @param listener The listener to be called when this event is invoked.
+     */
+    default void register(ArglessEventListener listener)
+    { register(x -> listener.onEvent()); }
+
+    /**
      * Registers another event to this event as a dependent event.
      * Dependent events will be invoked when this event is invoked.
      * Passes the same EventArgs object to the listeners of the dependent event as to this one.
