@@ -22,6 +22,11 @@ public interface Event<TArgs extends EventArgs>
     /**
      * Registers an event listener to this event.
      * @param listener The listener to be called when this event is invoked.
+     * @apiNote If the listener is intended to be deregistered, it should be passed as an instance of
+     *          {@link EventListener} instead of {@link ArglessEventListener} - where l is an argless event listener,
+     *          calling this method as <code>.register(l)</code> would be the equivalent of
+     *          <code>.register(args -> l.onEvent())</code>, and it's not guaranteed that the original instance of
+     *          {@link ArglessEventListener} is stored.
      */
     default void register(ArglessEventListener listener)
     { register(x -> listener.onEvent()); }
