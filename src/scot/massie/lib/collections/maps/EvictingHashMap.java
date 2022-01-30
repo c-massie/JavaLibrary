@@ -1,4 +1,4 @@
-package scot.massie.lib.collections.iterables.queues;
+package scot.massie.lib.collections.maps;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
