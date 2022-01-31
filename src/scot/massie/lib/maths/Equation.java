@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 
 import static scot.massie.lib.utils.ControlFlowUtils.*;
 
+// TO DO: Make Equation threadsafe. Builder or any of the internal types do not have to be threadsafe.
+
 /**
  * <p>An equation compiled from a string representation of itself, which may be evaluated at any time.</p>
  *
@@ -36,6 +38,55 @@ import static scot.massie.lib.utils.ControlFlowUtils.*;
  * <p>Variables and functions used in the equation may be redefined at any point, with
  * {@link Equation#setVariable(String, double) .setVariable(...)} and
  * {@link Equation#redefineFunction(String, ToDoubleFunction) .redefineFunction}.</p>
+ *
+ * <p>Examples:</p>
+ *
+ * <pre>{@code
+ * // Creates a new equation object representing the equation 6+7.
+ * new Equation("6 + 7");
+ *
+ *
+ * // Creates a new equation object representing the 5th fibonacci number + 3.2.
+ * new Equation("fib(5) + 3.2");
+ *
+ *
+ * // Creates a builder with a custom binary operator "€" and uses it to create two equations.
+ * // Prefix and postfix operators are also available.
+ * Equation.Builder b = new Equation.Builder().withOperator("€", (l, r) -> l * 3 + r);
+ * Equation eq1 = b.build("3 € 5");
+ * Equation eq2 = b.build("1 € 2");
+ *
+ *
+ * // Creates a builder with a variable "myvar" - variables can be reässigned.
+ * // Variables can be set via the builder or via existing equation objects.
+ * // Variables set by the builder's .withVariable(...) method only affect future equation objects.
+ * // Variables set by the builder's .pushVariable(...) method affects all equation objects created by that builder.
+ * // Variables set by the equation's .setVariable(...) method affects only that equation.
+ * // Functions can be set and reassigned in the same with, with the relevant functions.
+
+ * Equation.Builder b = new Equation.Builder().withVariable("myvar", 7);
+ * Equation eq1 = b.build("myvar * 3");
+ * Equation eq2 = b.build("myvar * 3");
+ * eq1.evaluate(); // == 21
+ * eq2.evaluate(); // == 21
+ *
+ * b.withVariable("myvar", 8);
+ * Equation eq3 = b.build("myvar * 3");
+ * eq1.evaluate(); // == 21
+ * eq2.evaluate(); // == 21
+ * eq3.evaluate(); // == 24
+ *
+ * b.pushVariable("myvar", 9);
+ * eq1.evaluate(); // == 27
+ * eq2.evaluate(); // == 27
+ * eq3.evaluate(); // == 27
+ *
+ * eq1.setVariable("myvar", 10);
+ * eq1.evaluate(); // == 30
+ * eq2.evaluate(); // == 27
+ * eq3.evaluate(); // == 27
+ *
+ * }</pre>
  */
 public class Equation
 {
