@@ -4274,6 +4274,11 @@ public class Equation
      * map of the builder used to create this equation object, allowing functions to be redefined.</p>
      */
     protected final Map<String, ToDoubleFunction<double[]>> functions;
+
+    /**
+     * The object upon which access to this object should be locked.
+     */
+    protected final Object syncLock = new Object();
     //endregion
 
     //region initialisation
@@ -4349,7 +4354,10 @@ public class Equation
      * @return The result of the equation as a double.
      */
     public double evaluate()
-    { return topLevelComponent.evaluate(this); }
+    {
+        synchronized(syncLock)
+        { return topLevelComponent.evaluate(this); }
+    }
 
     /**
      * <p>Reässigns the value of a variable in this equation. If the equation does not have a variable available to it
@@ -4361,10 +4369,14 @@ public class Equation
      */
     public boolean setVariable(String variableName, double newValue)
     {
-        if(!variableValues.containsKey(variableName))
-            return false;
+        synchronized(syncLock)
+        {
+            if(!variableValues.containsKey(variableName))
+                return false;
 
-        overwrittenVariableValues.put(variableName, newValue);
+            overwrittenVariableValues.put(variableName, newValue);
+        }
+
         return true;
     }
 
@@ -4379,10 +4391,14 @@ public class Equation
      */
     public boolean redefineFunction(String name, ToDoubleFunction<double[]> f)
     {
-        if(!functions.containsKey(name))
-            return false;
+        synchronized(syncLock)
+        {
+            if(!functions.containsKey(name))
+                return false;
 
-        overwrittenFunctions.put(name, f);
+            overwrittenFunctions.put(name, f);
+        }
+
         return true;
     }
 
@@ -4396,10 +4412,14 @@ public class Equation
      */
     public boolean redefineFunction(String name, DoubleSupplier f)
     {
-        if(!functions.containsKey(name))
-            return false;
+        synchronized(syncLock)
+        {
+            if(!functions.containsKey(name))
+                return false;
 
-        overwrittenFunctions.put(name, x -> f.getAsDouble());
+            overwrittenFunctions.put(name, x -> f.getAsDouble());
+        }
+
         return true;
     }
 
@@ -4414,16 +4434,19 @@ public class Equation
      */
     public boolean redefineFunction(String name, int requiredArgCount, ToDoubleFunction<double[]> f)
     {
-        if(!functions.containsKey(name))
-            return false;
-
-        overwrittenFunctions.put(name, args ->
+        synchronized(syncLock)
         {
-            if(args.length < requiredArgCount)
-                throw new MissingFunctionArgumentsException(name, requiredArgCount, args.length);
+            if(!functions.containsKey(name))
+                return false;
 
-            return f.applyAsDouble(args);
-        });
+            overwrittenFunctions.put(name, args ->
+            {
+                if(args.length < requiredArgCount)
+                    throw new MissingFunctionArgumentsException(name, requiredArgCount, args.length);
+
+                return f.applyAsDouble(args);
+            });
+        }
 
         return true;
     }
@@ -4438,16 +4461,19 @@ public class Equation
      */
     public boolean redefineMonoFunction(String name, ToDoubleFunction<? super Double> f)
     {
-        if(!functions.containsKey(name))
-            return false;
-
-        overwrittenFunctions.put(name, args ->
+        synchronized(syncLock)
         {
-            if(args.length < 1)
-                throw new MissingFunctionArgumentsException(name, 1, args.length);
+            if(!functions.containsKey(name))
+                return false;
 
-            return f.applyAsDouble(args[0]);
-        });
+            overwrittenFunctions.put(name, args ->
+            {
+                if(args.length < 1)
+                    throw new MissingFunctionArgumentsException(name, 1, args.length);
+
+                return f.applyAsDouble(args[0]);
+            });
+        }
 
         return true;
     }
@@ -4462,16 +4488,19 @@ public class Equation
      */
     public boolean redefineBiFunction(String name, ToDoubleBiFunction<? super Double, ? super Double> f)
     {
-        if(!functions.containsKey(name))
-            return false;
-
-        overwrittenFunctions.put(name, args ->
+        synchronized(syncLock)
         {
-            if(args.length < 2)
-                throw new MissingFunctionArgumentsException(name, 2, args.length);
+            if(!functions.containsKey(name))
+                return false;
 
-            return f.applyAsDouble(args[0], args[1]);
-        });
+            overwrittenFunctions.put(name, args ->
+            {
+                if(args.length < 2)
+                    throw new MissingFunctionArgumentsException(name, 2, args.length);
+
+                return f.applyAsDouble(args[0], args[1]);
+            });
+        }
 
         return true;
     }
@@ -4484,7 +4513,10 @@ public class Equation
      * @param name The name of the variable.
      */
     public void revertVariable(String name)
-    { overwrittenVariableValues.remove(name); }
+    {
+        synchronized(syncLock)
+        { overwrittenVariableValues.remove(name); }
+    }
 
     /**
      * <p>Reverts an equation's function implementation to the implementation provided by its builder.</p>
@@ -4494,7 +4526,10 @@ public class Equation
      * @param name The name of the function.
      */
     public void revertFunction(String name)
-    { overwrittenFunctions.remove(name); }
+    {
+        synchronized(syncLock)
+        { overwrittenFunctions.remove(name); }
+    }
     //endregion
     //endregion
 }
