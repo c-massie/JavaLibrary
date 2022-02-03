@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 
 import static scot.massie.lib.utils.ControlFlowUtils.*;
 
-// TO DO: Make Equation threadsafe. Builder or any of the internal types do not have to be threadsafe.
-
 /**
  * <p>An equation compiled from a string representation of itself, which may be evaluated at any time.</p>
  *
@@ -3938,6 +3936,13 @@ public class Equation
          * @return The result of evaluating this equation component, as a double.
          */
         public abstract double evaluate(Equation equationBeingEvaluated);
+
+        /**
+         * Gets whether or not this equation component references the equation it's from in a way that would require
+         * a synchronisation lock.
+         * @return True if it referenced the equation in a way that would require a lock. Otherwise, false.
+         */
+        public abstract boolean referencesEquation();
     }
 
     /**
@@ -3947,6 +3952,11 @@ public class Equation
      */
     static final class Operation extends EquationComponent
     {
+        /**
+         * Whether or not this equation component references the equation
+         */
+        private final boolean referencesEquation;
+
         /**
          * The unevaluated operands of this operation.
          */
@@ -3991,6 +4001,19 @@ public class Equation
         {
             this.components = components;
             this.action = action;
+
+            boolean refsEq = false;
+
+            for(EquationComponent eqComp : components)
+            {
+                if(eqComp.referencesEquation())
+                {
+                    refsEq = true;
+                    break;
+                }
+            }
+
+            referencesEquation = refsEq;
         }
 
         /**
@@ -4023,6 +4046,10 @@ public class Equation
 
             return action.performOperation(operands);
         }
+
+        @Override
+        public boolean referencesEquation()
+        { return referencesEquation; }
     }
 
     /**
@@ -4088,6 +4115,10 @@ public class Equation
 
             return f.applyAsDouble(results);
         }
+
+        @Override
+        public boolean referencesEquation()
+        { return true; }
     }
 
     /**
@@ -4122,6 +4153,10 @@ public class Equation
         @Override
         public double evaluate(Equation equationBeingEvaluated)
         { return equationBeingEvaluated.variableValues.get(name); }
+
+        @Override
+        public boolean referencesEquation()
+        { return true; }
     }
 
     /**
@@ -4156,6 +4191,10 @@ public class Equation
         @Override
         public double evaluate(Equation equationBeingEvaluated)
         { return value; }
+
+        @Override
+        public boolean referencesEquation()
+        { return false; }
     }
     //endregion
 
@@ -4355,8 +4394,11 @@ public class Equation
      */
     public double evaluate()
     {
-        synchronized(syncLock)
-        { return topLevelComponent.evaluate(this); }
+        if(topLevelComponent.referencesEquation())
+            synchronized(syncLock)
+            { return topLevelComponent.evaluate(this); }
+        else
+            return topLevelComponent.evaluate(this);
     }
 
     /**
