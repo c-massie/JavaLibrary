@@ -107,7 +107,13 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
         EventWithArgsConverter<TArgs, TArgs> ewac = new EventWithArgsConverter<>(dependentEvent, Function.identity());
 
         synchronized(syncLock)
-        { dependentEvents.put(dependentEvent, ewac); }
+        {
+            if(dependentEvent.hasDependentEventRecursively(this))
+                throw new IllegalArgumentException("Events may not be registered to events that are registered to "
+                                                   + "them.");
+
+            dependentEvents.put(dependentEvent, ewac);
+        }
     }
 
     @Override
@@ -198,7 +204,20 @@ public class OrderedEvent<TArgs extends EventArgs> implements InvokablePriorityE
 
     @Override
     public Collection<InvokableEvent<?>> getDependentEvents()
-    { synchronized(syncLock) { return dependentEvents.keySet(); } }
+    { synchronized(syncLock) { return new HashSet<>(dependentEvents.keySet()); } }
+
+    @Override
+    public boolean hasDependentEventRecursively(InvokableEvent<?> other)
+    {
+        synchronized(syncLock)
+        {
+            for(InvokableEvent<?> e : dependentEvents.keySet())
+                if(e == other || e.hasDependentEventRecursively(other))
+                    return true;
+        }
+
+        return false;
+    }
 
     @Override
     public List<EventListenerCallInfo<?>> generateCallInfo(TArgs args)

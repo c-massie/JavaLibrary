@@ -77,7 +77,13 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
         EventWithArgsConverter<TArgs, TArgs> ewac = new EventWithArgsConverter<>(dependentEvent, Function.identity());
 
         synchronized(syncLock)
-        { dependentEvents.put(dependentEvent, ewac); }
+        {
+            if(dependentEvent.hasDependentEventRecursively(this))
+                throw new IllegalArgumentException("Events may not be registered to events that are registered to "
+                                                   + "them.");
+
+            dependentEvents.put(dependentEvent, ewac);
+        }
     }
 
     @Override
@@ -134,9 +140,19 @@ public class SetEvent<TArgs extends EventArgs> implements InvokableEvent<TArgs>
 
     @Override
     public Collection<InvokableEvent<?>> getDependentEvents()
+    { synchronized(syncLock) { return new HashSet<>(dependentEvents.keySet()); } }
+
+    @Override
+    public boolean hasDependentEventRecursively(InvokableEvent<?> other)
     {
         synchronized(syncLock)
-        { return dependentEvents.values().stream().map(EventWithArgsConverter::getEvent).collect(Collectors.toList()); }
+        {
+            for(InvokableEvent<?> e : dependentEvents.keySet())
+                if(e == other || e.hasDependentEventRecursively(other))
+                    return true;
+        }
+
+        return false;
     }
 
     @Override

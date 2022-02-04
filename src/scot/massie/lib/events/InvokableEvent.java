@@ -56,6 +56,20 @@ public interface InvokableEvent<TArgs extends EventArgs> extends Event<TArgs>
     Collection<InvokableEvent<?>> getDependentEvents();
 
     /**
+     * Gets whether another event is dependent on this one, either directly or indirectly.
+     * @return True if this event's dependent events, or any of their dependent events recursively, contains the given
+     *         event. Otherwise, false.
+     */
+    default boolean hasDependentEventRecursively(InvokableEvent<?> other)
+    {
+        for(InvokableEvent<?> e : getDependentEvents())
+            if(e == other || e.hasDependentEventRecursively(other))
+                return true;
+
+        return false;
+    }
+
+    /**
      * Generates the information required to call all listeners of this event and all dependent events appropriately as
      * the result of the event being raised, as represented by the provided EventArgs object.
      * @param args The EventArgs representing this specific event invocation.
